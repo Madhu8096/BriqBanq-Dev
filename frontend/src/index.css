@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 16px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply text-base text-gray-900 bg-gray-50;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  }
+
+  h1 {
+    @apply text-4xl font-bold tracking-tight text-gray-900;
+  }
+
+  h2 {
+    @apply text-2xl font-bold tracking-tight text-gray-900;
+  }
+
+  h3 {
+    @apply text-xl font-semibold tracking-tight text-gray-900;
+  }
+
+  /* Accessibility and clean rendering */
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+/* Custom Scrollbar for a premium feel */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+  }
+}
+
+/* Print Styles */
+@media print {
+
+  /* Hide sidebar, header, and other UI elements */
+  aside,
+  header,
+  nav,
+  .lg\:hidden,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset layout for printing */
+  main,
+  .page-content,
+  .animate-fade-in-up {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure colors and backgrounds print */
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+  }
+
+  /* Avoid breaking sections in the middle of a page */
+  h1,
+  h2,
+  h3,
+  h4,
+  .shadow-xl,
+  .rounded-2xl {
+    page-break-inside: avoid;
+  }
+
+  /* Force background images to show */
+  .relative img {
+    display: block !important;
+  }
+
+  /* Hide print/download buttons themselves */
+  .print-controls {
+    display: none !important;
+  }
+}

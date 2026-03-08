@@ -1,0 +1,38 @@
+"""Contracts module — Schemas."""
+import uuid
+from datetime import datetime
+from typing import Optional, List
+from pydantic import BaseModel, Field
+from app.shared.enums import ContractStatus
+
+class ContractCreateRequest(BaseModel):
+    deal_id: uuid.UUID
+    title: str = Field(..., min_length=1, max_length=255)
+    contract_type: str = Field(..., min_length=1, max_length=50)
+    signer_ids: List[uuid.UUID]
+
+class ContractSignRequest(BaseModel):
+    signature_hash: str = Field(..., min_length=1)
+
+class ContractResponse(BaseModel):
+    id: uuid.UUID
+    deal_id: uuid.UUID
+    title: str
+    contract_type: str
+    status: ContractStatus
+    document_s3_key: Optional[str] = None
+    created_by: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    version: int
+    model_config = {"from_attributes": True}
+
+class SignatureResponse(BaseModel):
+    id: uuid.UUID
+    contract_id: uuid.UUID
+    signer_id: uuid.UUID
+    signer_role: str
+    signed_at: Optional[datetime] = None
+    is_signed: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
