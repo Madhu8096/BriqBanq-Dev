@@ -1,6 +1,6 @@
 import { borrowerApi } from '../api'
 import { settingsStorage } from '../data/settingsStorage'
-import { MOCK_ACTIVE_SESSIONS } from '../data/borrowerMockData'
+const MOCK_ACTIVE_SESSIONS = []
 
 /**
  * Security Service - Backend-friendly API wrapper with localStorage fallback
@@ -54,7 +54,7 @@ export const securityService = {
     try {
       const res = await borrowerApi.getActiveSessions()
       const sessions = res?.data?.data?.sessions || res?.data?.sessions || res?.data
-      
+
       if (Array.isArray(sessions)) {
         const existing = settingsStorage.getSecurity() || {}
         settingsStorage.setSecurity({ ...existing, sessions })
@@ -74,7 +74,7 @@ export const securityService = {
   async revokeSession(sessionId) {
     try {
       await borrowerApi.revokeSession(sessionId)
-      
+
       const existing = settingsStorage.getSecurity() || {}
       const updatedSessions = (existing.sessions || []).filter(s => s.id !== sessionId)
       settingsStorage.setSecurity({ ...existing, sessions: updatedSessions })
@@ -93,7 +93,7 @@ export const securityService = {
   async revokeAllOtherSessions() {
     try {
       await borrowerApi.revokeAllOtherSessions()
-      
+
       const existing = settingsStorage.getSecurity() || {}
       const updatedSessions = (existing.sessions || []).filter(s => s.isCurrent)
       settingsStorage.setSecurity({ ...existing, sessions: updatedSessions })

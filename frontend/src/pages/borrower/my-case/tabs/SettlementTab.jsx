@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import {
-  MOCK_SETTLEMENT_TASK_SUMMARY,
-  MOCK_SETTLEMENT_GROUPS,
-} from '../../data/borrowerMockData'
+const MOCK_SETTLEMENT_TASK_SUMMARY = {};
+const MOCK_SETTLEMENT_GROUPS = [];
 import ProgressBar from '../../components/ProgressBar'
 
 const BellIcon = () => (
@@ -84,18 +82,16 @@ export default function SettlementTab({ settlement: settlementProp, caseId }) {
         <button
           type="button"
           onClick={() => setSubTab('overview')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
-            subTab === 'overview' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${subTab === 'overview' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+            }`}
         >
           <span>Settlement Overview</span>
         </button>
         <button
           type="button"
           onClick={() => setSubTab('pexa')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
-            subTab === 'pexa' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${subTab === 'pexa' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+            }`}
         >
           PEXA Settlement
         </button>

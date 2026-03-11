@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { MOCK_DEALS } from '../../data/mockDealsData'
+const MOCK_DEALS = []
 import BuyNowHero from '../../components/admin/deals/BuyNowHero'
 import MetricsCards from '../../components/admin/deals/MetricsCards'
 import LoanDetails from '../../components/admin/deals/LoanDetails'
@@ -43,8 +43,8 @@ export default function BuyNowRoom() {
                     <button
                         onClick={() => setActiveTab('details')}
                         className={`flex items-center gap-3 px-8 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-[1.25rem] transition-all duration-500 ${activeTab === 'details'
-                                ? 'bg-white text-indigo-600 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.06)]'
-                                : 'text-gray-400 hover:text-gray-600'
+                            ? 'bg-white text-indigo-600 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.06)]'
+                            : 'text-gray-400 hover:text-gray-600'
                             }`}
                     >
                         <Building2 className="w-4 h-4" />
@@ -53,8 +53,8 @@ export default function BuyNowRoom() {
                     <button
                         onClick={() => setActiveTab('memo')}
                         className={`flex items-center gap-3 px-8 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-[1.25rem] transition-all duration-500 ${activeTab === 'memo'
-                                ? 'bg-white text-indigo-600 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.06)]'
-                                : 'text-gray-400 hover:text-gray-600'
+                            ? 'bg-white text-indigo-600 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.06)]'
+                            : 'text-gray-400 hover:text-gray-600'
                             }`}
                     >
                         <FileText className="w-4 h-4" />

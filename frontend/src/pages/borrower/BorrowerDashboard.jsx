@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import StatCard from './components/StatCard'
 import ProgressBar from './components/ProgressBar'
 import NewCase from './NewCase'
-import {
-  MOCK_BORROWER_CASE,
-  MOCK_TIMELINE_EVENTS,
-  MOCK_BORROWER_DOCUMENTS,
-} from './data/borrowerMockData'
+const MOCK_BORROWER_CASE = {};
+const MOCK_TIMELINE_EVENTS = [];
+const MOCK_BORROWER_DOCUMENTS = [];
 
 const formatNum = (n) =>
   new Intl.NumberFormat('en-AU', {
@@ -28,10 +26,10 @@ export default function BorrowerDashboard() {
   const addressLine2 = c.property ? `${c.property.suburb}, ${c.property.state}` : 'Potts Point, NSW'
   const nextMilestoneDate = c.auction?.endDate
     ? new Date(c.auction.endDate).toLocaleDateString('en-AU', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
     : '05 Mar 2026'
   const activeBidders = c.auction?.activeBidders ?? 5
   const currentBid = fin.currentHighestBid ?? 2450000
@@ -293,33 +291,30 @@ export default function BorrowerDashboard() {
           <button
             type="button"
             onClick={() => setActiveTab('overview')}
-            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              activeTab === 'overview'
+            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${activeTab === 'overview'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-200 border-b-0 -mb-px hover:bg-gray-50'
-            }`}
+              }`}
           >
             Overview
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('timeline')}
-            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              activeTab === 'timeline'
+            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${activeTab === 'timeline'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-200 border-b-0 -mb-px hover:bg-gray-50'
-            }`}
+              }`}
           >
             Timeline
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('documents')}
-            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-              activeTab === 'documents'
+            className={`min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${activeTab === 'documents'
                 ? 'bg-indigo-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-200 border-b-0 -mb-px hover:bg-gray-50'
-            }`}
+              }`}
           >
             Documents
             {pendingDocCount > 0 && (
@@ -421,9 +416,8 @@ export default function BorrowerDashboard() {
                 <div key={event.id} className="flex gap-4">
                   <div className="flex flex-col items-center shrink-0">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                        isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'
+                        }`}
                     >
                       {event.icon === 'check' && (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

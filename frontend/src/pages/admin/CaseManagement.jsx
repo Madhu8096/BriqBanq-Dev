@@ -4,7 +4,7 @@ import { Eye, Trash2, RefreshCw, Download, FileText, CheckSquare } from 'lucide-
 import AdminBreadcrumb from '../../components/admin/AdminBreadcrumb'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminRiskBadge from '../../components/admin/AdminRiskBadge'
-import { MOCK_CASES } from '../../data/mockData'
+const MOCK_CASES = []
 
 export default function CaseManagement() {
     const navigate = useNavigate()

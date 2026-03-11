@@ -12,13 +12,11 @@ import SettlementTab from './my-case/tabs/SettlementTab'
 import BidsTab from './my-case/tabs/BidsTab'
 import MessagesTab from './my-case/tabs/MessagesTab'
 import { borrowerApi } from './api'
-import {
-  MOCK_BORROWER_CASE,
-  MOCK_MY_CASE_MESSAGES,
-  MOCK_MY_CASE_UPLOADED_DOCS,
-  MOCK_SETTLEMENT_TASK_SUMMARY,
-  MOCK_SETTLEMENT_GROUPS,
-} from './data/borrowerMockData'
+const MOCK_BORROWER_CASE = { id: '', property: {} };
+const MOCK_MY_CASE_MESSAGES = [];
+const MOCK_MY_CASE_UPLOADED_DOCS = [];
+const MOCK_SETTLEMENT_TASK_SUMMARY = {};
+const MOCK_SETTLEMENT_GROUPS = [];
 
 const TAB_ICONS = {
   dashboard: (
@@ -77,12 +75,12 @@ export default function MyCase() {
     () =>
       c.property
         ? {
-            address: c.property.address,
-            suburb: c.property.suburb,
-            state: c.property.state,
-            postcode: c.property.postcode,
-            location: [c.property.suburb, c.property.state, c.property.postcode].filter(Boolean).join(', '),
-          }
+          address: c.property.address,
+          suburb: c.property.suburb,
+          state: c.property.state,
+          postcode: c.property.postcode,
+          location: [c.property.suburb, c.property.state, c.property.postcode].filter(Boolean).join(', '),
+        }
         : null,
     [c.property]
   )
@@ -161,13 +159,13 @@ export default function MyCase() {
     () =>
       c.property
         ? {
-            address: c.property.address,
-            location: [c.property.suburb, c.property.state, c.property.postcode].filter(Boolean).join(', '),
-            type: c.property.type,
-            bedrooms: c.property.bedrooms,
-            bathrooms: c.property.bathrooms,
-            parking: c.property.parking,
-          }
+          address: c.property.address,
+          location: [c.property.suburb, c.property.state, c.property.postcode].filter(Boolean).join(', '),
+          type: c.property.type,
+          bedrooms: c.property.bedrooms,
+          bathrooms: c.property.bathrooms,
+          parking: c.property.parking,
+        }
         : null,
     [c.property]
   )
@@ -176,10 +174,10 @@ export default function MyCase() {
     () =>
       c.property
         ? {
-            amount: c.property.valuation,
-            date: c.property.valuationDate,
-            valuer: c.property.valuer,
-          }
+          amount: c.property.valuation,
+          date: c.property.valuationDate,
+          valuer: c.property.valuer,
+        }
         : null,
     [c.property]
   )
@@ -221,11 +219,10 @@ export default function MyCase() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${activeTab === tab.id
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               {TAB_ICONS[tab.id]}
               <span>{tab.label}</span>

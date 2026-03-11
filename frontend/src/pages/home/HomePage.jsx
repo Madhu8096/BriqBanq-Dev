@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ROLES = [
   { id: "borrower", label: "Borrower", desc: "Manage your mortgage resolution", icon: "🏠" },
@@ -14,6 +14,12 @@ const ROLES = [
 const HERO_BG_IMAGE = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2070&q=80";
 
 export default function HomePage() {
+  const navigate = useNavigate();
+
+  const handleSignIn = () => navigate("/signin");
+  const handleSignUp = () => navigate("/signup");
+  const handleGetStarted = () => navigate("/signup");
+
   return (
     <div className="min-h-screen text-slate-800 overflow-hidden relative">
       {/* Australian real estate background */}
@@ -35,18 +41,18 @@ export default function HomePage() {
             </span>
           </Link>
           <nav className="flex items-center gap-2">
-            <Link
-              to="/signin"
+            <button
+              onClick={handleSignIn}
               className="px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors rounded-lg hover:bg-slate-100"
             >
               Sign In
-            </Link>
-            <Link
-              to="/signup"
+            </button>
+            <button
+              onClick={handleSignUp}
               className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:opacity-95 transition-opacity shadow-lg shadow-emerald-500/25"
             >
               Sign Up
-            </Link>
+            </button>
           </nav>
         </div>
       </header>
@@ -67,19 +73,19 @@ export default function HomePage() {
             Resolve mortgages, run live auctions, and manage contracts securely. Choose your role and get started in seconds.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <Link
-              to="/signup"
+            <button
+              onClick={handleGetStarted}
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:opacity-95 transition-opacity shadow-lg shadow-emerald-500/25"
             >
               Get started
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </Link>
-            <Link
-              to="/signin"
+            </button>
+            <button
+              onClick={handleSignIn}
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-800 border-2 border-slate-400 rounded-xl hover:bg-slate-100 transition-colors bg-white shadow-sm"
             >
               Sign in
-            </Link>
+            </button>
           </div>
         </div>
       </section>

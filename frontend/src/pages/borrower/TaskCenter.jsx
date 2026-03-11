@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Badge from './components/Badge'
-import { MOCK_BORROWER_TASKS } from './data/borrowerMockData'
+const MOCK_BORROWER_TASKS = []
 
 const priorityVariant = { Urgent: 'urgent', High: 'high', Medium: 'medium', Done: 'done' }
 const statusVariant = { Overdue: 'overdue', Pending: 'pending', InProgress: 'in-progress', Completed: 'completed' }
@@ -105,14 +105,14 @@ export default function TaskCenter() {
       prev.map((t) =>
         t.id === editingTask.id
           ? {
-              ...t,
-              title: newTaskForm.title.trim(),
-              desc: newTaskForm.description.trim() || 'No description',
-              priority: newTaskForm.priority,
-              dueLabel: formatDueLabel(newTaskForm.dueDate) || t.dueLabel,
-              dueDateRaw: newTaskForm.dueDate,
-              module: newTaskForm.module,
-            }
+            ...t,
+            title: newTaskForm.title.trim(),
+            desc: newTaskForm.description.trim() || 'No description',
+            priority: newTaskForm.priority,
+            dueLabel: formatDueLabel(newTaskForm.dueDate) || t.dueLabel,
+            dueDateRaw: newTaskForm.dueDate,
+            module: newTaskForm.module,
+          }
           : t
       )
     )

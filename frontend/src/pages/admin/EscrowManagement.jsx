@@ -1,7 +1,7 @@
 import AdminBreadcrumb from '../../components/admin/AdminBreadcrumb'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
-import { MOCK_ESCROW_TRANSACTIONS } from '../../data/mockData'
+const MOCK_ESCROW_TRANSACTIONS = []
 
 export default function EscrowManagement() {
     const formatCurrency = (amount) => {

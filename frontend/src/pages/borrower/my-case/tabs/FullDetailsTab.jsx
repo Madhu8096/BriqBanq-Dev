@@ -1,4 +1,4 @@
-import { MOCK_BORROWER_CASE } from '../../data/borrowerMockData'
+const MOCK_BORROWER_CASE = {};
 
 const formatNum = (n) =>
   n != null

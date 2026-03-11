@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Bell, Mail, MessageSquare, CheckCircle, Eye, Trash2 } from 'lucide-react'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
-import { MOCK_NOTIFICATIONS } from '../../data/mockData'
+const MOCK_NOTIFICATIONS = []
 
 export default function Notifications() {
     const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)

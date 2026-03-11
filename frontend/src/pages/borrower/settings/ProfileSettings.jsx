@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Breadcrumb, FormInput, FormSelect } from './SettingsComponents'
 import { useBorrowerProfile } from '../BorrowerProfileContext'
 import { profileService } from '../services'
-import { MOCK_PROFILE } from '../data/borrowerMockData'
+const MOCK_PROFILE = { address: {} }
 
 const BIO_MAX = 500
 const STATES = [{ value: 'VIC', label: 'VIC' }, { value: 'NSW', label: 'NSW' }, { value: 'QLD', label: 'QLD' }, { value: 'WA', label: 'WA' }, { value: 'SA', label: 'SA' }, { value: 'TAS', label: 'TAS' }, { value: 'ACT', label: 'ACT' }, { value: 'NT', label: 'NT' }]
@@ -39,7 +39,7 @@ export default function ProfileSettings() {
 
   useEffect(() => {
     if (ctxProfile?.photoUrl && !photoPreview) setPhotoPreview(ctxProfile.photoUrl)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only set preview when profile photo URL appears
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only set preview when profile photo URL appears
   }, [ctxProfile?.photoUrl])
 
   useEffect(() => {
@@ -120,13 +120,13 @@ export default function ProfileSettings() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
+
     // Optimistically show preview
     const reader = new FileReader()
     reader.onload = () => setPhotoPreview(reader.result)
     reader.readAsDataURL(file)
     setIsDirty(true)
-    
+
     // Try to upload via service (handles offline gracefully)
     try {
       const updated = await profileService.uploadPhoto(file)

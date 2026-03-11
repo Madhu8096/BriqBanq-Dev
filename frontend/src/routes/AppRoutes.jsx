@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from '../pages/home/HomePage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
+import SignIn from '../pages/auth/SignIn';
+import SignUp from '../pages/auth/SignUp';
 
 // Import dashboards (assuming standard entry points)
 import BorrowerDashboard from '../pages/borrower/BorrowerDashboard';
@@ -14,6 +16,8 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 

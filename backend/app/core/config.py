@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Application
     app_name: str = Field(default="BrickBanq", description="Application name")
     app_env: str = Field(default="development", description="Environment")
-    debug: bool = Field(default=False, description="Debug mode")
+    debug: bool = Field(default=True, description="Debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
 
     # Database

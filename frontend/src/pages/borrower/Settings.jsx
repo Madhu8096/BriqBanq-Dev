@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import SettingsTabBar from './settings/SettingsTabBar'
-import {
-  MOCK_BORROWER_PROFILE,
-  MOCK_ORGANIZATION,
-  MOCK_TEAM_MEMBERS,
-  MOCK_BILLING,
-  MOCK_API_INTEGRATIONS,
-  MOCK_FORMS_LIST,
-  MOCK_CUSTOM_FIELDS_BY_FORM,
-  MOCK_ACTIVE_SESSIONS,
-  MOCK_NOTIFICATION_PREFS,
-} from './data/borrowerMockData'
+const MOCK_BORROWER_PROFILE = { address: {} }
+const MOCK_ORGANIZATION = {}
+const MOCK_TEAM_MEMBERS = []
+const MOCK_BILLING = {}
+const MOCK_API_INTEGRATIONS = []
+const MOCK_FORMS_LIST = []
+const MOCK_CUSTOM_FIELDS_BY_FORM = {}
+const MOCK_ACTIVE_SESSIONS = []
+const MOCK_NOTIFICATION_PREFS = { email: [], push: [], sms: [] }
 import { TABS } from './settings/SettingsTabBar'
 
 // ——— Breadcrumb ———

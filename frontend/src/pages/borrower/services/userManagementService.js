@@ -1,6 +1,6 @@
 import { borrowerApi } from '../api'
 import { settingsStorage } from '../data/settingsStorage'
-import { MOCK_USERS } from '../data/borrowerMockData'
+const MOCK_USERS = []
 
 /**
  * User Management Service - Backend-friendly API wrapper with localStorage fallback
@@ -11,7 +11,7 @@ export const userManagementService = {
     try {
       const res = await borrowerApi.getUsers()
       const users = res?.data?.data?.users || res?.data?.users || res?.data
-      
+
       if (Array.isArray(users)) {
         settingsStorage.setUsers(users)
         return users
@@ -32,7 +32,7 @@ export const userManagementService = {
     try {
       const res = await borrowerApi.createUser(userData)
       const user = res?.data?.data !== undefined ? res.data.data : res?.data
-      
+
       const existing = settingsStorage.getUsers() || []
       settingsStorage.setUsers([...existing, user])
       return user
@@ -52,7 +52,7 @@ export const userManagementService = {
     try {
       const res = await borrowerApi.updateUser(userId, userData)
       const updated = res?.data?.data !== undefined ? res.data.data : res?.data
-      
+
       const existing = settingsStorage.getUsers() || []
       const updatedUsers = existing.map(u => u.id === userId ? { ...u, ...updated } : u)
       settingsStorage.setUsers(updatedUsers)
@@ -71,7 +71,7 @@ export const userManagementService = {
   async deleteUser(userId) {
     try {
       await borrowerApi.deleteUser(userId)
-      
+
       const existing = settingsStorage.getUsers() || []
       const updatedUsers = existing.filter(u => u.id !== userId)
       settingsStorage.setUsers(updatedUsers)

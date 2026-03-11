@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Breadcrumb, FormInput, FormSelect } from './SettingsComponents'
-import { MOCK_ORGANIZATION } from '../data/borrowerMockData'
+const MOCK_ORGANIZATION = { teamMembers: [] }
 import { organizationService } from '../services'
 
 const INDUSTRIES = [{ value: 'Financial Services', label: 'Financial Services' }, { value: 'Technology', label: 'Technology' }, { value: 'Healthcare', label: 'Healthcare' }, { value: 'Other', label: 'Other' }]
@@ -84,7 +84,7 @@ export default function OrganizationSettings() {
     const name = inviteName.trim()
     const email = inviteEmail.trim()
     if (!name || !email) return
-    
+
     try {
       const member = await organizationService.inviteTeamMember({
         name,

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { jsPDF } from 'jspdf'
 import StatusPill from './components/StatusPill'
-import { MOCK_BORROWER_CONTRACTS } from './data/borrowerMockData'
+const MOCK_BORROWER_CONTRACTS = [];
 
 const formatNum = (n) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
 
@@ -249,114 +249,114 @@ export default function Contracts() {
             </button>
           </div>
           <form id="create-contract-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Property Address *</label>
+              <input
+                type="text"
+                value={formData.propertyAddress}
+                onChange={(e) => setFormData((f) => ({ ...f, propertyAddress: e.target.value }))}
+                placeholder="e.g. 45 Victoria Street"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {errors.propertyAddress && <p className="text-xs text-red-500 mt-1">{errors.propertyAddress}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Suburb / Location</label>
+              <input
+                type="text"
+                value={formData.propertySuburb}
+                onChange={(e) => setFormData((f) => ({ ...f, propertySuburb: e.target.value }))}
+                placeholder="e.g. Potts Point, NSW"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Upload Property Photos</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  id="contract-photos"
+                />
+                <label htmlFor="contract-photos" className="cursor-pointer block">
+                  <span className="text-gray-500 text-sm">Click to upload or drag and drop</span>
+                  <span className="text-gray-400 text-xs block mt-1">JPG, PNG (max 10MB each)</span>
+                </label>
+              </div>
+              {photoPreviews.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {photoPreviews.map((p, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+                      <button type="button" onClick={removePhoto(i)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center" aria-label="Remove">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Property Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Party (Buyer / Name) *</label>
                 <input
                   type="text"
-                  value={formData.propertyAddress}
-                  onChange={(e) => setFormData((f) => ({ ...f, propertyAddress: e.target.value }))}
-                  placeholder="e.g. 45 Victoria Street"
+                  value={formData.party}
+                  onChange={(e) => setFormData((f) => ({ ...f, party: e.target.value }))}
+                  placeholder="e.g. Emma Rodriguez"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                {errors.propertyAddress && <p className="text-xs text-red-500 mt-1">{errors.propertyAddress}</p>}
+                {errors.party && <p className="text-xs text-red-500 mt-1">{errors.party}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Suburb / Location</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lender</label>
                 <input
                   type="text"
-                  value={formData.propertySuburb}
-                  onChange={(e) => setFormData((f) => ({ ...f, propertySuburb: e.target.value }))}
-                  placeholder="e.g. Potts Point, NSW"
+                  value={formData.lender}
+                  onChange={(e) => setFormData((f) => ({ ...f, lender: e.target.value }))}
+                  placeholder="e.g. ANZ"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contract Value (A$) *</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={formData.contractValue}
+                onChange={(e) => setFormData((f) => ({ ...f, contractValue: e.target.value }))}
+                placeholder="e.g. 1750000"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {errors.contractValue && <p className="text-xs text-red-500 mt-1">{errors.contractValue}</p>}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Property Photos</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handlePhotoChange}
-                    className="hidden"
-                    id="contract-photos"
-                  />
-                  <label htmlFor="contract-photos" className="cursor-pointer block">
-                    <span className="text-gray-500 text-sm">Click to upload or drag and drop</span>
-                    <span className="text-gray-400 text-xs block mt-1">JPG, PNG (max 10MB each)</span>
-                  </label>
-                </div>
-                {photoPreviews.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {photoPreviews.map((p, i) => (
-                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-                        <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
-                        <button type="button" onClick={removePhoto(i)} className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded text-xs flex items-center justify-center" aria-label="Remove">×</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Party (Buyer / Name) *</label>
-                  <input
-                    type="text"
-                    value={formData.party}
-                    onChange={(e) => setFormData((f) => ({ ...f, party: e.target.value }))}
-                    placeholder="e.g. Emma Rodriguez"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  {errors.party && <p className="text-xs text-red-500 mt-1">{errors.party}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lender</label>
-                  <input
-                    type="text"
-                    value={formData.lender}
-                    onChange={(e) => setFormData((f) => ({ ...f, lender: e.target.value }))}
-                    placeholder="e.g. ANZ"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contract Value (A$) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                 <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.contractValue}
-                  onChange={(e) => setFormData((f) => ({ ...f, contractValue: e.target.value }))}
-                  placeholder="e.g. 1750000"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData((f) => ({ ...f, date: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                {errors.contractValue && <p className="text-xs text-red-500 mt-1">{errors.contractValue}</p>}
+                {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData((f) => ({ ...f, status: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    {STATUS_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData((f) => ({ ...f, date: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
-                </div>
-              </div>
+            </div>
           </form>
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 shrink-0 bg-gray-50">
             <button

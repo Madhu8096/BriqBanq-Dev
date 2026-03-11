@@ -1,6 +1,6 @@
 import StatCard from '../../components/StatCard'
 import ProgressBar from '../../components/ProgressBar'
-import { MOCK_BORROWER_CASE } from '../../data/borrowerMockData'
+const MOCK_BORROWER_CASE = {};
 
 const formatNum = (n) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)

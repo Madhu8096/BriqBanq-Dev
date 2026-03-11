@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MOCK_INTEGRATION_DATA } from '../data/integrationArchitectureMockData'
+const MOCK_INTEGRATION_DATA = { coreModules: [], specializedModules: [] };
 import PageHeader from './integration-architecture/PageHeader'
 import TopInfoBoxes from './integration-architecture/TopInfoBoxes'
 import PlatformArchitecture from './integration-architecture/PlatformArchitecture'

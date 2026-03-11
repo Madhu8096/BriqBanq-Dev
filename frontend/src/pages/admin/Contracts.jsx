@@ -1,6 +1,6 @@
 import { Plus, Eye, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_CONTRACTS } from '../../data/mockData'
+const MOCK_CONTRACTS = []
 
 export default function Contracts() {
     const navigate = useNavigate()

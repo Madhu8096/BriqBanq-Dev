@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from './components/Breadcrumb'
 import useCountdown from '../../hooks/useCountdown'
-import { MOCK_AUCTION_ROOM } from './data/borrowerMockData'
+const MOCK_AUCTION_ROOM = { bidHistory: [] };
 
 const formatAud = (n) =>
   n == null ? 'A$0' : new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }).format(n)
@@ -193,9 +193,8 @@ export default function AuctionRoom() {
                   key={tab.id}
                   type="button"
                   onClick={() => setMediaTab(tab.id)}
-                  className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1 ${
-                    mediaTab === tab.id ? 'bg-white text-gray-900' : 'text-white/80 hover:text-white'
-                  }`}
+                  className={`px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1 ${mediaTab === tab.id ? 'bg-white text-gray-900' : 'text-white/80 hover:text-white'
+                    }`}
                 >
                   <span>{tab.icon}</span>
                   {tab.label}

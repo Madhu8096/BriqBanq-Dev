@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { borrowerApi } from '../../api'
-import { MOCK_INVESTMENT_MEMO } from '../../data/investmentMemoMockData'
+const MOCK_INVESTMENT_MEMO = {};
 import HeaderControls from './investment-memorandum/HeaderControls'
 import HeroSection from './investment-memorandum/HeroSection'
 import ExecutiveSummary from './investment-memorandum/ExecutiveSummary'
@@ -33,7 +33,7 @@ export default function InvestmentMemorandum({ caseId }) {
     if (!caseId) {
       setMemoData(MOCK_INVESTMENT_MEMO)
       setLoading(false)
-      return () => {}
+      return () => { }
     }
 
     borrowerApi

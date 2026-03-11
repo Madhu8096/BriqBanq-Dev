@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
-import { MOCK_TASKS } from '../../data/mockData'
+const MOCK_TASKS = { urgent: [], inProgress: [], completed: [] }
 
 const tabs = ['Tasks', 'KYC Review', 'Disputes', 'Fee Configuration', 'Audit Logs']
 
@@ -58,8 +58,8 @@ export default function AdminConsole() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`pb-3 text-sm font-medium transition-colors ${activeTab === tab
-                                    ? 'text-gray-900 border-b-2 border-indigo-600'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                ? 'text-gray-900 border-b-2 border-indigo-600'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             {tab}

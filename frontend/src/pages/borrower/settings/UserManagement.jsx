@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Breadcrumb, FormInput } from './SettingsComponents'
-import { MOCK_USERS } from '../data/borrowerMockData'
+const MOCK_USERS = []
 import { userManagementService } from '../services'
 
 const SORT_OPTIONS = [{ value: 'name', label: 'Name' }, { value: 'email', label: 'Email' }, { value: 'role', label: 'Role' }, { value: 'status', label: 'Status' }, { value: 'lastLogin', label: 'Last Login' }]
@@ -76,7 +76,7 @@ export default function UserManagement() {
     const name = addName.trim()
     const email = addEmail.trim()
     if (!name || !email) return
-    
+
     try {
       const newUser = await userManagementService.createUser({
         name,

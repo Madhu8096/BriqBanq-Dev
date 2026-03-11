@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react'
 import { borrowerApi } from './api'
-import {
-  MOCK_GOVSIGN_STATS,
-  MOCK_GOVSIGN_TASKS,
-  MOCK_GOVSIGN_ALERTS,
-  MOCK_GOVSIGN_ACTIVITY,
-  MOCK_GOVSIGN_ENVELOPES,
-  MOCK_GOVSIGN_DOCUMENTS,
-  MOCK_GOVSIGN_TEMPLATES,
-  MOCK_GOVSIGN_HSM_CLUSTER,
-  MOCK_GOVSIGN_CERTIFICATES,
-  MOCK_GOVSIGN_EVIDENCE_CHAIN,
-  MOCK_GOVSIGN_EVIDENCE_EVENTS,
-  MOCK_GOVSIGN_ADMIN_SOVEREIGNTY,
-  MOCK_GOVSIGN_ADMIN_POLICIES,
-  MOCK_GOVSIGN_ADMIN_SECURITY,
-  MOCK_GOVSIGN_REPORT_TYPES,
-  MOCK_GOVSIGN_REPORTS,
-  MOCK_GOVSIGN_HELP_FAQ,
-  MOCK_GOVSIGN_HELP_LINKS,
-} from './data/borrowerMockData'
+const MOCK_GOVSIGN_STATS = { pendingForMe: 0, awaitingOthers: 0, drafts: 0, expiringCertificates: 0 };
+const MOCK_GOVSIGN_TASKS = [];
+const MOCK_GOVSIGN_ALERTS = [];
+const MOCK_GOVSIGN_ACTIVITY = [];
+const MOCK_GOVSIGN_ENVELOPES = [];
+const MOCK_GOVSIGN_DOCUMENTS = [];
+const MOCK_GOVSIGN_TEMPLATES = [];
+const MOCK_GOVSIGN_HSM_CLUSTER = {};
+const MOCK_GOVSIGN_CERTIFICATES = [];
+const MOCK_GOVSIGN_EVIDENCE_CHAIN = [];
+const MOCK_GOVSIGN_EVIDENCE_EVENTS = [];
+const MOCK_GOVSIGN_ADMIN_SOVEREIGNTY = {};
+const MOCK_GOVSIGN_ADMIN_POLICIES = [];
+const MOCK_GOVSIGN_ADMIN_SECURITY = [];
+const MOCK_GOVSIGN_REPORT_TYPES = [];
+const MOCK_GOVSIGN_REPORTS = [];
+const MOCK_GOVSIGN_HELP_FAQ = [];
+const MOCK_GOVSIGN_HELP_LINKS = [];
 
 const GOVSIGN_TABS = [
   'Dashboard',
@@ -123,9 +121,9 @@ export default function ESignatures() {
         setTemplates(payload.templates ?? [...MOCK_GOVSIGN_TEMPLATES])
         setReports(payload.reports ?? [...MOCK_GOVSIGN_REPORTS])
         const initial = {}
-        ;(payload.adminSecurity ?? MOCK_GOVSIGN_ADMIN_SECURITY).forEach((s) => {
-          initial[s.id] = s.enabled
-        })
+          ; (payload.adminSecurity ?? MOCK_GOVSIGN_ADMIN_SECURITY).forEach((s) => {
+            initial[s.id] = s.enabled
+          })
         setAdminToggles(initial)
       })
       .catch(() => {
@@ -164,10 +162,10 @@ export default function ESignatures() {
   const helpLinks = data?.helpLinks ?? MOCK_GOVSIGN_HELP_LINKS
   const filteredFaq = helpSearch
     ? helpFaq.filter(
-        (f) =>
-          f.question.toLowerCase().includes(helpSearch.toLowerCase()) ||
-          f.answer.toLowerCase().includes(helpSearch.toLowerCase())
-      )
+      (f) =>
+        f.question.toLowerCase().includes(helpSearch.toLowerCase()) ||
+        f.answer.toLowerCase().includes(helpSearch.toLowerCase())
+    )
     : helpFaq
 
   const documentsList = documents.length ? documents : (data?.documents ?? MOCK_GOVSIGN_DOCUMENTS)
@@ -204,8 +202,8 @@ export default function ESignatures() {
 
   const handleCreateEnvelope = () => setShowCreateEnvelopeModal(true)
   const handleViewAllEnvelopes = () => setActiveTab('Envelopes')
-  const handleViewEnvelope = () => {}
-  const handleDownloadEnvelope = () => {}
+  const handleViewEnvelope = () => { }
+  const handleDownloadEnvelope = () => { }
   const handleReviewSign = (task) => () => setSignModalEnv(task)
   const handleConfirmSign = () => {
     if (signModalEnv) setSignedIds((prev) => new Set(prev).add(signModalEnv.id))
@@ -214,14 +212,14 @@ export default function ESignatures() {
   const handleRenewCertificate = () => setCertificateModal(true)
   const handleCloseCertificateModal = () => setCertificateModal(false)
   const handleSovereignty = () => setSovereigntyModal(true)
-  const handleExportLedger = () => {}
-  const handleIssueCertificate = () => {}
-  const handleConfigureHSM = () => {}
-  const handleCertificateExport = () => {}
+  const handleExportLedger = () => { }
+  const handleIssueCertificate = () => { }
+  const handleConfigureHSM = () => { }
+  const handleCertificateExport = () => { }
   const handleCertificateView = (cert) => () => setCertificateDetail(cert)
-  const handleCertificateRenew = () => {}
+  const handleCertificateRenew = () => { }
   const setAdminToggle = (id, value) => setAdminToggles((prev) => ({ ...prev, [id]: value }))
-  const handleNewPolicyRule = () => {}
+  const handleNewPolicyRule = () => { }
   const handleUploadDocument = () => setShowUploadDocumentModal(true)
   const handleSubmitUploadDocument = () => {
     if (!uploadDocumentForm.name.trim()) return
@@ -240,8 +238,8 @@ export default function ESignatures() {
     setShowUploadDocumentModal(false)
     setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' })
   }
-  const handleDocumentView = () => {}
-  const handleDocumentDownload = () => {}
+  const handleDocumentView = () => { }
+  const handleDocumentDownload = () => { }
   const handleDocumentDelete = (id) => setDocuments((prev) => prev.filter((d) => d.id !== id))
   const handleCreateTemplate = () => setCreateTemplateModal(true)
   const handleEditTemplate = (t) => () => {
@@ -278,7 +276,7 @@ export default function ESignatures() {
       setGeneratingReport(false)
     }, 1200)
   }
-  const handleDownloadReport = () => {}
+  const handleDownloadReport = () => { }
   const handleToggleFaq = (id) => () => setExpandedFaqId((prev) => (prev === id ? null : id))
   const closeCreateTemplateModal = () => {
     setCreateTemplateModal(false)
@@ -370,11 +368,10 @@ export default function ESignatures() {
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                activeTab === tab
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === tab
                   ? 'bg-slate-800 text-white border-red-500'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -414,20 +411,18 @@ export default function ESignatures() {
                 ].map((card) => (
                   <div
                     key={card.label}
-                    className={`rounded-xl border-2 p-5 relative ${
-                      card.color === 'blue' ? 'border-blue-200 bg-blue-50/50' :
-                      card.color === 'orange' ? 'border-amber-200 bg-amber-50/30' :
-                      card.color === 'purple' ? 'border-purple-200 bg-purple-50/30' :
-                      'border-red-200 bg-red-50/30'
-                    }`}
+                    className={`rounded-xl border-2 p-5 relative ${card.color === 'blue' ? 'border-blue-200 bg-blue-50/50' :
+                        card.color === 'orange' ? 'border-amber-200 bg-amber-50/30' :
+                          card.color === 'purple' ? 'border-purple-200 bg-purple-50/30' :
+                            'border-red-200 bg-red-50/30'
+                      }`}
                   >
                     {card.badge > 0 && (
                       <span className="absolute top-3 right-3 w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">{card.badge}</span>
                     )}
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${
-                        card.color === 'blue' ? 'bg-blue-500' : card.color === 'orange' ? 'bg-amber-500' : card.color === 'purple' ? 'bg-purple-500' : 'bg-red-500'
-                      }`}>
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${card.color === 'blue' ? 'bg-blue-500' : card.color === 'orange' ? 'bg-amber-500' : card.color === 'purple' ? 'bg-purple-500' : 'bg-red-500'
+                        }`}>
                         {card.value}
                       </div>
                       <div>
@@ -595,16 +590,14 @@ export default function ESignatures() {
                           </td>
                           <td className="px-6 py-4 text-gray-700">{row.type}</td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                              row.risk === 'URGENT' ? 'bg-red-100 text-red-800' :
-                              row.risk === 'PROTECTED' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-                            }`}>{row.risk}</span>
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${row.risk === 'URGENT' ? 'bg-red-100 text-red-800' :
+                                row.risk === 'PROTECTED' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                              }`}>{row.risk}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                              row.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                              row.status === 'In Signing' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                            }`}>{row.status}</span>
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${row.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                row.status === 'In Signing' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                              }`}>{row.status}</span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -759,9 +752,8 @@ export default function ESignatures() {
                             <td className="px-6 py-4 text-gray-700">{doc.type}</td>
                             <td className="px-6 py-4 text-gray-700">{doc.size}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-                                doc.status === 'Signed' ? 'bg-green-100 text-green-800' : doc.status === 'In Signing' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                              }`}>{doc.status}</span>
+                              <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${doc.status === 'Signed' ? 'bg-green-100 text-green-800' : doc.status === 'In Signing' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                                }`}>{doc.status}</span>
                             </td>
                             <td className="px-6 py-4 text-gray-600 font-mono text-xs">{doc.envelopeId || '—'}</td>
                             <td className="px-6 py-4 text-gray-700">{doc.uploadedBy}</td>

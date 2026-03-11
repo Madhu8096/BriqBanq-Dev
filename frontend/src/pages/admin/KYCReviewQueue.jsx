@@ -1,7 +1,7 @@
 import { Eye, CheckCircle, XCircle } from 'lucide-react'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
-import { MOCK_KYC } from '../../data/mockData'
+const MOCK_KYC = []
 
 export default function KYCReviewQueue() {
     return (

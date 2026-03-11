@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { FileText, FolderOpen, Star, Upload, Download, Eye, Share2, Trash2, File } from 'lucide-react'
 import AdminBreadcrumb from '../../components/admin/AdminBreadcrumb'
 import AdminStatCard from '../../components/admin/AdminStatCard'
-import { MOCK_DOCUMENTS } from '../../data/mockData'
+const MOCK_DOCUMENTS = []
 
 export default function DocumentLibrary() {
     const [documents, setDocuments] = useState(MOCK_DOCUMENTS)

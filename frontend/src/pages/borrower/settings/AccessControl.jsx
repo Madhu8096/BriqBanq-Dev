@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Breadcrumb } from './SettingsComponents'
-import { MOCK_ROLES } from '../data/borrowerMockData'
+const MOCK_ROLES = []
 
 export default function AccessControl() {
   const [roles] = useState([...MOCK_ROLES])

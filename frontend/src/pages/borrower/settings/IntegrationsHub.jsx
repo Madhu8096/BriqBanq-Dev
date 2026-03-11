@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  MOCK_INTEGRATIONS,
-  MOCK_INTEGRATIONS_METRICS,
-  MOCK_INTEGRATION_CATEGORIES,
-} from '../data/integrationsHubMockData'
+const MOCK_INTEGRATIONS = [];
+const MOCK_INTEGRATIONS_METRICS = null;
+const MOCK_INTEGRATION_CATEGORIES = [];
 import IntegrationMetrics from './integrations-hub/IntegrationMetrics'
 import IntegrationCategoryFilters from './integrations-hub/IntegrationCategoryFilters'
 import IntegrationCard from './integrations-hub/IntegrationCard'

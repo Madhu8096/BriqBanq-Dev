@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BackToSettings, Toggle } from './SettingsComponents'
-import { MOCK_NOTIFICATION_PREFERENCES } from '../data/borrowerMockData'
+const MOCK_NOTIFICATION_PREFERENCES = { email: {}, push: {}, sms: {} }
 import { notificationService } from '../services'
 
 const defaultPrefs = {

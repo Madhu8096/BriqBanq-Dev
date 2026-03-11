@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { borrowerApi } from '../../api'
-import {
-  MOCK_LAWYER_REVIEW_DOCS,
-  MOCK_ENFORCEMENT_STEPS,
-  MOCK_LOAN_COMPLIANCE_ITEMS,
-} from '../../data/borrowerMockData'
-import { MOCK_BORROWER_CASE } from '../../data/borrowerMockData'
+const MOCK_LAWYER_REVIEW_DOCS = [];
+const MOCK_ENFORCEMENT_STEPS = [];
+const MOCK_LOAN_COMPLIANCE_ITEMS = [];
+const MOCK_BORROWER_CASE = {};
 
 export default function LawyerReviewTab({ caseId }) {
   const [nccpYes, setNccpYes] = useState(true)
@@ -31,8 +29,8 @@ export default function LawyerReviewTab({ caseId }) {
   const reviewProgress = Math.round(
     (enforcement.length + compliance.length) > 0
       ? ((enforcement.filter((e) => e.checked).length + compliance.filter((c) => c.checked).length) /
-          (enforcement.length + compliance.length)) *
-          100
+        (enforcement.length + compliance.length)) *
+      100
       : 0
   )
 

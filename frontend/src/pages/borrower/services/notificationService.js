@@ -1,6 +1,6 @@
 import { borrowerApi } from '../api'
 import { settingsStorage } from '../data/settingsStorage'
-import { MOCK_NOTIFICATION_PREFERENCES } from '../data/borrowerMockData'
+const MOCK_NOTIFICATION_PREFERENCES = { email: {}, push: {}, sms: {} }
 
 /**
  * Notification Service - Backend-friendly API wrapper with localStorage fallback

@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from './components/Breadcrumb'
 import { borrowerApi } from './api'
-import { MOCK_KYC_STEPS, MOCK_KYC_DRAFT_KEY, MOCK_KYC_STATUS_KEY, MOCK_BORROWER_PROFILE } from './data/borrowerMockData'
+const MOCK_KYC_STEPS = [];
+const MOCK_KYC_DRAFT_KEY = 'kyc_draft';
+const MOCK_KYC_STATUS_KEY = 'kyc_status';
+const MOCK_BORROWER_PROFILE = {};
 
 const getInitialForm = () => {
   try {
@@ -218,9 +221,8 @@ export default function IdentityVerification() {
             <div key={s.step} className="flex items-center gap-2">
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                    isPast ? 'bg-emerald-500 text-white' : isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isPast ? 'bg-emerald-500 text-white' : isActive ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
+                    }`}
                 >
                   {isPast ? '✓' : s.step}
                 </div>
