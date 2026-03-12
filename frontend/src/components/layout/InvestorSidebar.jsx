@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   Gavel,
@@ -10,6 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import AppLogo from "../common/AppLogo";
+import { useAuth } from "../../context/AuthContext";
 
 const navLinks = [
   { to: "/investor/dashboard", icon: Home, label: "Dashboard" },
@@ -22,6 +23,14 @@ const navLinks = [
 ];
 
 export default function InvestorSidebar({ isOpen, setIsOpen }) {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <>
       {isOpen && (
@@ -64,7 +73,10 @@ export default function InvestorSidebar({ isOpen, setIsOpen }) {
         </nav>
 
         <div className="p-3 border-t border-gray-800">
-          <button className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+          >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             <span className="leading-tight text-xs">Sign Out</span>
           </button>

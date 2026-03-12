@@ -1,7 +1,7 @@
 // src/context/CaseContext.jsx
 import { createContext, useState, useContext, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-const MOCK_CASE_DETAILS = {};
+import { MOCK_CASE_DETAILS } from '../data/mockCaseData'
 
 const CaseContext = createContext()
 

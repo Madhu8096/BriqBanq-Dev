@@ -1,9 +1,9 @@
 import { AlertCircle } from "lucide-react";
 
-export const LoadingState = () => (
+export const LoadingState = ({ message = "Loading data..." }) => (
     <div className="w-full py-20 flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-medium tracking-wide">Loading data...</p>
+        <p className="text-gray-500 font-medium tracking-wide">{message}</p>
     </div>
 );
 

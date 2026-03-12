@@ -106,11 +106,15 @@ export default function SignUp() {
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-white/20 text-white focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 outline-none transition appearance-none cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e2e8f0'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", backgroundSize: "1.25rem", paddingRight: "2.5rem" }}
+                aria-label="Select your role"
               >
-                <option value="" className="bg-gray-900 text-white">Select your role</option>
+                <option value="" style={{ backgroundColor: "#f1f5f9", color: "#0f172a" }}>Select your role</option>
                 {USER_ROLES.map((r) => (
-                  <option key={r.value} value={r.value} className="bg-gray-900 text-white">{r.label}</option>
+                  <option key={r.value} value={r.value} style={{ backgroundColor: "#ffffff", color: "#0f172a", padding: "0.5rem 0" }}>
+                    {r.label}
+                  </option>
                 ))}
               </select>
             </div>
