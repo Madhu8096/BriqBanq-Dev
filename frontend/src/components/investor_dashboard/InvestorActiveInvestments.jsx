@@ -20,11 +20,14 @@ export default function InvestorActiveInvestments({ investments = [] }) {
     }, [toast]);
 
     const filteredInvestments = useMemo(() => {
-        return investments.filter((item) => {
+        const safeInvestments = Array.isArray(investments) ? investments : [];
+        return safeInvestments.filter((item) => {
+            if (!item) return false;
+            
             const matchesSearch =
-                item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.suburb.toLowerCase().includes(searchTerm.toLowerCase());
+                (item.id?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                (item.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                (item.suburb?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
             if (!matchesSearch) return false;
 
@@ -39,7 +42,7 @@ export default function InvestorActiveInvestments({ investments = [] }) {
 
             const days = daysMap[filterTime];
             if (days) {
-                if (days <= 30) return parseInt(item.id.split('-').pop()) % 2 === 0;
+                if (days <= 30) return parseInt(item.id?.split('-').pop()) % 2 === 0;
             }
 
             return true;

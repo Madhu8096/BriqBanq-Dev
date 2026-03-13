@@ -6,16 +6,17 @@ export default function InvestorSidebarWidgets({ stats, investments = [] }) {
     const navigate = useNavigate();
 
     const breakdown = useMemo(() => {
+        const safeInvestments = Array.isArray(investments) ? investments : [];
         let totalVal = parseFloat(stats?.totalInvested) || 0;
         if (totalVal <= 0) totalVal = 10; // Fallback so we don't divide by zero
 
-        let resCount = investments.filter((_, i) => i % 3 !== 1).length;
-        let comCount = investments.filter((_, i) => i % 3 === 1).length;
-        let indCount = investments.filter((_, i) => i % 5 === 0).length;
+        let resCount = safeInvestments.filter((_, i) => i % 3 !== 1).length;
+        let comCount = safeInvestments.filter((_, i) => i % 3 === 1).length;
+        let indCount = safeInvestments.filter((_, i) => i % 5 === 0).length;
 
-        if (investments.length === 0) { resCount = 55; comCount = 30; indCount = 15; }
+        if (safeInvestments.length === 0) { resCount = 55; comCount = 30; indCount = 15; }
 
-        const sum = resCount + comCount + indCount;
+        const sum = (resCount + comCount + indCount) || 1;
         const resPct = Math.round((resCount / sum) * 100);
         const comPct = Math.round((comCount / sum) * 100);
         const indPct = 100 - resPct - comPct;

@@ -1,7 +1,6 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Home, Gavel, FileText, Bell, Settings, LogOut, Briefcase } from "lucide-react";
 import AppLogo from "../common/AppLogo";
-import { useAuth } from "../../context/AuthContext";
 
 const navLinks = [
   { to: "/lender/dashboard", icon: Home, label: "Dashboard" },
@@ -13,14 +12,6 @@ const navLinks = [
 ];
 
 export default function LenderSidebar({ isOpen, setIsOpen }) {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   return (
     <>
       {isOpen && (
@@ -60,10 +51,7 @@ export default function LenderSidebar({ isOpen, setIsOpen }) {
         </nav>
 
         <div className="p-3 border-t border-gray-800">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-          >
+          <button className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
             <LogOut className="w-4 h-4 flex-shrink-0" />
             <span className="leading-tight text-xs">Sign Out</span>
           </button>

@@ -1,7 +1,6 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import AppLogo from '../common/AppLogo'
-import { useAuth } from '../../context/AuthContext'
 import {
     LayoutDashboard,
     Briefcase,
@@ -39,13 +38,6 @@ const DEFAULT_WIDTH = 240
 
 export default function AdminSidebar({ width, onWidthChange, isMobile }) {
     const [isResizing, setIsResizing] = useState(false)
-    const navigate = useNavigate()
-    const { logout } = useAuth()
-
-    const handleLogout = () => {
-        logout()
-        navigate('/')
-    }
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -115,10 +107,7 @@ export default function AdminSidebar({ width, onWidthChange, isMobile }) {
 
                 {/* Sign Out */}
                 <div className="border-t border-gray-800 p-3">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                    >
+                    <button className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
                         <LogOut className="w-4 h-4 flex-shrink-0" />
                         <span className="leading-tight text-xs">Sign Out</span>
                     </button>

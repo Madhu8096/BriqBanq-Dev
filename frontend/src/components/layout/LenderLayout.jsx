@@ -1,4 +1,4 @@
-import LenderHeader from "./LenderHeader";
+import LenderTopNavBar from "./LenderTopNavBar";
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -13,15 +13,14 @@ export default function LenderLayout() {
     }, [currentRole, switchRole]);
 
     return (
-        <div className="flex flex-col h-screen bg-[#F8FAFC]">
-            <LenderHeader />
+        <div className="min-h-screen bg-gray-50">
+            <LenderTopNavBar />
 
-            <main className="flex-1 overflow-y-auto pt-2 pb-10 scrollbar-hide">
-                <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 min-h-full">
+            <main className="pt-14 flex flex-col min-h-screen">
+                <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <Outlet />
                 </div>
             </main>
-
         </div>
     );
 }

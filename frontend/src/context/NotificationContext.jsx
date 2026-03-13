@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
@@ -71,26 +70,21 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-    const { currentRole } = useAuth();
-
-    // Scoped storage key for role separation
-    const storageKey = `brickbanq_notifications_${currentRole || 'investor'}`;
-
     const [notifications, setNotifications] = useState(() => {
-        const saved = localStorage.getItem(storageKey);
-        return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+        try {
+            const saved = localStorage.getItem('brickbanq_notifications');
+            return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+        } catch {
+            return INITIAL_NOTIFICATIONS;
+        }
     });
 
-    // Reset notifications when role changes to ensure absolute separation
+    // Persist to LocalStorage whenever changes occur
     useEffect(() => {
-        const saved = localStorage.getItem(storageKey);
-        setNotifications(saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS);
-    }, [currentRole, storageKey]);
-
-    // Persist to LocalStorage whenever changes occur, scoped by role
-    useEffect(() => {
-        localStorage.setItem(storageKey, JSON.stringify(notifications));
-    }, [notifications, storageKey]);
+        try {
+            localStorage.setItem('brickbanq_notifications', JSON.stringify(notifications));
+        } catch (_) {}
+    }, [notifications]);
 
     const addNotification = useCallback((notification) => {
         setNotifications(prev => [

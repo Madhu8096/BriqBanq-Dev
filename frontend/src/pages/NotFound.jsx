@@ -12,8 +12,15 @@ const NotFound = () => {
                     The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
                 </p>
                 <Link to="/" style={styles.button}>
-                    Go Back Home
+                    Go Back Home (Investor)
                 </Link>
+                <p style={styles.orText}>Or go to:</p>
+                <div style={styles.portals}>
+                    <Link to="/investor/dashboard" style={styles.link}>Investor</Link>
+                    <Link to="/lender/dashboard" style={styles.link}>Lender</Link>
+                    <Link to="/borrower/dashboard" style={styles.link}>Borrower</Link>
+                    <Link to="/admin/dashboard" style={styles.link}>Admin</Link>
+                </div>
             </div>
         </div>
     );
@@ -70,6 +77,9 @@ const styles = {
         transition: "transform 0.2s, background-color 0.2s",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
     },
+    orText: { marginTop: "24px", marginBottom: "8px", fontSize: "14px", color: "#6b7280" },
+    portals: { display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center" },
+    link: { color: "#6366f1", textDecoration: "none", fontWeight: "500" },
 };
 
 export default NotFound;

@@ -1,6 +1,6 @@
 import { analyticsData } from "../data/analyticsData";
 
-const USE_SIMULATOR = import.meta.env.VITE_USE_SIMULATOR === "true";
+const USE_SIMULATOR = true; // Always true for pure frontend mode
 
 const simulateBackend = async (data, methodName) => {
     const delay = Math.floor(Math.random() * (1200 - 300 + 1)) + 300;

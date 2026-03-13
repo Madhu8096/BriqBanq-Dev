@@ -17,13 +17,13 @@ if (!rootEl) {
   try {
     ReactDOM.createRoot(rootEl).render(
       <BrowserRouter>
+        <NotificationProvider>
           <AuthProvider>
-            <NotificationProvider>
-              <ErrorBoundary>
-                <App />
-              </ErrorBoundary>
-            </NotificationProvider>
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
           </AuthProvider>
+        </NotificationProvider>
       </BrowserRouter>
     );
   } catch (err) {

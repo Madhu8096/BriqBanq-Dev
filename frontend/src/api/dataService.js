@@ -1,35 +1,20 @@
 // This acts as the base client for all API requests.
 // For now, it returns dummy data simulated as promises to ensure the UI is backend-ready.
 
+import api from "../services/api";
 import { auctionsData } from "../data/auctionsData";
 import { dealsData } from "../data/dealsData";
 import { contractsData } from "../data/contractsData";
 import { escrowData } from "../data/escrowData";
 
-const USE_SIMULATOR = import.meta.env.VITE_USE_SIMULATOR === "true";
+const USE_SIMULATOR = true; // Always true for pure frontend mode
 
 const simulateBackend = async (data, methodName) => {
-    // 1. Realistic Network Delay (300ms to 1500ms)
-    const delay = Math.floor(Math.random() * (1500 - 300 + 1)) + 300;
+    // 1. Realistic Network Delay (300ms to 1000ms)
+    const delay = Math.floor(Math.random() * (1000 - 300 + 1)) + 300;
     await new Promise(resolve => setTimeout(resolve, delay));
 
-    // 2. Simulate Random API Failures (20%) - ONLY IN SIMULATOR
-    if (Math.random() < 0.2) {
-        console.error(`[API FAIL] ${methodName} after ${delay}ms`);
-        return { success: false, error: "Simulated server error" };
-    }
-
-    // 3. Simulate Malformed & Partial Data (10%)
-    const isMalformed = Math.random() < 0.1;
     let finalData = data;
-    if (isMalformed) {
-        const rand = Math.random();
-        if (rand < 0.25) finalData = null;
-        else if (rand < 0.5) finalData = undefined;
-        else if (rand < 0.75) finalData = Array.isArray(data) ? [] : {};
-        else finalData = Array.isArray(data) && data.length > 0 ? [{ id: data[0]?.id || 1 }] : { id: 1 };
-        console.warn(`[API MALFORMED] ${methodName} returning malformed data.`);
-    }
 
     console.log(`[API SUCCESS] ${methodName} in ${delay}ms`, finalData);
 
@@ -41,35 +26,26 @@ const simulateBackend = async (data, methodName) => {
     };
 };
 
-// Generic fetch wrapper for when the backend is connected
+// Generic fetch wrapper updated to use Axios
 const apiFetch = async (url, options = {}) => {
     try {
-        const res = await fetch(url, options);
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
-        const rawText = await res.text();
-        let data;
-        try {
-            data = JSON.parse(rawText);
-        } catch (e) {
-            throw new Error(`Failed to parse backend response as JSON. Received: ${rawText.substring(0, 20)}...`);
-        }
-
-        // Assuming your future API returns { success: true, data: ..., message: "OK" }
-        // If not, you map the response here to match the standard contract.
-        return data;
+        const response = await api({
+            url,
+            method: options.method || 'GET',
+            data: options.body ? JSON.parse(options.body) : undefined,
+            ...options
+        });
+        return response.data;
     } catch (err) {
         console.error(`[API REAL FAIL] ${url}`, err);
-        return { success: false, error: err.message };
+        return { success: false, error: err.response?.data?.detail || err.message };
     }
 };
 
 export const auctionService = {
     getAuctions: async () => {
         if (USE_SIMULATOR) return simulateBackend(auctionsData || [], "getAuctions");
-        return apiFetch("/api/investor/auctions");
+        return apiFetch("/api/v1/auctions/");
     },
     getAuctionById: async (id) => {
         if (USE_SIMULATOR) {
@@ -88,7 +64,7 @@ export const auctionService = {
             };
             return simulateBackend(enrichedDeal, `getAuctionById(${id})`);
         }
-        return apiFetch(`/api/investor/auctions/${id}`);
+        return apiFetch(`/api/v1/auctions/${id}`);
     },
     placeBid: async (id, amount) => {
         if (USE_SIMULATOR) {
@@ -112,10 +88,9 @@ export const auctionService = {
             }
             return simulateBackend(null, `placeBid(${id}) - Deal not found`, false);
         }
-        return apiFetch(`/api/investor/auctions/${id}/bid`, {
+        return apiFetch(`/api/v1/bids/place`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount })
+            body: JSON.stringify({ auction_id: id, amount: Number(amount) })
         });
     },
     getBidHistory: async (id) => {
@@ -123,25 +98,26 @@ export const auctionService = {
             const deal = dealsData.find(d => d.id === id);
             return simulateBackend(deal?.bidHistory || [], `getBidHistory(${id})`);
         }
-        return apiFetch(`/api/investor/auctions/${id}/bids`);
+        return apiFetch(`/api/v1/bids/auction/${id}`);
     },
     getDocuments: async (id) => {
         if (USE_SIMULATOR) {
             const deal = dealsData.find(d => d.id === id);
             return simulateBackend(deal?.documents || [], `getDocuments(${id})`);
         }
-        return apiFetch(`/api/investor/auctions/${id}/documents`);
+        // Assuming auction links to a case or has its own documents endpoint
+        return apiFetch(`/api/v1/documents/case/${id}`);
     }
 };
 
 export const dealsService = {
     getDeals: async () => {
         if (USE_SIMULATOR) return simulateBackend(dealsData || [], "getDeals");
-        return apiFetch("/api/investor/deals");
+        return apiFetch("/api/v1/deals/");
     },
     getDealById: async (id) => {
         if (USE_SIMULATOR) return simulateBackend(dealsData.find(d => d.id === id) || null, `getDealById(${id})`);
-        return apiFetch(`/api/investor/deals/${id}`);
+        return apiFetch(`/api/v1/deals/${id}`);
     },
     purchaseDeal: async (id) => {
         if (USE_SIMULATOR) {
@@ -158,23 +134,7 @@ export const dealsService = {
             }
             return simulateBackend(null, `purchaseDeal(${id}) - Deal not found`, false);
         }
-        return apiFetch(`/api/investor/deals/${id}/purchase`, { method: 'POST' });
-    },
-    updateDeal: async (id, payload) => {
-        if (USE_SIMULATOR) return simulateBackend({ id, data: payload }, `updateDeal(${id})`);
-        return apiFetch(`/api/investor/deals/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-    },
-    addDealNote: async (id, noteData) => {
-        if (USE_SIMULATOR) return simulateBackend({ id, note: noteData }, `addDealNote(${id})`);
-        return apiFetch(`/api/investor/deals/${id}/notes`, { method: 'POST', body: JSON.stringify(noteData) });
-    },
-    deleteDealNote: async (id, noteId) => {
-        if (USE_SIMULATOR) return simulateBackend({ id, noteId }, `deleteDealNote(${id})`);
-        return apiFetch(`/api/investor/deals/${id}/notes/${noteId}`, { method: 'DELETE' });
-    },
-    updateTaskStatus: async (id, taskId, status) => {
-        if (USE_SIMULATOR) return simulateBackend({ id, taskId, status }, `updateTaskStatus(${id})`);
-        return apiFetch(`/api/investor/deals/${id}/tasks/${taskId}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+        return apiFetch(`/api/v1/deals/${id}/close`, { method: 'POST' });
     }
 };
 
@@ -219,11 +179,11 @@ export const escrowService = {
 export const userService = {
     getUserProfile: async () => {
         if (USE_SIMULATOR) return simulateBackend({}, "getUserProfile");
-        return apiFetch("/api/user/profile");
+        return apiFetch("/api/v1/identity/me");
     },
     updateUserProfile: async (payload) => {
         if (USE_SIMULATOR) return simulateBackend(payload, "updateUserProfile");
-        return apiFetch("/api/user/profile", { method: 'PUT', body: JSON.stringify(payload) });
+        return apiFetch("/api/v1/identity/me", { method: 'PUT', body: JSON.stringify(payload) });
     },
     getUserSettings: async () => {
         if (USE_SIMULATOR) return simulateBackend({}, "getUserSettings");

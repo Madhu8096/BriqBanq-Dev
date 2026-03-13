@@ -1,4 +1,4 @@
-import InvestorHeader from "./InvestorHeader";
+import InvestorTopNavBar from "./InvestorTopNavBar";
 import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -13,11 +13,13 @@ export default function InvestorLayout() {
   }, [currentRole, switchRole]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <InvestorHeader />
+    <div className="min-h-screen bg-gray-50">
+      <InvestorTopNavBar />
 
-      <main className="pt-2 px-4 sm:px-6 lg:px-8 pb-10 max-w-[1440px] mx-auto">
-        <Outlet />
+      <main className="pt-14 flex flex-col min-h-screen">
+        <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

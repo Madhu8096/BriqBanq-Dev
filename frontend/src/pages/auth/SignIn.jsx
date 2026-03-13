@@ -56,7 +56,31 @@ export default function SignIn() {
       <main className="relative z-10 flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8 shadow-2xl">
           <h1 className="text-2xl font-bold text-white mb-1">Sign in</h1>
-          <p className="text-white/50 text-sm mb-6">Enter your details and select your role.</p>
+          <p className="text-white/50 text-sm mb-6">Enter your details and select your role or use dummy login.</p>
+          
+          <div className="mb-6 flex flex-wrap gap-2">
+            {[ 
+              { id: "borrower", label: "Borrower" },
+              { id: "lender", label: "Lender" },
+              { id: "investor", label: "Investor" },
+              { id: "lawyer", label: "Lawyer" },
+              { id: "admin", label: "Admin" }
+            ].map(r => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => {
+                  setEmail(`${r.id}@brickbanq.com`);
+                  setPassword("password123");
+                  setRole(r.id);
+                }}
+                className="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-emerald-500/20 text-white/80 hover:text-emerald-300 transition-colors border border-white/5"
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm">
