@@ -96,17 +96,19 @@ export default function CaseDetailsLayout() {
                     <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-10">
                         <div className="space-y-4 max-w-2xl">
                             <div className="flex flex-wrap items-center gap-3">
-                                <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none">{caseData.id}</h1>
+                                <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none">
+                                    {caseData.id.length > 20 ? `${caseData.id.substring(0, 8)}...${caseData.id.substring(caseData.id.length - 8)}` : caseData.id}
+                                </h1>
                                 <div className="flex items-center gap-2">
                                     <span className="px-5 py-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-indigo-100">
                                         {caseData.status}
                                     </span>
                                     <span className={`px-5 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border shadow-sm
-                                        ${caseData.risk === 'High Risk' ? 'bg-red-50 text-red-600 border-red-100' :
-                                            caseData.risk === 'Medium Risk' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                        ${(caseData.risk_level || caseData.risk) === 'High' ? 'bg-red-50 text-red-600 border-red-100' :
+                                            (caseData.risk_level || caseData.risk) === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                 'bg-emerald-50 text-emerald-600 border-emerald-100'}
                                     `}>
-                                        {caseData.risk}
+                                        {caseData.risk_level || caseData.risk || 'Medium'}
                                     </span>
                                 </div>
                             </div>
@@ -117,7 +119,10 @@ export default function CaseDetailsLayout() {
                                         <Building2 className="w-5 h-5" />
                                     </div>
                                     <p className="text-xl text-gray-500 font-medium leading-relaxed">
-                                        {caseData.property.address}, <span className="text-gray-900 font-bold">{caseData.property.suburb}</span>, {caseData.property.state} {caseData.property.postcode}
+                                        {caseData.property.address}
+                                        {caseData.property.suburb && <>, <span className="text-gray-900 font-bold">{caseData.property.suburb}</span></>}
+                                        {caseData.property.state && <>, {caseData.property.state}</>}
+                                        {caseData.property.postcode && <> {caseData.property.postcode}</>}
                                     </p>
                                 </div>
                             </div>
@@ -161,10 +166,10 @@ export default function CaseDetailsLayout() {
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mt-12 py-8 border-t border-gray-50 relative z-10">
                         {[
-                            { label: 'Primary Borrower', value: caseData.borrower.name, sub: 'Identity Verified' },
-                            { label: 'Assigned Lender', value: caseData.lender.name, sub: 'Agreement Active' },
-                            { label: 'Outstanding Debt', value: formatCurrency(caseData.loan.outstandingDebt), sub: `LTV Ratio: ${caseData.loan.ltv}%` },
-                            { label: 'Verified Valuation', value: formatCurrency(caseData.valuation.amount), sub: 'Updated 14 days ago' }
+                            { label: 'Primary Borrower', value: caseData.borrower_name || caseData.borrower.name, sub: 'Identity Verified' },
+                            { label: 'Assigned Lender', value: caseData.lender_name || caseData.lender.name, sub: 'Agreement Active' },
+                            { label: 'Outstanding Debt', value: formatCurrency(caseData.outstanding_debt || caseData.loan.outstandingDebt), sub: `LTV Ratio: ${caseData.loan.ltv}%` },
+                            { label: 'Verified Valuation', value: formatCurrency(caseData.estimated_value || caseData.valuation.amount), sub: 'Updated from source' }
                         ].map((item, i) => (
                             <div key={i}>
                                 <p className="text-[9px] text-gray-300 uppercase font-black tracking-widest mb-2">{item.label}</p>

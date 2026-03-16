@@ -53,9 +53,11 @@ export default function Overview() {
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Yield Optimization</p>
                                 </div>
                                 <p className="text-4xl font-black tracking-tighter text-emerald-400">
-                                    {formatCurrency(caseData.financial.currentHighestBid)}
+                                    {caseData.financial.currentHighestBid > 0 
+                                        ? `${((caseData.valuation.amount / caseData.financial.currentHighestBid) * 100).toFixed(1)}%`
+                                        : '0.0%'}
                                 </p>
-                                <p className="text-xs text-gray-500 font-medium">Verified current highest execution price</p>
+                                <p className="text-xs text-gray-500 font-medium">Verified current valuation / highest bid</p>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3">
@@ -63,9 +65,9 @@ export default function Overview() {
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Projected Equity</p>
                                 </div>
                                 <p className="text-4xl font-black tracking-tighter">
-                                    {formatCurrency(caseData.financial.equityAvailable)}
+                                    {formatCurrency(caseData.financial.equityAvailable || 0)}
                                 </p>
-                                <p className="text-xs text-gray-500 font-medium tracking-tight">Est. residual value post-liabilities</p>
+                                <p className="text-xs text-gray-500 font-medium tracking-tight">Est. residual value (Valuation - Debt)</p>
                             </div>
                         </div>
                     </div>

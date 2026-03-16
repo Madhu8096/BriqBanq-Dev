@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Breadcrumb from './components/Breadcrumb'
 import CaseHeader from './my-case/CaseHeader'
 import ManageCaseModal from './my-case/ManageCaseModal'
@@ -11,6 +11,7 @@ import InvestmentMemoTab from './my-case/tabs/InvestmentMemoTab'
 import SettlementTab from './my-case/tabs/SettlementTab'
 import BidsTab from './my-case/tabs/BidsTab'
 import MessagesTab from './my-case/tabs/MessagesTab'
+import { caseService } from '../../api/dataService'
 import { borrowerApi } from './api'
 import {
   MOCK_BORROWER_CASE,
@@ -68,6 +69,44 @@ export default function MyCase() {
   const [showManageCaseModal, setShowManageCaseModal] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState(MOCK_MY_CASE_UPLOADED_DOCS)
   const [caseData, setCaseData] = useState(MOCK_BORROWER_CASE)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchCase = async () => {
+      setLoading(true)
+      try {
+        const res = await caseService.getMyCases()
+        if (res.success && res.data && res.data.length > 0) {
+          // Flatten property data for display
+          const rawCase = res.data[0]
+          setCaseData({
+            ...MOCK_BORROWER_CASE,
+            id: rawCase.id,
+            status: rawCase.status,
+            borrower: rawCase.borrower_name || MOCK_BORROWER_CASE.borrower,
+            lender: rawCase.lender_name || MOCK_BORROWER_CASE.lender,
+            lawyer: rawCase.lawyer_name,
+            riskLevel: rawCase.risk_level,
+            property: {
+              ...MOCK_BORROWER_CASE.property,
+              address: rawCase.property_address || MOCK_BORROWER_CASE.property.address,
+              type: rawCase.property_type || MOCK_BORROWER_CASE.property.type,
+              valuation: rawCase.estimated_value || MOCK_BORROWER_CASE.property.valuation,
+            },
+            financials: {
+              ...MOCK_BORROWER_CASE.financials,
+              outstandingPrincipal: rawCase.outstanding_debt || MOCK_BORROWER_CASE.financials.outstandingPrincipal,
+            }
+          })
+        }
+      } catch (err) {
+        console.error("Failed to fetch case:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCase()
+  }, [])
 
   const c = caseData
   const addr = c.property
@@ -113,24 +152,25 @@ export default function MyCase() {
     [c.id, c.borrower, c.lender, c.property, c.financials]
   )
 
-  const handleExportReport = () => {
-    const report = {
-      caseId: c.id,
-      address: addr,
-      status: c.status,
-      borrower: c.borrower,
-      lender: c.lender,
-      property: c.property,
-      financials: c.financials,
-      exportedAt: new Date().toISOString(),
+  const handleExportReport = async () => {
+    try {
+      const res = await caseService.exportCaseReport(c.id)
+      if (res.success) {
+        const report = res.data
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `Case-Report-${c.id}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+      } else {
+        alert("Export failed: " + (res.error || "Unknown error"))
+      }
+    } catch (err) {
+      console.error("Export error:", err)
+      alert("Failed to export report.")
     }
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Case-Report-${c.id}.json`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   const handleManageCase = () => setShowManageCaseModal(true)
@@ -228,6 +268,14 @@ export default function MyCase() {
 
   return (
     <div className="p-6 md:p-8 space-y-6">
+      {loading && (
+        <div className="fixed inset-0 z-[60] bg-white/80 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+                <svg className="w-8 h-8 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                <span className="text-sm font-medium text-slate-600">Loading case details…</span>
+            </div>
+        </div>
+      )}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-gray-900">My Case</h1>
         <p className="text-sm text-gray-500 mt-1">Manage your mortgage resolution case.</p>
@@ -248,7 +296,7 @@ export default function MyCase() {
         property={propertyForHeader}
         borrower={typeof c.borrower === 'object' ? c.borrower?.name : c.borrower}
         lender={typeof c.lender === 'object' ? c.lender?.name : c.lender}
-        outstandingDebt={c.lender?.outstandingDebt ?? 980000}
+        outstandingDebt={c.financials?.outstandingPrincipal ?? 980000}
         propertyValuation={c.property?.valuation ?? 1250000}
         onExportReport={handleExportReport}
         onManageCase={handleManageCase}

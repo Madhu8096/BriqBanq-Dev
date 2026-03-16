@@ -94,26 +94,94 @@ function SimpleBarChart({ data, barColor }) {
     )
 }
 
-// ============================================================================
+import { adminService } from '../../api/dataService'
+
+// ===================================
 // MAIN DASHBOARD COMPONENT
-// ============================================================================
+// ===================================
 
 export default function Dashboard() {
     const navigate = useNavigate()
 
-    // State for API-ready data
-    const [stats] = useState(STAT_CARDS)
+    // State for API data
+    const [stats, setStats] = useState(STAT_CARDS)
+    const [platformStatus, setPlatformStatus] = useState(PLATFORM_STATUS)
     const [recentCases] = useState(RECENT_CASES)
     const [recentSales] = useState(RECENT_SALES)
-    const [platformStatus] = useState(PLATFORM_STATUS)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
-    // TODO: Replace with API call
-    // useEffect(() => {
-    //   getDashboardStats().then(res => setStats(res.data))
-    //   getRecentCases().then(res => setRecentCases(res.data))
-    //   getRecentSales().then(res => setRecentSales(res.data))
-    //   getPlatformStatus().then(res => setPlatformStatus(res.data))
-    // }, [])
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setLoading(true)
+            try {
+                const [summaryRes, statsRes] = await Promise.all([
+                    adminService.getDashboardSummary(),
+                    adminService.getPlatformStats()
+                ])
+
+                if (summaryRes.success && statsRes.success) {
+                  const summary = summaryRes.data;
+                  const platform = statsRes.data;
+
+                  // Map backend summary to STAT_CARDS format
+                  const updatedStats = [
+                    { 
+                        label: 'Total Cases', 
+                        value: platform.total_cases?.toString() || '0', 
+                        sub: 'Active & Listed', 
+                        growth: '+0%', 
+                        icon: 'cases', 
+                        color: 'indigo' 
+                    },
+                    { 
+                        label: 'Total Sales', 
+                        value: `A$${((platform.platform_revenue || 0) / 1000000).toFixed(1)}M`, 
+                        sub: `Platform Revenue`, 
+                        growth: '+0%', 
+                        icon: 'sales', 
+                        color: 'green' 
+                    },
+                    { 
+                        label: 'Platform Users', 
+                        value: platform.total_users?.toString() || '0', 
+                        sub: `${summary.pending_kyc_reviews || 0} pending KYC`, 
+                        growth: '+0%', 
+                        icon: 'users', 
+                        color: 'purple' 
+                    },
+                    { 
+                        label: 'Active Auctions', 
+                        value: (platform.total_investments || 0).toString(), 
+                        sub: 'Live activity', 
+                        growth: '0%', 
+                        icon: 'auctions', 
+                        color: 'amber' 
+                    },
+                  ]
+                  setStats(updatedStats)
+
+                  // Map backend summary to PLATFORM_STATUS format
+                  const updatedPlatformStatus = [
+                    { label: 'Live Auctions', value: platform.total_investments || 0, sub: 'Current active deals', color: 'indigo', icon: 'live' },
+                    { label: 'Pending Approvals', value: (summary.pending_role_requests || 0) + (summary.pending_kyc_reviews || 0), sub: `KYC: ${summary.pending_kyc_reviews || 0} • Roles: ${summary.pending_role_requests || 0}`, color: 'amber', icon: 'pending' },
+                    { label: 'Completed', value: 0, sub: 'Recent activities', color: 'green', icon: 'completed' },
+                    { label: 'Attention', value: summary.suspended_users || 0, sub: 'Suspended user accounts', color: 'red', icon: 'attention' },
+                  ]
+                  setPlatformStatus(updatedPlatformStatus)
+                } else {
+                  setError(summaryRes.error || statsRes.error || "Failed to load dashboard data")
+                }
+            } catch (err) {
+                console.error("Dashboard: Error fetching data", err)
+                setError("An unexpected error occurred while loading dashboard")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchDashboardData()
+    }, [])
 
     // Icon mapping
     const getStatIcon = (iconType) => {

@@ -52,10 +52,14 @@ class RoleService:
                 message=f"Role {role_type} is already {existing.status.value}"
             )
 
+        # Auto-approve for demo/MVP purposes
+        auto_approved = [RoleType.BORROWER, RoleType.LENDER, RoleType.INVESTOR, RoleType.LAWYER]
+        initial_status = RoleStatus.APPROVED if role_enum in auto_approved else RoleStatus.PENDING
+
         user_role = UserRole(
             user_id=user_id,
             role_type=role_enum,
-            status=RoleStatus.PENDING,
+            status=initial_status,
         )
 
         return await self.repository.create(user_role)

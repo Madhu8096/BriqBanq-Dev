@@ -34,7 +34,8 @@ export default function InvestorReports() {
             if (summaryRes.success && chartsRes.success && activityRes.success) {
                 setSummary(summaryRes.data);
                 setCharts(chartsRes.data);
-                setActivity(activityRes.data);
+                const activityData = activityRes.data;
+                setActivity(Array.isArray(activityData) ? activityData : (activityData?.items || []));
             } else {
                 setError(summaryRes.error || chartsRes.error || activityRes.error || "Failed to load reports");
             }

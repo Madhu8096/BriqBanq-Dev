@@ -12,7 +12,7 @@ const NotFound = () => {
                     The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
                 </p>
                 <Link to="/" style={styles.button}>
-                    Go Back Home (Investor)
+                    Go Back Home
                 </Link>
                 <p style={styles.orText}>Or go to:</p>
                 <div style={styles.portals}>

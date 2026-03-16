@@ -6,6 +6,8 @@ import { casesService, activityService } from '../../api/dataService';
 export default function LenderPortfolioTable() {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
+    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const [portfolio, setPortfolio] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -32,14 +34,19 @@ export default function LenderPortfolioTable() {
 
     // Filter logic
     const filteredPortfolio = useMemo(() => {
-        return portfolio.filter(item =>
-            item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.property?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.suburb?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.borrower?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [portfolio, searchTerm]);
+        return portfolio.filter(item => {
+            const matchesSearch = 
+                item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.property?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.suburb?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.borrower?.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+            
+            return matchesSearch && matchesStatus;
+        });
+    }, [portfolio, searchTerm, statusFilter]);
 
     // Pagination logic
     const totalPages = Math.ceil(filteredPortfolio.length / itemsPerPage) || 1;
@@ -78,10 +85,10 @@ export default function LenderPortfolioTable() {
         alert(`Exporting ${count} records. Check the recent activity feed!`);
     };
 
-    // Reset to page 1 on search
+    // Reset to page 1 on search or filter
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm]);
+    }, [searchTerm, statusFilter]);
 
     if (loading) {
         return (
@@ -134,11 +141,31 @@ export default function LenderPortfolioTable() {
                         className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all placeholder:text-slate-400"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-semibold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+                <div className="flex items-center gap-2 relative">
+                    <button 
+                        onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                        className={`flex items-center gap-2 px-3.5 py-2.5 border rounded-xl text-[13px] font-semibold transition-all shadow-sm ${showFilterDropdown ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
                         <Filter size={14} />
-                        Filters
+                        {statusFilter === "All" ? "Filters" : statusFilter}
                     </button>
+
+                    {showFilterDropdown && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {["All", "Active", "In Auction", "Pending", "Under Contract", "Completed"].map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => {
+                                        setStatusFilter(status);
+                                        setShowFilterDropdown(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-2 text-[13px] font-medium transition-colors ${statusFilter === status ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {status}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

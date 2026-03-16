@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { caseService } from '../../api/dataService'
 
 const STEPS = [
   { id: 1, label: 'Property' },
@@ -108,6 +110,10 @@ const initialFormData = {
   creditCheckConsent: false,
   paymentAuthorized: false,
   paymentMethod: 'Credit Card',
+  // Missing fields from step 8
+  lenderLicenceType: '',
+  creditGuide: false,
+  creditContract: false,
 }
 
 const LENDER_DOCS = [
@@ -125,7 +131,8 @@ const LENDER_DOCS = [
   { title: 'Privacy Consent Signed*', desc: 'Signed privacy consent forms, authorization to share information, disclosure agreements.' },
 ]
 
-export default function NewCase({ onClose, onSuccess }) {
+export default function NewCase() {
+  const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState(initialFormData)
   const [submitting, setSubmitting] = useState(false)
@@ -137,28 +144,157 @@ export default function NewCase({ onClose, onSuccess }) {
   const [guarantors, setGuarantors] = useState([])
   const [runningChecks, setRunningChecks] = useState(false)
   const [checksComplete, setChecksComplete] = useState(false)
-  const [uploadedLenderDocs, setUploadedLenderDocs] = useState(() => new Set())
-  const [valuationUploaded, setValuationUploaded] = useState(false)
-  const [insuranceUploaded, setInsuranceUploaded] = useState(false)
-  const [supportingDocs, setSupportingDocs] = useState({ title: false, certificate: false, report: false })
+  const [uploadedLenderDocs, setUploadedLenderDocs] = useState(() => ({ level: 'none' })) // Using object to store { title: filename }
+  const [valuationUploaded, setValuationUploaded] = useState('') // Store filename
+  const [insuranceUploaded, setInsuranceUploaded] = useState('') // Store filename
+  const [supportingDocs, setSupportingDocs] = useState({ title: '', certificate: '', report: '' }) // Store filenames
+  const fileInputRef = useRef(null)
+  const [uploadContext, setUploadContext] = useState(null)
   const [runAnalysisLoading, setRunAnalysisLoading] = useState(false)
   const [runAnalysisResult, setRunAnalysisResult] = useState(null)
   const [pendingTrustee, setPendingTrustee] = useState(null)
   const [pendingGuarantor, setPendingGuarantor] = useState(null)
+  const [errors, setErrors] = useState({})
+  const [showGlobalError, setShowGlobalError] = useState(false)
 
-  const update = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }))
+  const update = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }))
+    // Clear error for this field when updated
+    if (errors[key]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    }
+  }
 
-  const handlePrev = () => setStep((s) => Math.max(1, s - 1))
+  const validateStep = (s) => {
+    const newErrors = {}
+    if (s === 1) {
+      if (!formData.streetAddress) newErrors.streetAddress = 'Street address is required'
+      if (!formData.suburb) newErrors.suburb = 'Suburb is required'
+      if (!formData.state) newErrors.state = 'State is required'
+      if (!formData.postcode) newErrors.postcode = 'Postcode is required'
+      if (!formData.propertyType) newErrors.propertyType = 'Property type is required'
+      if (!formData.intendedLoanAmount) newErrors.intendedLoanAmount = 'Loan amount is required'
+      if (!formData.typeOfSecurity) newErrors.typeOfSecurity = 'Type of security is required'
+      if (!formData.mortgageOnTitle) newErrors.mortgageOnTitle = 'Confirmation of registration is required'
+      if (!formData.mortgagePriority) newErrors.mortgagePriority = 'Mortgage priority is required'
+      if (!formData.confirmPPSA) newErrors.confirmPPSA = 'PPSA confirmation is required'
+    } else if (s === 2) {
+      if (!formData.entityType) newErrors.entityType = 'Entity type is required'
+      if (formData.entityType === 'Personal') {
+        if (!formData.firstName) newErrors.firstName = 'First name is required'
+        if (!formData.lastName) newErrors.lastName = 'Last name is required'
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required'
+        if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required'
+        if (!formData.emailAddress) newErrors.emailAddress = 'Email is required'
+        if (!formData.residentialAddress) newErrors.residentialAddress = 'Residential address is required'
+        if (!formData.occupation) newErrors.occupation = 'Occupation is required'
+      } else if (formData.entityType === 'Company') {
+        if (!formData.companyName) newErrors.companyName = 'Company name is required'
+        if (!formData.acn) newErrors.acn = 'ACN is required'
+        if (directors.length === 0) newErrors.directors = 'At least one director is required'
+        if (shareholders.length === 0) newErrors.shareholders = 'At least one shareholder is required'
+      } else if (formData.entityType === 'Trust') {
+        if (!formData.trustName) newErrors.trustName = 'Trust name is required'
+        if (trustees.length === 0) newErrors.trustees = 'At least one trustee is required'
+      }
+      if (!formData.creditCheckConsent) newErrors.creditCheckConsent = 'Consent is required'
+    } else if (s === 3) {
+      if (!checksComplete) newErrors.checks = 'Please run all checks before proceeding'
+      if (!formData.paymentMethod) newErrors.paymentMethod = 'Payment method is required'
+      if (!formData.cardholderName) newErrors.cardholderName = 'Cardholder name is required'
+      if (!formData.cardNumber) newErrors.cardNumber = 'Card number is required'
+      if (!formData.expiryDate) newErrors.expiryDate = 'Expiry date is required'
+      if (!formData.cvv) newErrors.cvv = 'CVV is required'
+      if (!formData.billingPostcode) newErrors.billingPostcode = 'Billing postcode is required'
+      if (!formData.paymentAuthorized) newErrors.paymentAuthorized = 'Payment authorization is required'
+    } else if (s === 4) {
+      if (!formData.lenderContact) newErrors.lenderContact = 'Lender contact is required'
+      if (!formData.lenderEmail) newErrors.lenderEmail = 'Lender email is required'
+      if (!formData.lenderPhone) newErrors.lenderPhone = 'Lender phone is required'
+      if (!formData.loanAccountNumber) newErrors.loanAccountNumber = 'Loan account number is required'
+      
+      const missingDocs = LENDER_DOCS.filter(d => d.title.endsWith('*') && !uploadedLenderDocs[d.title])
+      if (missingDocs.length > 0) newErrors.lenderDocs = 'Please upload all required documents'
+    } else if (s === 5) {
+      if (!formData.outstandingDebt) newErrors.outstandingDebt = 'Outstanding debt is required'
+      if (!formData.originalLoanAmount) newErrors.originalLoanAmount = 'Original loan amount is required'
+      if (!formData.missedPayments) newErrors.missedPayments = 'Number of missed payments is required'
+      if (!formData.currentValuation) newErrors.currentValuation = 'Current valuation is required'
+      if (!valuationUploaded) newErrors.valuationReport = 'Valuation report is required'
+    } else if (s === 7) {
+      if (!formData.borrowerLawyerName) newErrors.borrowerLawyerName = 'Lawyer name is required'
+      if (!formData.borrowerLawFirm) newErrors.borrowerLawFirm = 'Law firm is required'
+      if (!formData.borrowerLawyerEmail) newErrors.borrowerLawyerEmail = 'Lawyer email is required'
+      if (!formData.borrowerLawyerPhone) newErrors.borrowerLawyerPhone = 'Lawyer phone is required'
+      if (!formData.borrowerLawyerLicense) newErrors.borrowerLawyerLicense = 'Lawyer license is required'
+    } else if (s === 8) {
+      if (!formData.lenderLicenceType) newErrors.lenderLicenceType = 'Licence type is required'
+      if (!formData.creditGuide) newErrors.creditGuide = 'Credit guide confirmation is required'
+      if (!formData.creditContract) newErrors.creditContract = 'Credit contract confirmation is required'
+    } else if (s === 10) {
+      if (!formData.reasonForDefault) newErrors.reasonForDefault = 'Reason for default is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleNext = () => {
+    if (!validateStep(step)) {
+      setShowGlobalError(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    setShowGlobalError(false)
+
     if (step === 11) {
       setSubmitting(true)
-      setTimeout(() => {
-        setSubmitting(false)
-        onSuccess?.()
-      }, 800)
+      const payload = {
+        title: formData.streetAddress || "Mortgage Resolution Case",
+        description: formData.reasonForDefault || "New borrower case submission",
+        property_address: `${formData.streetAddress}, ${formData.suburb}, ${formData.state} ${formData.postcode}`,
+        property_type: formData.propertyType || "Other",
+        estimated_value: parseFloat(formData.currentValuation) || 0,
+        outstanding_debt: parseFloat(formData.outstandingDebt) || 0,
+      }
+
+      const performSubmission = async () => {
+        try {
+          const createRes = await caseService.createCase(payload)
+          if (createRes.success) {
+            const caseId = createRes.data.id
+            // Auto-submit after creation to match UI flow
+            const submitRes = await caseService.submitCaseActual(caseId)
+            if (submitRes.success) {
+              setSubmitting(false)
+              navigate('/borrower/my-case')
+            } else {
+              setErrors({ submit: submitRes.error })
+              setSubmitting(false)
+            }
+          } else {
+            setErrors({ submit: createRes.error })
+            setSubmitting(false)
+          }
+        } catch (err) {
+          setErrors({ submit: "Could not connect to the platform server." })
+          setSubmitting(false)
+        }
+      }
+
+      performSubmission()
       return
     }
     setStep((s) => Math.min(11, s + 1))
+  }
+
+  const handlePrev = () => {
+    setStep((s) => Math.max(1, s - 1))
+    setShowGlobalError(false)
   }
 
   const handleValidateProperty = () => {
@@ -220,21 +356,47 @@ export default function NewCase({ onClose, onSuccess }) {
     })
   }
 
-  const handleRunAllChecks = () => {
-    setRunningChecks(true)
-    setTimeout(() => {
-      setRunningChecks(false)
-      setChecksComplete(true)
-    }, 2000)
+  const triggerUpload = (context) => {
+    setUploadContext(context)
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+    }
   }
 
-  const handleUploadLenderDoc = (title) => {
-    setUploadedLenderDocs((prev) => new Set(prev).add(title))
-  }
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  const handleUploadValuation = () => setValuationUploaded(true)
-  const handleUploadInsurance = () => setInsuranceUploaded(true)
-  const handleUploadSupporting = (key) => setSupportingDocs((prev) => ({ ...prev, [key]: true }))
+    // 5MB validation
+    if (file.size > 5 * 1024 * 1024) {
+      const errorMsg = 'File size must be less than 5 MB.'
+      setErrors((prev) => ({ ...prev, [uploadContext.field || 'upload']: errorMsg }))
+      setShowGlobalError(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      e.target.value = '' // Clear selection
+      return
+    }
+
+    // Success - clear errors and update state
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next[uploadContext.field || 'upload']
+      return next
+    })
+
+    const context = uploadContext
+    if (context.type === 'lender') {
+      setUploadedLenderDocs((prev) => ({ ...prev, [context.title]: file.name }))
+    } else if (context.type === 'valuation') {
+      setValuationUploaded(file.name)
+    } else if (context.type === 'insurance') {
+      setInsuranceUploaded(file.name)
+    } else if (context.type === 'supporting') {
+      setSupportingDocs((prev) => ({ ...prev, [context.key]: file.name }))
+    }
+
+    e.target.value = '' // Clear selection for next upload
+  }
 
   const handleRunAnalysis = () => {
     setRunAnalysisLoading(true)
@@ -245,7 +407,15 @@ export default function NewCase({ onClose, onSuccess }) {
     }, 1800)
   }
 
-  const lenderDocsCompleted = uploadedLenderDocs.size
+  const handleRunAllChecks = () => {
+    setRunningChecks(true)
+    setTimeout(() => {
+      setRunningChecks(false)
+      setChecksComplete(true)
+    }, 2000)
+  }
+
+  const lenderDocsCompleted = Object.keys(uploadedLenderDocs).length - 1 // -1 for level: 'none'
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto w-full min-w-0 pb-4">
@@ -263,7 +433,7 @@ export default function NewCase({ onClose, onSuccess }) {
           </h1>
           <p className="text-sm text-slate-500 mt-1">Complete property & identity verification for your mortgage resolution case</p>
         </div>
-        <button type="button" onClick={onClose} className="text-[#4F46E5] text-sm font-medium hover:underline shrink-0 self-start sm:self-center flex items-center gap-1">
+        <button type="button" onClick={() => navigate('/borrower/dashboard')} className="text-[#4F46E5] text-sm font-medium hover:underline shrink-0 self-start sm:self-center flex items-center gap-1">
           <span>←</span> Back to Dashboard
         </button>
       </div>
@@ -288,6 +458,17 @@ export default function NewCase({ onClose, onSuccess }) {
         <p className="text-xs text-slate-500 mt-2">*Step skipped (NCCP does not apply to this loan)</p>
       </div>
 
+      {/* Global Error Banner */}
+      {(showGlobalError || errors.submit) && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <span className="text-red-500 shrink-0 text-lg">⚠️</span>
+          <div>
+            <p className="text-sm font-bold text-red-800">{errors.submit ? 'Submission Error' : 'Please fill all required fields.'}</p>
+            <p className="text-sm text-red-700 mt-0.5">{errors.submit || 'Some mandatory information is missing or incorrect in the current step.'}</p>
+          </div>
+        </div>
+      )}
+
       {/* Step content */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         {step === 1 && (
@@ -304,15 +485,18 @@ export default function NewCase({ onClose, onSuccess }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Street Address * <span className="text-slate-500 font-normal">(Auto-complete enabled)</span></label>
-                    <input type="text" value={formData.streetAddress} onChange={(e) => update('streetAddress', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5]" placeholder="Street address" />
+                    <input type="text" value={formData.streetAddress} onChange={(e) => update('streetAddress', e.target.value)} className={`w-full border ${errors.streetAddress ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#4F46E5] focus:border-[#4F46E5]`} placeholder="Street address" />
+                    {errors.streetAddress && <p className="mt-1 text-xs text-red-500">{errors.streetAddress}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Suburb *</label>
-                    <input type="text" value={formData.suburb} onChange={(e) => update('suburb', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white" placeholder="Suburb" />
+                    <input type="text" value={formData.suburb} onChange={(e) => update('suburb', e.target.value)} className={`w-full border ${errors.suburb ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`} placeholder="Suburb" />
+                    {errors.suburb && <p className="mt-1 text-xs text-red-500">{errors.suburb}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">State *</label>
-                    <select value={formData.state} onChange={(e) => update('state', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white">
+                    <select value={formData.state} onChange={(e) => update('state', e.target.value)} className={`w-full border ${errors.state ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`}>
+                      <option value="">Select state</option>
                       <option>NSW</option>
                       <option>VIC</option>
                       <option>QLD</option>
@@ -322,23 +506,28 @@ export default function NewCase({ onClose, onSuccess }) {
                       <option>ACT</option>
                       <option>NT</option>
                     </select>
+                    {errors.state && <p className="mt-1 text-xs text-red-500">{errors.state}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Postcode *</label>
-                    <input type="text" value={formData.postcode} onChange={(e) => update('postcode', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white" placeholder="Postcode" />
+                    <input type="text" value={formData.postcode} onChange={(e) => update('postcode', e.target.value)} className={`w-full border ${errors.postcode ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`} placeholder="Postcode" />
+                    {errors.postcode && <p className="mt-1 text-xs text-red-500">{errors.postcode}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Property Type *</label>
-                    <select value={formData.propertyType} onChange={(e) => update('propertyType', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white">
+                    <select value={formData.propertyType} onChange={(e) => update('propertyType', e.target.value)} className={`w-full border ${errors.propertyType ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`}>
+                      <option value="">Select type</option>
                       <option>House</option>
                       <option>Apartment</option>
                       <option>Townhouse</option>
                       <option>Land</option>
                     </select>
+                    {errors.propertyType && <p className="mt-1 text-xs text-red-500">{errors.propertyType}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Intended Loan Amount (A$) *</label>
-                    <input type="text" value={formData.intendedLoanAmount} onChange={(e) => update('intendedLoanAmount', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white" placeholder="Amount" />
+                    <input type="text" value={formData.intendedLoanAmount} onChange={(e) => update('intendedLoanAmount', e.target.value)} className={`w-full border ${errors.intendedLoanAmount ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`} placeholder="Amount" />
+                    {errors.intendedLoanAmount && <p className="mt-1 text-xs text-red-500">{errors.intendedLoanAmount}</p>}
                   </div>
                 </div>
                 <button type="button" onClick={handleValidateProperty} disabled={propertyValidating} className="mt-5 w-full sm:w-auto px-5 py-2.5 bg-[#4F46E5] text-white text-sm font-medium rounded-md hover:bg-[#4338CA] disabled:opacity-70 flex items-center justify-center gap-2">
@@ -381,30 +570,37 @@ export default function NewCase({ onClose, onSuccess }) {
               <div className="mt-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Type of Security *</label>
-                  <select value={formData.typeOfSecurity} onChange={(e) => update('typeOfSecurity', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]">
+                  <select value={formData.typeOfSecurity} onChange={(e) => update('typeOfSecurity', e.target.value)} className={`w-full border ${errors.typeOfSecurity ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]`}>
+                    <option value="">Select type</option>
                     <option value="Registered Mortgage">Registered Mortgage</option>
                     <option value="General Security Agreement">General Security Agreement</option>
                     <option value="Security over Specific Goods">Security over Specific Goods</option>
                     <option value="Purchase Money Security Interests">Purchase Money Security Interests</option>
                     <option value="Unsecured">Unsecured</option>
                   </select>
+                  {errors.typeOfSecurity && <p className="mt-1 text-xs text-red-500">{errors.typeOfSecurity}</p>}
                 </div>
                 {/* Registered Mortgage Requirements = checkbox + description */}
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={formData.mortgageOnTitle} onChange={(e) => update('mortgageOnTitle', e.target.checked)} className="rounded border-slate-300 text-[#7C3AED] mt-0.5 shrink-0 focus:ring-[#7C3AED]" />
-                  <div>
-                    <span className="text-sm font-medium text-slate-700">Mortgage Registered on Title *</span>
-                    <p className="text-xs text-slate-500 mt-0.5">Confirm that the mortgage is registered on the Certificate of Title at the relevant Land Titles Office (Real Property Act).</p>
-                  </div>
-                </label>
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={formData.mortgageOnTitle} onChange={(e) => update('mortgageOnTitle', e.target.checked)} className={`rounded ${errors.mortgageOnTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-[#7C3AED] mt-0.5 shrink-0 focus:ring-[#7C3AED]`} />
+                    <div>
+                      <span className={`text-sm font-medium ${errors.mortgageOnTitle ? 'text-red-700' : 'text-slate-700'}`}>Mortgage Registered on Title *</span>
+                      <p className="text-xs text-slate-500 mt-0.5">Confirm that the mortgage is registered on the Certificate of Title at the relevant Land Titles Office (Real Property Act).</p>
+                    </div>
+                  </label>
+                  {errors.mortgageOnTitle && <p className="mt-1 text-xs text-red-500">{errors.mortgageOnTitle}</p>}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Mortgage Priority *</label>
-                  <select value={formData.mortgagePriority} onChange={(e) => update('mortgagePriority', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]">
+                  <select value={formData.mortgagePriority} onChange={(e) => update('mortgagePriority', e.target.value)} className={`w-full border ${errors.mortgagePriority ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]`}>
+                    <option value="">Select priority</option>
                     <option value="First Mortgage">First Mortgage</option>
                     <option value="Second">Second</option>
                     <option value="Third">Third</option>
                     <option value="Subordinated">Subordinated</option>
                   </select>
+                  {errors.mortgagePriority && <p className="mt-1 text-xs text-red-500">{errors.mortgagePriority}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Agreement Date</label>
@@ -414,13 +610,16 @@ export default function NewCase({ onClose, onSuccess }) {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Description of Secured Property</label>
                   <textarea value={formData.descriptionSecuredProperty} onChange={(e) => update('descriptionSecuredProperty', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#7C3AED] focus:border-[#7C3AED]" rows={3} placeholder="Describe the property or assets that are subject to the security interest..." />
                 </div>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={formData.confirmPPSA} onChange={(e) => update('confirmPPSA', e.target.checked)} className="rounded border-slate-300 text-[#7C3AED] mt-0.5 shrink-0 focus:ring-[#7C3AED]" />
-                  <div>
-                    <span className="text-sm font-medium text-[#6D28D9]">I confirm PPSA compliance for this security interest *</span>
-                    <p className="text-xs text-slate-500 mt-0.5">I confirm that all security interests have been properly perfected according to PPSA requirements, including registration where required, and all necessary searches have been conducted.</p>
-                  </div>
-                </label>
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={formData.confirmPPSA} onChange={(e) => update('confirmPPSA', e.target.checked)} className={`rounded ${errors.confirmPPSA ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-[#7C3AED] mt-0.5 shrink-0 focus:ring-[#7C3AED]`} />
+                    <div>
+                      <span className={`text-sm font-medium ${errors.confirmPPSA ? 'text-red-700' : 'text-[#6D28D9]'}`}>I confirm PPSA compliance for this security interest *</span>
+                      <p className="text-xs text-slate-500 mt-0.5">I confirm that all security interests have been properly perfected according to PPSA requirements, including registration where required, and all necessary searches have been conducted.</p>
+                    </div>
+                  </label>
+                  {errors.confirmPPSA && <p className="mt-1 text-xs text-red-500">{errors.confirmPPSA}</p>}
+                </div>
               </div>
             </section>
           </div>
@@ -439,7 +638,6 @@ export default function NewCase({ onClose, onSuccess }) {
               <p className="text-sm text-slate-500 mt-1">Define the borrowing entity and all related parties</p>
             </div>
 
-            {/* Borrowing Entity Type */}
             <section>
               <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
                 <span className="w-7 h-7 rounded-full bg-[#EDE9FE] flex items-center justify-center text-[#7C3AED]">
@@ -449,21 +647,21 @@ export default function NewCase({ onClose, onSuccess }) {
               </h3>
               <p className="text-sm text-slate-500 mt-1 mb-4">Select the type of entity borrowing the funds</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <button type="button" onClick={() => update('entityType', 'Personal')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Personal' ? 'border-[#3B82F6] bg-[#EFF6FF]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                <button type="button" onClick={() => update('entityType', 'Personal')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Personal' ? 'border-[#3B82F6] bg-[#EFF6FF]' : errors.entityType ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
                   <span className={`block w-9 h-9 rounded-full flex items-center justify-center mb-3 ${formData.entityType === 'Personal' ? 'bg-[#3B82F6] text-white' : 'bg-slate-100 text-slate-500'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   </span>
                   <span className={`block font-semibold ${formData.entityType === 'Personal' ? 'text-[#1D4ED8]' : 'text-slate-900'}`}>Personal</span>
                   <span className={`block text-sm mt-0.5 ${formData.entityType === 'Personal' ? 'text-[#2563EB]' : 'text-slate-500'}`}>Individual borrower</span>
                 </button>
-                <button type="button" onClick={() => update('entityType', 'Company')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Company' ? 'border-[#7C3AED] bg-[#F5F3FF]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                <button type="button" onClick={() => update('entityType', 'Company')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Company' ? 'border-[#7C3AED] bg-[#F5F3FF]' : errors.entityType ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
                   <span className={`block w-9 h-9 rounded-full flex items-center justify-center mb-3 ${formData.entityType === 'Company' ? 'bg-[#7C3AED] text-white' : 'bg-slate-100 text-slate-500'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                   </span>
                   <span className={`block font-semibold ${formData.entityType === 'Company' ? 'text-[#6D28D9]' : 'text-slate-900'}`}>Company</span>
                   <span className={`block text-sm mt-0.5 ${formData.entityType === 'Company' ? 'text-[#7C3AED]' : 'text-slate-500'}`}>Corporate entity</span>
                 </button>
-                <button type="button" onClick={() => update('entityType', 'Trust')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Trust' ? 'border-[#EA580C] bg-[#FFF7ED]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                <button type="button" onClick={() => update('entityType', 'Trust')} className={`rounded-lg border-2 p-4 text-left transition-colors ${formData.entityType === 'Trust' ? 'border-[#EA580C] bg-[#FFF7ED]' : errors.entityType ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
                   <span className={`block w-9 h-9 rounded-full flex items-center justify-center mb-3 ${formData.entityType === 'Trust' ? 'bg-[#EA580C] text-white' : 'bg-slate-100 text-slate-500'}`}>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                   </span>
@@ -471,6 +669,7 @@ export default function NewCase({ onClose, onSuccess }) {
                   <span className={`block text-sm mt-0.5 ${formData.entityType === 'Trust' ? 'text-[#EA580C]' : 'text-slate-500'}`}>Trust structure</span>
                 </button>
               </div>
+              {errors.entityType && <p className="mt-2 text-xs text-red-500">{errors.entityType}</p>}
             </section>
 
             {/* Company Details - when Company selected */}
@@ -485,7 +684,8 @@ export default function NewCase({ onClose, onSuccess }) {
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Company Name *</label>
-                    <input type="text" value={formData.companyName} onChange={(e) => update('companyName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="ABC Pty Ltd" />
+                    <input type="text" value={formData.companyName} onChange={(e) => update('companyName', e.target.value)} className={`w-full border ${errors.companyName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} placeholder="ABC Pty Ltd" />
+                    {errors.companyName && <p className="mt-1 text-xs text-red-500">{errors.companyName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">ABN</label>
@@ -493,7 +693,8 @@ export default function NewCase({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">ACN *</label>
-                    <input type="text" value={formData.acn} onChange={(e) => update('acn', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="123 456 789" />
+                    <input type="text" value={formData.acn} onChange={(e) => update('acn', e.target.value)} className={`w-full border ${errors.acn ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} placeholder="123 456 789" />
+                    {errors.acn && <p className="mt-1 text-xs text-red-500">{errors.acn}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Registration Date</label>
@@ -522,7 +723,7 @@ export default function NewCase({ onClose, onSuccess }) {
                       </span>
                       Directors ({formData.directorsCount})
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">All directors must be verified</p>
+                    <p className={`text-sm ${errors.directors ? 'text-red-600' : 'text-slate-500'} mt-1`}>{errors.directors || 'All directors must be verified'}</p>
                   </div>
                   <button type="button" onClick={addDirector} className="px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-md hover:bg-[#1D4ED8] flex items-center gap-2 shrink-0">
                     <span>+</span> Add Director
@@ -554,7 +755,7 @@ export default function NewCase({ onClose, onSuccess }) {
                       </span>
                       Shareholders with 25%+ Ownership ({formData.shareholdersCount})
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">AML/CTF Act requires verification of beneficial owners with 25%+ shareholding</p>
+                    <p className={`text-sm ${errors.shareholders ? 'text-red-600' : 'text-slate-500'} mt-1`}>{errors.shareholders || 'AML/CTF Act requires verification of beneficial owners with 25%+ shareholding'}</p>
                   </div>
                   <button type="button" onClick={addShareholder} className="px-4 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-md hover:bg-[#15803D] flex items-center gap-2 shrink-0">
                     <span>+</span> Add Shareholder
@@ -587,7 +788,8 @@ export default function NewCase({ onClose, onSuccess }) {
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Trust Name *</label>
-                    <input type="text" value={formData.trustName} onChange={(e) => update('trustName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="Smith Family Trust" />
+                    <input type="text" value={formData.trustName} onChange={(e) => update('trustName', e.target.value)} className={`w-full border ${errors.trustName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} placeholder="Smith Family Trust" />
+                    {errors.trustName && <p className="mt-1 text-xs text-red-500">{errors.trustName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Trust Type</label>
@@ -621,7 +823,7 @@ export default function NewCase({ onClose, onSuccess }) {
                       </span>
                       Trustees ({trustees.length})
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1">All trustees must be verified (can be individuals or companies)</p>
+                    <p className={`text-sm ${errors.trustees ? 'text-red-600' : 'text-slate-500'} mt-1`}>{errors.trustees || 'All trustees must be verified (can be individuals or companies)'}</p>
                   </div>
                   {!pendingTrustee && (
                     <button type="button" onClick={addTrustee} className="px-4 py-2 bg-[#7C3AED] text-white text-sm font-medium rounded-md hover:bg-[#6D28D9] flex items-center gap-2 shrink-0">
@@ -692,27 +894,33 @@ export default function NewCase({ onClose, onSuccess }) {
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">First Name *</label>
-                    <input type="text" value={formData.firstName} onChange={(e) => update('firstName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="text" value={formData.firstName} onChange={(e) => update('firstName', e.target.value)} className={`w-full border ${errors.firstName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Last Name *</label>
-                    <input type="text" value={formData.lastName} onChange={(e) => update('lastName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="text" value={formData.lastName} onChange={(e) => update('lastName', e.target.value)} className={`w-full border ${errors.lastName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Birth *</label>
-                    <input type="text" value={formData.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="mm/dd/yyyy" />
+                    <input type="text" value={formData.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} className={`w-full border ${errors.dateOfBirth ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} placeholder="mm/dd/yyyy" />
+                    {errors.dateOfBirth && <p className="mt-1 text-xs text-red-500">{errors.dateOfBirth}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number *</label>
-                    <input type="text" value={formData.phoneNumber} onChange={(e) => update('phoneNumber', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="text" value={formData.phoneNumber} onChange={(e) => update('phoneNumber', e.target.value)} className={`w-full border ${errors.phoneNumber ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.phoneNumber && <p className="mt-1 text-xs text-red-500">{errors.phoneNumber}</p>}
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address *</label>
-                    <input type="email" value={formData.emailAddress} onChange={(e) => update('emailAddress', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="email" value={formData.emailAddress} onChange={(e) => update('emailAddress', e.target.value)} className={`w-full border ${errors.emailAddress ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.emailAddress && <p className="mt-1 text-xs text-red-500">{errors.emailAddress}</p>}
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Residential Address *</label>
-                    <input type="text" value={formData.residentialAddress} onChange={(e) => update('residentialAddress', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="text" value={formData.residentialAddress} onChange={(e) => update('residentialAddress', e.target.value)} className={`w-full border ${errors.residentialAddress ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.residentialAddress && <p className="mt-1 text-xs text-red-500">{errors.residentialAddress}</p>}
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Postal Address (if different)</label>
@@ -720,7 +928,8 @@ export default function NewCase({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Occupation *</label>
-                    <input type="text" value={formData.occupation} onChange={(e) => update('occupation', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
+                    <input type="text" value={formData.occupation} onChange={(e) => update('occupation', e.target.value)} className={`w-full border ${errors.occupation ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white`} />
+                    {errors.occupation && <p className="mt-1 text-xs text-red-500">{errors.occupation}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Employer</label>
@@ -864,11 +1073,11 @@ export default function NewCase({ onClose, onSuccess }) {
                 </div>
               </div>
 
-              <div className="mt-4 p-4 rounded-lg border border-red-300 bg-white">
+               <div className={`mt-4 p-4 rounded-lg border ${errors.creditCheckConsent ? 'border-red-500 bg-red-50' : 'border-red-300 bg-white'}`}>
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={formData.creditCheckConsent} onChange={(e) => update('creditCheckConsent', e.target.checked)} className="rounded border-red-300 text-red-600 mt-0.5 shrink-0 focus:ring-red-500" />
+                  <input type="checkbox" checked={formData.creditCheckConsent} onChange={(e) => update('creditCheckConsent', e.target.checked)} className={`rounded ${errors.creditCheckConsent ? 'border-red-500 ring-1 ring-red-500' : 'border-red-300'} text-red-600 mt-0.5 shrink-0 focus:ring-red-500`} />
                   <div>
-                    <span className="text-sm font-medium text-red-700">Credit Check Consent Obtained from Borrower *</span>
+                    <span className={`text-sm font-medium ${errors.creditCheckConsent ? 'text-red-700' : 'text-red-700'}`}>Credit Check Consent Obtained from Borrower *</span>
                     <p className="text-sm text-slate-700 mt-2">I confirm that I have obtained explicit, informed, written consent from the borrower to:</p>
                     <ul className="list-disc list-inside text-sm text-slate-700 mt-2 space-y-1">
                       <li>Access their credit report from a credit reporting body (CRB)</li>
@@ -879,6 +1088,7 @@ export default function NewCase({ onClose, onSuccess }) {
                     <p className="text-xs text-red-600 mt-2">Privacy Act 1988 & Australian Privacy Principles (APP) 2 & 6.1</p>
                   </div>
                 </label>
+                {errors.creditCheckConsent && <p className="mt-2 text-xs text-red-500 font-bold">{errors.creditCheckConsent}</p>}
               </div>
 
               <div className="mt-4 p-4 rounded-lg border border-amber-300 bg-amber-50">
@@ -935,7 +1145,7 @@ export default function NewCase({ onClose, onSuccess }) {
             </div>
 
             {/* Instant Automated Processing - purple */}
-            <div className="bg-purple-600 text-white rounded-lg p-5">
+            <div className={`bg-purple-600 text-white rounded-lg p-5 ${errors.checks ? 'ring-4 ring-offset-2 ring-red-500' : ''}`}>
               <h3 className="font-semibold text-white">Instant Automated Processing:</h3>
               <ul className="mt-3 space-y-1.5 text-sm text-purple-100">
                 {['Complete property AVM valuation from RP Data', 'Full title search and ownership verification', 'Encumbrances, caveats & zoning checks', 'GreenID + DVS identity verification', 'AUSTRAC sanctions & PEP screening', 'All reports automatically sent to you', 'Automatically attached to Credit Risk'].map((item) => (
@@ -960,6 +1170,7 @@ export default function NewCase({ onClose, onSuccess }) {
                   </>
                 )}
               </button>
+              {errors.checks && <p className="mt-2 text-sm text-red-200 font-bold">{errors.checks}</p>}
               <p className="text-xs text-purple-200 mt-3">By proceeding, you authorise Drove to charge $186.00 (inc. GST) to your account for automated verification services.</p>
             </div>
 
@@ -998,27 +1209,33 @@ export default function NewCase({ onClose, onSuccess }) {
               <h3 className="font-semibold text-slate-900">Payment Method</h3>
               <div className="mt-4">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Select Payment Method *</label>
-                <select value={formData.paymentMethod ?? 'Credit Card'} onChange={(e) => update('paymentMethod', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white">
+                <select value={formData.paymentMethod ?? 'Credit Card'} onChange={(e) => update('paymentMethod', e.target.value)} className={`w-full border ${errors.paymentMethod ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`}>
+                  <option value="">Select method</option>
                   <option>Credit Card</option>
                   <option>Bank Transfer</option>
                 </select>
+                {errors.paymentMethod && <p className="mt-1 text-xs text-red-500">{errors.paymentMethod}</p>}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Cardholder Name *</label>
-                  <input type="text" value={formData.cardholderName} onChange={(e) => update('cardholderName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.cardholderName} onChange={(e) => update('cardholderName', e.target.value)} className={`w-full border ${errors.cardholderName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.cardholderName && <p className="mt-1 text-xs text-red-500">{errors.cardholderName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Card Number *</label>
-                  <input type="text" value={formData.cardNumber} onChange={(e) => update('cardNumber', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.cardNumber} onChange={(e) => update('cardNumber', e.target.value)} className={`w-full border ${errors.cardNumber ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.cardNumber && <p className="mt-1 text-xs text-red-500">{errors.cardNumber}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Expiry Date (MM/YY) *</label>
-                  <input type="text" value={formData.expiryDate} onChange={(e) => update('expiryDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.expiryDate} onChange={(e) => update('expiryDate', e.target.value)} className={`w-full border ${errors.expiryDate ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.expiryDate && <p className="mt-1 text-xs text-red-500">{errors.expiryDate}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">CVV *</label>
-                  <input type="text" value={formData.cvv} onChange={(e) => update('cvv', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.cvv} onChange={(e) => update('cvv', e.target.value)} className={`w-full border ${errors.cvv ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.cvv && <p className="mt-1 text-xs text-red-500">{errors.cvv}</p>}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Billing Address</label>
@@ -1026,13 +1243,17 @@ export default function NewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Billing Postcode *</label>
-                  <input type="text" value={formData.billingPostcode} onChange={(e) => update('billingPostcode', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.billingPostcode} onChange={(e) => update('billingPostcode', e.target.value)} className={`w-full border ${errors.billingPostcode ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.billingPostcode && <p className="mt-1 text-xs text-red-500">{errors.billingPostcode}</p>}
                 </div>
               </div>
-              <label className="mt-4 flex items-start gap-2 cursor-pointer">
-                <input type="checkbox" checked={formData.paymentAuthorized || false} onChange={(e) => update('paymentAuthorized', e.target.checked)} className="rounded border-slate-300 text-indigo-600 mt-1 shrink-0" />
-                <span className="text-sm text-slate-700">I authorize the charges outlined above * — I understand that these fees cover InfoTrack Verification services and platform onboarding. The charges are non-refundable once the checks have been initiated.</span>
-              </label>
+               <div className="mt-4">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.paymentAuthorized || false} onChange={(e) => update('paymentAuthorized', e.target.checked)} className={`rounded ${errors.paymentAuthorized ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600 mt-1 shrink-0`} />
+                  <span className={`text-sm ${errors.paymentAuthorized ? 'text-red-700 font-medium' : 'text-slate-700'}`}>I authorize the charges outlined above * — I understand that these fees cover InfoTrack Verification services and platform onboarding. The charges are non-refundable once the checks have been initiated.</span>
+                </label>
+                {errors.paymentAuthorized && <p className="mt-1 text-xs text-red-500 font-bold">{errors.paymentAuthorized}</p>}
+              </div>
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3">
                 <span className="text-green-600 shrink-0">🔒</span>
                 <p className="text-sm text-green-800 font-medium">Secure Payment. All payment information is encrypted and processed securely. We never store your full card details.</p>
@@ -1051,20 +1272,24 @@ export default function NewCase({ onClose, onSuccess }) {
                 <input type="text" value={formData.lenderName} onChange={(e) => update('lenderName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" readOnly />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Primary Contact Person</label>
-                <input type="text" value={formData.lenderContact} onChange={(e) => update('lenderContact', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Primary Contact Person *</label>
+                <input type="text" value={formData.lenderContact} onChange={(e) => update('lenderContact', e.target.value)} className={`w-full border ${errors.lenderContact ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.lenderContact && <p className="mt-1 text-xs text-red-500">{errors.lenderContact}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Lender Email</label>
-                <input type="email" value={formData.lenderEmail} onChange={(e) => update('lenderEmail', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Lender Email *</label>
+                <input type="email" value={formData.lenderEmail} onChange={(e) => update('lenderEmail', e.target.value)} className={`w-full border ${errors.lenderEmail ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.lenderEmail && <p className="mt-1 text-xs text-red-500">{errors.lenderEmail}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Lender Phone</label>
-                <input type="text" value={formData.lenderPhone} onChange={(e) => update('lenderPhone', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Lender Phone *</label>
+                <input type="text" value={formData.lenderPhone} onChange={(e) => update('lenderPhone', e.target.value)} className={`w-full border ${errors.lenderPhone ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.lenderPhone && <p className="mt-1 text-xs text-red-500">{errors.lenderPhone}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Loan Account Number</label>
-                <input type="text" value={formData.loanAccountNumber} onChange={(e) => update('loanAccountNumber', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Loan Account Number *</label>
+                <input type="text" value={formData.loanAccountNumber} onChange={(e) => update('loanAccountNumber', e.target.value)} className={`w-full border ${errors.loanAccountNumber ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.loanAccountNumber && <p className="mt-1 text-xs text-red-500">{errors.loanAccountNumber}</p>}
               </div>
             </div>
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex gap-2">
@@ -1073,20 +1298,22 @@ export default function NewCase({ onClose, onSuccess }) {
             </div>
             <div>
               <h3 className="font-medium text-slate-900">Lender Documents for Mortgage Reassignment</h3>
-              <p className="text-sm text-slate-500 mt-0.5">Upload all documents the lender should be holding to facilitate mortgage reassignment and settlement. {lenderDocsCompleted} of 12 categories completed.</p>
+              <p className={`text-sm ${errors.lenderDocs ? 'text-red-600 font-medium' : 'text-slate-500'} mt-0.5`}>Upload all documents the lender should be holding to facilitate mortgage reassignment and settlement. {lenderDocsCompleted} of 12 categories completed. {errors.lenderDocs && <span className="block">{errors.lenderDocs}</span>}</p>
               {LENDER_DOCS.map(({ title, desc }) => {
-                const isUploaded = uploadedLenderDocs.has(title)
+                const fileName = uploadedLenderDocs[title]
+                const isUploaded = !!fileName
                 return (
                   <div key={title} className="mt-3 flex flex-wrap items-center justify-between gap-4 p-3 border border-slate-200 rounded-lg">
-                    <div>
-                      <span className="text-sm font-medium text-slate-700 block">{title}</span>
-                      <span className="text-xs text-slate-500">{desc}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-slate-700 block truncate">{title}</span>
+                      <span className="text-xs text-slate-500 block truncate">{desc}</span>
+                      {fileName && <p className="text-xs text-indigo-600 font-medium mt-1 truncate">📄 {fileName}</p>}
                     </div>
-                    <button type="button" onClick={() => handleUploadLenderDoc(title)} className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-1.5 shrink-0 ${isUploaded ? 'bg-green-100 text-green-800' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                    <button type="button" onClick={() => triggerUpload({ type: 'lender', title, field: 'lenderDocs' })} className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-1.5 shrink-0 ${isUploaded ? 'bg-green-100 text-green-800' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
                       {isUploaded ? (
                         <>
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                          Uploaded
+                          Change
                         </>
                       ) : (
                         <>
@@ -1126,11 +1353,13 @@ export default function NewCase({ onClose, onSuccess }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Outstanding Debt (A$) *</label>
-                <input type="text" value={formData.outstandingDebt} onChange={(e) => update('outstandingDebt', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <input type="text" value={formData.outstandingDebt} onChange={(e) => update('outstandingDebt', e.target.value)} className={`w-full border ${errors.outstandingDebt ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.outstandingDebt && <p className="mt-1 text-xs text-red-500">{errors.outstandingDebt}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Original Loan Amount (A$) *</label>
-                <input type="text" value={formData.originalLoanAmount} onChange={(e) => update('originalLoanAmount', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <input type="text" value={formData.originalLoanAmount} onChange={(e) => update('originalLoanAmount', e.target.value)} className={`w-full border ${errors.originalLoanAmount ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.originalLoanAmount && <p className="mt-1 text-xs text-red-500">{errors.originalLoanAmount}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Loan Start Date</label>
@@ -1149,7 +1378,8 @@ export default function NewCase({ onClose, onSuccess }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Missed Payments *</label>
-                <input type="text" value={formData.missedPayments} onChange={(e) => update('missedPayments', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                <input type="text" value={formData.missedPayments} onChange={(e) => update('missedPayments', e.target.value)} className={`w-full border ${errors.missedPayments ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                {errors.missedPayments && <p className="mt-1 text-xs text-red-500">{errors.missedPayments}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Total Arrears (A$)</label>
@@ -1165,7 +1395,8 @@ export default function NewCase({ onClose, onSuccess }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Current Valuation (A$) *</label>
-                  <input type="text" value={formData.currentValuation} onChange={(e) => update('currentValuation', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="text" value={formData.currentValuation} onChange={(e) => update('currentValuation', e.target.value)} className={`w-full border ${errors.currentValuation ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.currentValuation && <p className="mt-1 text-xs text-red-500">{errors.currentValuation}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Valuation Provider</label>
@@ -1177,13 +1408,17 @@ export default function NewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Upload Valuation Report *</label>
-                  <button type="button" onClick={handleUploadValuation} className={`w-full mt-1 px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 ${valuationUploaded ? 'bg-green-100 text-green-800 border border-green-200' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                  <button type="button" onClick={() => triggerUpload({ type: 'valuation', field: 'valuationReport' })} className={`w-full mt-1 px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 ${valuationUploaded ? 'bg-green-100 text-green-800 border border-green-200' : errors.valuationReport ? 'border-red-500 ring-1 ring-red-500 text-red-700 bg-red-50' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
                     {valuationUploaded ? (
-                      <> <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Uploaded </>
+                      <> 
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> 
+                        <span className="truncate">{valuationUploaded}</span>
+                      </>
                     ) : (
                       <> <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> Upload Report </>
                     )}
                   </button>
+                  {errors.valuationReport && <p className="mt-1 text-xs text-red-500 font-medium">{errors.valuationReport}</p>}
                 </div>
               </div>
               <p className="text-xs text-slate-500 mt-2">Note: A valuation report will be automatically generated upon payment in Step 3.</p>
@@ -1284,9 +1519,17 @@ export default function NewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Upload Insurance Policy</label>
-                  <button type="button" onClick={handleUploadInsurance} className={`mt-1 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${insuranceUploaded ? 'bg-green-100 text-green-800 border border-green-200' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
-                    {insuranceUploaded ? (<> <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Uploaded </>) : (<> <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> Upload Policy </>)}
+                  <button type="button" onClick={() => triggerUpload({ type: 'insurance', field: 'insurancePolicy' })} className={`mt-1 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${insuranceUploaded ? 'bg-green-100 text-green-800 border border-green-200' : errors.insurancePolicy ? 'border-red-500 ring-1 ring-red-500 text-red-700 bg-red-50' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                    {insuranceUploaded ? (
+                      <> 
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> 
+                        <span className="truncate">{insuranceUploaded}</span>
+                      </>
+                    ) : (
+                      <> <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> Upload Policy </>
+                    )}
                   </button>
+                  {errors.insurancePolicy && <p className="mt-1 text-xs text-red-500 font-medium">{errors.insurancePolicy}</p>}
                 </div>
               </div>
             </div>
@@ -1314,18 +1557,20 @@ export default function NewCase({ onClose, onSuccess }) {
             <div>
               <h3 className="font-medium text-slate-900">Supporting Documents</h3>
               <div className="flex flex-wrap gap-3 mt-2">
-                {[
-                  { key: 'title', label: 'Upload Title' },
-                  { key: 'certificate', label: 'Upload Certificate' },
-                  { key: 'report', label: 'Upload Report' },
-                ].map(({ key, label }) => (
-                  <button key={key} type="button" onClick={() => handleUploadSupporting(key)} className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${supportingDocs[key] ? 'bg-green-100 text-green-800 border border-green-200' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
-                    {supportingDocs[key] ? (
-                      <> <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> {label.replace('Upload ', '')} uploaded </>
-                    ) : (
-                      <> <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> {label} </>
-                    )}
-                  </button>
+                {Object.entries({ title: 'Upload Title', certificate: 'Upload Certificate', report: 'Upload Report' }).map(([key, label]) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <button type="button" onClick={() => triggerUpload({ type: 'supporting', key, field: `supporting_${key}` })} className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${supportingDocs[key] ? 'bg-green-100 text-green-800 border border-green-200' : errors[`supporting_${key}`] ? 'border-red-500 ring-1 ring-red-500 text-red-700 bg-red-50' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                      {supportingDocs[key] ? (
+                        <> 
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> 
+                          <span className="truncate">{supportingDocs[key]}</span> 
+                        </>
+                      ) : (
+                        <> <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> {label} </>
+                      )}
+                    </button>
+                    {errors[`supporting_${key}`] && <p className="text-xs text-red-500 font-medium">{errors[`supporting_${key}`]}</p>}
+                  </div>
                 ))}
               </div>
             </div>
@@ -1340,24 +1585,29 @@ export default function NewCase({ onClose, onSuccess }) {
               <h3 className="font-medium text-slate-900">Borrower's Lawyer / Solicitor (Required)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Lawyer Name</label>
-                  <input type="text" value={formData.borrowerLawyerName} onChange={(e) => update('borrowerLawyerName', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Lawyer Name *</label>
+                  <input type="text" value={formData.borrowerLawyerName} onChange={(e) => update('borrowerLawyerName', e.target.value)} className={`w-full border ${errors.borrowerLawyerName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.borrowerLawyerName && <p className="mt-1 text-xs text-red-500">{errors.borrowerLawyerName}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Law Firm</label>
-                  <input type="text" value={formData.borrowerLawFirm} onChange={(e) => update('borrowerLawFirm', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Law Firm *</label>
+                  <input type="text" value={formData.borrowerLawFirm} onChange={(e) => update('borrowerLawFirm', e.target.value)} className={`w-full border ${errors.borrowerLawFirm ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.borrowerLawFirm && <p className="mt-1 text-xs text-red-500">{errors.borrowerLawFirm}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                  <input type="email" value={formData.borrowerLawyerEmail} onChange={(e) => update('borrowerLawyerEmail', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                  <input type="email" value={formData.borrowerLawyerEmail} onChange={(e) => update('borrowerLawyerEmail', e.target.value)} className={`w-full border ${errors.borrowerLawyerEmail ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.borrowerLawyerEmail && <p className="mt-1 text-xs text-red-500">{errors.borrowerLawyerEmail}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                  <input type="text" value={formData.borrowerLawyerPhone} onChange={(e) => update('borrowerLawyerPhone', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
+                  <input type="text" value={formData.borrowerLawyerPhone} onChange={(e) => update('borrowerLawyerPhone', e.target.value)} className={`w-full border ${errors.borrowerLawyerPhone ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.borrowerLawyerPhone && <p className="mt-1 text-xs text-red-500">{errors.borrowerLawyerPhone}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">License/Registration Number</label>
-                  <input type="text" value={formData.borrowerLawyerLicense} onChange={(e) => update('borrowerLawyerLicense', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">License/Registration Number *</label>
+                  <input type="text" value={formData.borrowerLawyerLicense} onChange={(e) => update('borrowerLawyerLicense', e.target.value)} className={`w-full border ${errors.borrowerLawyerLicense ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} />
+                  {errors.borrowerLawyerLicense && <p className="mt-1 text-xs text-red-500">{errors.borrowerLawyerLicense}</p>}
                 </div>
               </div>
             </section>
@@ -1378,21 +1628,28 @@ export default function NewCase({ onClose, onSuccess }) {
             <div className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Lender Licence Type *</label>
-                <select className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white">
-                  <option>Select...</option>
+                <select value={formData.lenderLicenceType} onChange={(e) => update('lenderLicenceType', e.target.value)} className={`w-full border ${errors.lenderLicenceType ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm bg-white`}>
+                  <option value="">Select...</option>
                   <option>Australian Credit Licence</option>
                 </select>
+                {errors.lenderLicenceType && <p className="mt-1 text-xs text-red-500">{errors.lenderLicenceType}</p>}
               </div>
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
                 All required disclosures must be provided before the borrower signs the credit contract. Incomplete disclosures may void the contract.
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" className="rounded border-slate-300 text-indigo-600" />
-                <span className="text-sm text-slate-700">Credit Guide (NCCP s120) *</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={formData.creditGuide} onChange={(e) => update('creditGuide', e.target.checked)} className={`rounded ${errors.creditGuide ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600`} />
+                  <span className={`text-sm ${errors.creditGuide ? 'text-red-700 font-medium' : 'text-slate-700'}`}>Credit Guide (NCCP s120) *</span>
+                </div>
+                {errors.creditGuide && <p className="text-xs text-red-500">{errors.creditGuide}</p>}
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" className="rounded border-slate-300 text-indigo-600" />
-                <span className="text-sm text-slate-700">Credit Contract with Full Terms (NCCP s17) *</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={formData.creditContract} onChange={(e) => update('creditContract', e.target.checked)} className={`rounded ${errors.creditContract ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600`} />
+                  <span className={`text-sm ${errors.creditContract ? 'text-red-700 font-medium' : 'text-slate-700'}`}>Credit Contract with Full Terms (NCCP s17) *</span>
+                </div>
+                {errors.creditContract && <p className="text-xs text-red-500">{errors.creditContract}</p>}
               </div>
             </div>
           </div>
@@ -1415,7 +1672,8 @@ export default function NewCase({ onClose, onSuccess }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Reason for Default *</label>
-                <textarea value={formData.reasonForDefault} onChange={(e) => update('reasonForDefault', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" rows={3} placeholder="Provide details about why the borrower has defaulted..." />
+                <textarea value={formData.reasonForDefault} onChange={(e) => update('reasonForDefault', e.target.value)} className={`w-full border ${errors.reasonForDefault ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-md px-3 py-2 text-sm`} rows={3} placeholder="Provide details about why the borrower has defaulted..." />
+                {errors.reasonForDefault && <p className="mt-1 text-xs text-red-500">{errors.reasonForDefault}</p>}
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Hardship Circumstances</label>
@@ -1485,6 +1743,14 @@ export default function NewCase({ onClose, onSuccess }) {
           </div>
         )}
       </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        className="hidden"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+      />
 
       {/* Footer nav */}
       <div className="bg-white border border-slate-200 rounded-lg px-4 py-4 flex flex-wrap items-center justify-between gap-4 mt-6">

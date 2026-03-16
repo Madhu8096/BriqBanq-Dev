@@ -30,10 +30,14 @@ export default function InvestorDocuments() {
                 ]);
 
                 if (docsRes.success) {
-                    setInvestorDocs(docsRes.data || []);
+                    const docsData = docsRes.data;
+                    setInvestorDocs(Array.isArray(docsData) ? docsData : (docsData?.items || []));
                 }
                 if (contractsRes.success) {
-                    setContracts(contractsRes.data || []);
+                    const contractsData = contractsRes.data;
+                    // contractsRes.data might be direct array or { items: [] } or { contracts: [] }
+                    // contractService might already handle this, but let's be safe here too
+                    setContracts(Array.isArray(contractsData) ? contractsData : (contractsData?.items || contractsData?.contracts || []));
                 }
             } catch (err) {
                 setError(err.message || "Failed to load documents");

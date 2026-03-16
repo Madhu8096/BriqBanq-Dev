@@ -13,12 +13,21 @@ function getNotificationList(res) {
 }
 
 function normalizeNotification(n, i) {
+  if (!n) return {
+    id: i,
+    type: 'info',
+    title: 'Loading...',
+    message: '',
+    time: '',
+    read: false,
+    isNew: false
+  }
   return {
     id: n.id ?? n.notification_id ?? i,
     type: n.type ?? 'info',
     title: n.title ?? n.subject ?? 'Notification',
-    message: n.message ?? n.body ?? n.text ?? '',
-    time: n.time ?? n.created_at ?? n.date ?? '',
+    message: String(n.message ?? n.body ?? n.text ?? ''),
+    time: String(n.time ?? n.created_at ?? n.date ?? ''),
     read: Boolean(n.read ?? n.is_read),
     isNew: Boolean(n.isNew ?? n.is_new ?? !(n.read ?? n.is_read))
   }

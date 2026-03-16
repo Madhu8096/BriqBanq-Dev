@@ -1,46 +1,67 @@
 import { useState, useEffect } from 'react'
 import { Breadcrumb, FormInput, FormSelect } from './SettingsComponents'
+import { useAuth } from '../../../context/AuthContext'
 import { useBorrowerProfile } from '../BorrowerProfileContext'
 import { profileService } from '../services'
-import { MOCK_PROFILE } from '../data/borrowerMockData'
+import { MOCK_BORROWER_PROFILE } from '../data/borrowerMockData'
 
 const BIO_MAX = 500
 const STATES = [{ value: 'VIC', label: 'VIC' }, { value: 'NSW', label: 'NSW' }, { value: 'QLD', label: 'QLD' }, { value: 'WA', label: 'WA' }, { value: 'SA', label: 'SA' }, { value: 'TAS', label: 'TAS' }, { value: 'ACT', label: 'ACT' }, { value: 'NT', label: 'NT' }]
 const COUNTRIES = [{ value: 'Australia', label: 'Australia' }]
 
 function toFormProfile(p) {
-  if (!p || typeof p !== 'object') return { ...MOCK_PROFILE }
+  const fallback = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    jobTitle: '',
+    bio: '',
+    streetAddress: '',
+    city: '',
+    state: 'VIC',
+    postcode: '',
+    country: 'Australia',
+    memberSince: 'Mar 2024',
+    accountType: 'Borrower',
+    verified: false,
+  }
+  if (!p || typeof p !== 'object') return fallback
   return {
-    firstName: p.firstName ?? p.first_name ?? MOCK_PROFILE.firstName,
-    lastName: p.lastName ?? p.last_name ?? MOCK_PROFILE.lastName,
-    email: p.email ?? MOCK_PROFILE.email,
-    phone: p.phone ?? MOCK_PROFILE.phone,
-    company: p.company ?? MOCK_PROFILE.company ?? '',
-    jobTitle: p.jobTitle ?? p.job_title ?? MOCK_PROFILE.jobTitle ?? '',
-    bio: p.bio ?? MOCK_PROFILE.bio ?? '',
-    streetAddress: p.streetAddress ?? p.street_address ?? MOCK_PROFILE.streetAddress ?? '',
-    city: p.city ?? MOCK_PROFILE.city ?? '',
-    state: p.state ?? MOCK_PROFILE.state ?? 'VIC',
-    postcode: p.postcode ?? MOCK_PROFILE.postcode ?? '',
-    country: p.country ?? MOCK_PROFILE.country ?? 'Australia',
-    memberSince: p.memberSince ?? MOCK_PROFILE.memberSince,
-    accountType: p.accountType ?? MOCK_PROFILE.accountType,
-    verified: p.verified ?? MOCK_PROFILE.verified,
+    firstName: p.firstName ?? p.first_name ?? fallback.firstName,
+    lastName: p.lastName ?? p.last_name ?? fallback.lastName,
+    email: p.email ?? fallback.email,
+    phone: p.phone ?? fallback.phone,
+    company: p.company ?? fallback.company,
+    jobTitle: p.jobTitle ?? p.job_title ?? fallback.jobTitle,
+    bio: p.bio ?? fallback.bio,
+    streetAddress: p.streetAddress ?? p.street_address ?? fallback.streetAddress,
+    city: p.city ?? fallback.city,
+    state: p.state ?? fallback.state,
+    postcode: p.postcode ?? fallback.postcode,
+    country: p.country ?? fallback.country,
+    memberSince: p.memberSince ?? fallback.memberSince,
+    accountType: p.accountType ?? p.role ?? fallback.accountType,
+    verified: p.verified ?? fallback.verified,
   }
 }
 
 export default function ProfileSettings() {
+  const { user: authUser, updateUser } = useAuth()
   const { profile: ctxProfile, setProfile: setCtxProfile } = useBorrowerProfile()
-  const [formData, setFormData] = useState(() => toFormProfile(ctxProfile ?? MOCK_PROFILE))
+  const [formData, setFormData] = useState(() => toFormProfile(authUser || ctxProfile))
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState({})
-  const [photoPreview, setPhotoPreview] = useState(() => (ctxProfile?.photoUrl ?? null))
+  const [photoPreview, setPhotoPreview] = useState(() => (authUser?.photoUrl ?? ctxProfile?.photoUrl ?? null))
 
   useEffect(() => {
-    if (ctxProfile?.photoUrl && !photoPreview) setPhotoPreview(ctxProfile.photoUrl)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only set preview when profile photo URL appears
-  }, [ctxProfile?.photoUrl])
+    if (authUser && !isDirty) {
+      setFormData(toFormProfile(authUser))
+      if (authUser.photoUrl) setPhotoPreview(authUser.photoUrl)
+    }
+  }, [authUser, isDirty])
 
   useEffect(() => {
     let cancelled = false
@@ -49,17 +70,16 @@ export default function ProfileSettings() {
         if (cancelled) return
         setFormData(toFormProfile(profile))
         setCtxProfile(profile)
+        updateUser(profile)
         if (profile.photoUrl) setPhotoPreview(profile.photoUrl)
       })
       .catch(() => {
-        if (!cancelled) {
-          const fallback = ctxProfile || MOCK_PROFILE
-          setFormData(toFormProfile(fallback))
-          if (fallback.photoUrl) setPhotoPreview(fallback.photoUrl)
+        if (!cancelled && authUser) {
+          setFormData(toFormProfile(authUser))
         }
       })
     return () => { cancelled = true }
-  }, [setCtxProfile, ctxProfile])
+  }, [setCtxProfile, authUser, updateUser])
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -111,7 +131,7 @@ export default function ProfileSettings() {
   }
 
   const handleCancel = () => {
-    setFormData(toFormProfile(ctxProfile ?? MOCK_PROFILE))
+    setFormData(toFormProfile(ctxProfile ?? MOCK_BORROWER_PROFILE))
     setPhotoPreview(ctxProfile?.photoUrl ?? null)
     setIsDirty(false)
     setErrors({})

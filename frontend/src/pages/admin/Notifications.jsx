@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Bell, Mail, MessageSquare, CheckCircle, Eye, Trash2 } from 'lucide-react'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
 import { MOCK_NOTIFICATIONS } from '../../data/mockData'
 
 export default function Notifications() {
+    const navigate = useNavigate()
     const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
     const [searchTerm, setSearchTerm] = useState('')
     const [typeFilter, setTypeFilter] = useState('All Types')
@@ -160,7 +162,27 @@ export default function Notifications() {
 
                                 {/* Actions */}
                                 <div className="flex gap-2 flex-shrink-0">
-                                    <button className="text-sm border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50 flex items-center gap-1">
+                                    <button 
+                                        onClick={() => {
+                                            const mipMatch = notification.message.match(/MIP-\d{4}-\d{3}/)
+                                            const mipId = mipMatch ? mipMatch[0] : 'MIP-2024-001'
+                                            
+                                            switch(notification.type) {
+                                                case 'kyc':
+                                                    navigate(`/admin/kyc-review/1`)
+                                                    break
+                                                case 'message':
+                                                    navigate(`/admin/admin-console`)
+                                                    break
+                                                case 'contract':
+                                                    navigate(`/admin/contracts`)
+                                                    break
+                                                default:
+                                                    navigate(`/admin/case-details/${mipId}`)
+                                            }
+                                        }}
+                                        className="text-sm border border-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-50 flex items-center gap-1"
+                                    >
                                         <Eye className="w-3.5 h-3.5 flex-shrink-0" /> View
                                     </button>
                                     {!notification.read && (

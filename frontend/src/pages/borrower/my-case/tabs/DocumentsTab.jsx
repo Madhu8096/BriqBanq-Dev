@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useAuth } from '../../../../context/AuthContext'
 import { borrowerApi } from '../../api'
 
 export default function DocumentsTab({ documents: initialDocuments = [], onDocumentUploaded }) {
+  const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [localDocs, setLocalDocs] = useState(() => initialDocuments)
@@ -19,7 +21,7 @@ export default function DocumentsTab({ documents: initialDocuments = [], onDocum
             id: `upload-${Date.now()}-${file.name}`,
             name: file.name,
             type: 'Upload',
-            uploadedBy: 'You',
+            uploadedBy: user?.name || 'You',
             date: new Date().toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' }),
           },
         ])
@@ -34,7 +36,7 @@ export default function DocumentsTab({ documents: initialDocuments = [], onDocum
             id: `local-${Date.now()}-${file.name}`,
             name: file.name,
             type: 'Upload',
-            uploadedBy: 'You',
+            uploadedBy: user?.name || 'You',
             date: new Date().toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' }),
           },
         ])

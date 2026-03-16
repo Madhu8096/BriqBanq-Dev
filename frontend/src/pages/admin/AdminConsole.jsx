@@ -1,12 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminBadge from '../../components/admin/AdminBadge'
+import { adminService } from '../../api/dataService'
 import { MOCK_TASKS } from '../../data/mockData'
 
 const tabs = ['Tasks', 'KYC Review', 'Disputes', 'Fee Configuration', 'Audit Logs']
 
 export default function AdminConsole() {
     const [activeTab, setActiveTab] = useState('Tasks')
+    const [stats, setStats] = useState({
+        pendingKyc: 0,
+        activeDisputes: 0,
+        totalUsers: 0,
+        monthlyVolume: 0
+    })
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const [summaryRes, statsRes] = await Promise.all([
+                    adminService.getDashboardSummary(),
+                    adminService.getPlatformStats()
+                ])
+
+                if (summaryRes.success && statsRes.success) {
+                    setStats({
+                        pendingKyc: summaryRes.data.pending_kyc_reviews || 0,
+                        activeDisputes: 0, // Mocked until dispute service is ready
+                        totalUsers: statsRes.data.total_users || 0,
+                        monthlyVolume: statsRes.data.platform_revenue || 0
+                    })
+                }
+            } catch (err) {
+                console.error("Failed to fetch admin stats:", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchStats()
+    }, [])
 
     return (
         <div className="space-y-6">
@@ -20,30 +53,30 @@ export default function AdminConsole() {
             <div className="grid grid-cols-4 gap-4">
                 <AdminStatCard
                     label="Pending KYC"
-                    value="7"
+                    value={stats.pendingKyc.toString()}
                     icon="👥"
                     iconBg="bg-indigo-100"
                     iconColor="text-indigo-600"
                 />
                 <AdminStatCard
                     label="Active Disputes"
-                    value="2"
+                    value={stats.activeDisputes.toString()}
                     icon="⚠"
                     iconBg="bg-orange-100"
                     iconColor="text-orange-600"
                 />
                 <AdminStatCard
                     label="Platform Users"
-                    value="146"
-                    growth="+23%"
+                    value={stats.totalUsers.toString()}
+                    growth="+0%"
                     icon="📈"
                     iconBg="bg-blue-100"
                     iconColor="text-blue-600"
                 />
                 <AdminStatCard
                     label="Monthly Volume"
-                    value="$12.5M"
-                    growth="+15%"
+                    value={`A$${(stats.monthlyVolume / 1000000).toFixed(1)}M`}
+                    growth="+0%"
                     icon="$"
                     iconBg="bg-green-100"
                     iconColor="text-green-600"

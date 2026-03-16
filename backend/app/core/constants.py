@@ -4,7 +4,7 @@ No hardcoded values in business logic — all constants defined here.
 """
 
 # Password Requirements
-PASSWORD_MIN_LENGTH = 12
+PASSWORD_MIN_LENGTH = 8
 PASSWORD_REQUIRE_UPPERCASE = True
 PASSWORD_REQUIRE_LOWERCASE = True
 PASSWORD_REQUIRE_DIGIT = True

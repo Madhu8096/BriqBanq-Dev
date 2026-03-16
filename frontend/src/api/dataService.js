@@ -7,7 +7,7 @@ import { dealsData } from "../data/dealsData";
 import { contractsData } from "../data/contractsData";
 import { escrowData } from "../data/escrowData";
 
-const USE_SIMULATOR = true; // Always true for pure frontend mode
+const USE_SIMULATOR = false; // Set to false to use the real backend proxy
 
 const simulateBackend = async (data, methodName) => {
     // 1. Realistic Network Delay (300ms to 1000ms)
@@ -28,17 +28,59 @@ const simulateBackend = async (data, methodName) => {
 
 // Generic fetch wrapper updated to use Axios
 const apiFetch = async (url, options = {}) => {
+    console.log(`[apiFetch] Calling: ${url}`, options);
     try {
+        const { method, body, data, ...rest } = options;
+        
+        // Determine the final data payload
+        let finalData = data;
+        if (body) {
+            if (typeof body === 'string') {
+                try {
+                    finalData = JSON.parse(body);
+                } catch (e) {
+                    finalData = body; // Not JSON string (e.g. FormData)
+                }
+            } else {
+                finalData = body;
+            }
+        }
+
         const response = await api({
             url,
-            method: options.method || 'GET',
-            data: options.body ? JSON.parse(options.body) : undefined,
-            ...options
+            method: method || 'GET',
+            data: finalData,
+            ...rest
         });
-        return response.data;
+        return { success: true, data: response.data };
     } catch (err) {
         console.error(`[API REAL FAIL] ${url}`, err);
-        return { success: false, error: err.response?.data?.detail || err.message };
+        let errorMsg = err.message || "An unexpected error occurred";
+        
+        if (err.response?.data?.detail) {
+            const detail = err.response.data.detail;
+            if (typeof detail === 'string') {
+                errorMsg = detail;
+            } else if (Array.isArray(detail)) {
+                // FastAPI validation errors are lists of { loc, msg, type }
+                const first = detail[0];
+                if (first?.loc && Array.isArray(first.loc)) {
+                    const field = first.loc[first.loc.length - 1];
+                    errorMsg = `${field}: ${first.msg}`;
+                } else {
+                    errorMsg = first?.msg || JSON.stringify(detail);
+                }
+            } else if (typeof detail === 'object' && detail !== null) {
+                // Generic object error
+                errorMsg = detail.message || detail.msg || JSON.stringify(detail);
+            }
+        } else if (err.response?.data?.message) {
+            errorMsg = err.response.data.message;
+        } else if (err.code === 'ERR_NETWORK') {
+            errorMsg = "Network Error: Could not connect to the server.";
+        }
+        
+        return { success: false, error: errorMsg };
     }
 };
 
@@ -205,6 +247,18 @@ export const userService = {
 };
 
 export const authService = {
+    login: async (email, password) => {
+        return apiFetch("/api/v1/identity/login", {
+            method: 'POST',
+            data: { email, password }
+        });
+    },
+    register: async (userData) => {
+        return apiFetch("/api/v1/identity/register", {
+            method: 'POST',
+            data: userData
+        });
+    },
     changePassword: async (payload) => {
         if (USE_SIMULATOR) return simulateBackend({ success: true }, `changePassword`);
         return apiFetch("/api/auth/change-password", { method: 'POST', body: JSON.stringify(payload) });
@@ -233,6 +287,127 @@ export const authService = {
     logoutAllOtherSessions: async () => {
         if (USE_SIMULATOR) return simulateBackend({ success: true }, "logoutAllOtherSessions");
         return apiFetch("/api/auth/sessions/logout-others", { method: 'DELETE' });
+    }
+};
+
+export const adminService = {
+    getDashboardSummary: async () => {
+        if (USE_SIMULATOR) {
+            return simulateBackend({
+                total_users: 1284,
+                active_users: 1250,
+                suspended_users: 34,
+                pending_role_requests: 8,
+                pending_kyc_reviews: 5
+            }, "getDashboardSummary");
+        }
+        return apiFetch("/api/v1/admin/dashboard");
+    },
+    getPlatformStats: async () => {
+        if (USE_SIMULATOR) {
+            return simulateBackend({
+                total_users: 1284,
+                total_cases: 247,
+                total_investments: 100,
+                platform_revenue: 50000.0
+            }, "getPlatformStats");
+        }
+        return apiFetch("/api/v1/admin/platform-stats");
+    },
+    getSettings: async (category = null) => {
+        if (USE_SIMULATOR) return simulateBackend([], "getSettings");
+        const url = category ? `/api/v1/admin/settings?category=${category}` : "/api/v1/admin/settings";
+        return apiFetch(url);
+    }
+};
+
+export const kycService = {
+    getPendingKYC: async (page = 1, pageSize = 20) => {
+        if (USE_SIMULATOR) return simulateBackend([], "getPendingKYC");
+        return apiFetch(`/api/v1/kyc/pending?page=${page}&page_size=${pageSize}`);
+    },
+    approveKYC: async (kycId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, `approveKYC(${kycId})`);
+        return apiFetch(`/api/v1/kyc/${kycId}/approve`, { method: 'POST' });
+    },
+    rejectKYC: async (kycId, reason) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, `rejectKYC(${kycId})`);
+        return apiFetch(`/api/v1/kyc/${kycId}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ rejection_reason: reason })
+        });
+    }
+};
+
+export const caseService = {
+    getAllCases: async (status = null, page = 1, pageSize = 20) => {
+        if (USE_SIMULATOR) return simulateBackend({ items: [], total: 0 }, "getAllCases");
+        let url = `/api/v1/cases/?page=${page}&page_size=${pageSize}`;
+        if (status && status !== 'All Status') url += `&status=${encodeURIComponent(status.toUpperCase())}`;
+        return apiFetch(url);
+    },
+    updateCaseStatus: async (caseId, status) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "updateCaseStatus");
+        return apiFetch(`/api/v1/cases/${caseId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: status.toUpperCase() })
+        });
+    },
+    assignParticipants: async (caseId, lawyerId, lenderId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "assignParticipants");
+        return apiFetch(`/api/v1/cases/${caseId}/assign`, {
+            method: 'POST',
+            body: JSON.stringify({ lawyer_id: lawyerId, lender_id: lenderId })
+        });
+    },
+    getCaseDetails: async (caseId) => {
+        if (USE_SIMULATOR) return simulateBackend({}, "getCaseDetails");
+        return apiFetch(`/api/v1/cases/${caseId}`);
+    },
+    createCase: async (payload) => {
+        if (USE_SIMULATOR) return simulateBackend({ id: "NEW-CASE-ID", ...payload }, "createCase");
+        return apiFetch("/api/v1/cases/", {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    },
+    submitCaseActual: async (caseId) => {
+        if (USE_SIMULATOR) return simulateBackend({ id: caseId, status: "SUBMITTED" }, "submitCaseActual");
+        return apiFetch(`/api/v1/cases/${caseId}/submit`, {
+            method: 'POST'
+        });
+    },
+    getMyCases: async (params = {}) => {
+        if (USE_SIMULATOR) return simulateBackend([], "getMyCases");
+        const { status, page = 1, page_size = 20 } = params;
+        let url = `/api/v1/cases/my-cases?page=${page}&page_size=${page_size}`;
+        if (status) url += `&status=${status.toUpperCase()}`;
+        return apiFetch(url);
+    },
+    exportCaseReport: async (caseId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "exportCaseReport");
+        return apiFetch(`/api/v1/cases/${caseId}/export`);
+    },
+    deleteCase: async (caseId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "deleteCase");
+        return apiFetch(`/api/v1/cases/${caseId}`, { method: 'DELETE' });
+    }
+};
+
+export const adminDealService = {
+    getAllDeals: async (status = null, page = 1, pageSize = 20) => {
+        if (USE_SIMULATOR) return simulateBackend({ items: [], total: 0 }, "getAllDeals");
+        let url = `/api/v1/deals/?page=${page}&page_size=${pageSize}`;
+        if (status && status !== 'All Status') url += `&status=${encodeURIComponent(status.toUpperCase())}`;
+        return apiFetch(url);
+    },
+    listDeal: async (dealId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "listDeal");
+        return apiFetch(`/api/v1/deals/${dealId}/list`, { method: 'POST' });
+    },
+    closeDeal: async (dealId) => {
+        if (USE_SIMULATOR) return simulateBackend({ success: true }, "closeDeal");
+        return apiFetch(`/api/v1/deals/${dealId}/close`, { method: 'POST' });
     }
 };
 
@@ -557,9 +732,9 @@ let inMemoryActivities = [
 ];
 
 export const activityService = {
-    getRecentActivity: async () => {
-        if (USE_SIMULATOR) return simulateBackend([...inMemoryActivities], "getRecentActivity");
-        return apiFetch("/api/lender/activity");
+    getRecentActivities: async (limit = 10) => {
+        if (USE_SIMULATOR) return simulateBackend(inMemoryActivities.slice(0, limit), `getRecentActivities`);
+        return apiFetch("/api/v1/audit/recent", { params: { limit } });
     },
     logActivity: async (activity) => {
         const newActivity = {
@@ -574,5 +749,46 @@ export const activityService = {
             return simulateBackend(newActivity, "logActivity");
         }
         return apiFetch("/api/lender/activity", { method: 'POST', body: JSON.stringify(activity) });
+    }
+};
+export const adminAuctionService = {
+    listAuctions: async (status = null, page = 1, pageSize = 20) => {
+        return apiFetch("/api/v1/auctions/", {
+            params: { status, page, page_size: pageSize }
+        });
+    },
+    getAuction: async (auctionId) => {
+        return apiFetch(`/api/v1/auctions/${auctionId}`);
+    },
+    createAuction: async (auctionData) => {
+        return apiFetch("/api/v1/auctions/", {
+            method: 'POST',
+            data: auctionData
+        });
+    },
+    startAuction: async (auctionId) => {
+        return apiFetch(`/api/v1/auctions/${auctionId}/start`, { method: 'POST' });
+    },
+    pauseAuction: async (auctionId) => {
+        return apiFetch(`/api/v1/auctions/${auctionId}/pause`, { method: 'POST' });
+    },
+    resumeAuction: async (auctionId) => {
+        return apiFetch(`/api/v1/auctions/${auctionId}/resume`, { method: 'POST' });
+    },
+    endAuction: async (auctionId) => {
+        return apiFetch(`/api/v1/auctions/${auctionId}/end`, { method: 'POST' });
+    }
+};
+
+export const adminTaskService = {
+    listTasks: async (status = null, page = 1, pageSize = 20) => {
+        // Fallback to activities if task module is not separate
+        return apiFetch("/api/v1/audit/recent", { params: { limit: pageSize } });
+    }
+};
+
+export const adminAuditService = {
+    getLogs: async (params = {}) => {
+        return apiFetch("/api/v1/audit/recent", { params });
     }
 };

@@ -2,9 +2,12 @@
 Documents module — FastAPI routes.
 """
 
+import os
 import uuid
+import pathlib
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import JSONResponse
 
 from app.core.dependencies import get_current_user, get_db, get_trace_id
 from app.modules.documents.policies import DocumentPolicy
@@ -17,6 +20,60 @@ from app.modules.documents.service import DocumentService
 from app.modules.identity.schemas import MessageResponse
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
+
+# ── Local upload directory (created automatically) ────────────────────────────
+_UPLOAD_DIR = pathlib.Path("uploads/documents")
+_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+_MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+_ALLOWED_CONTENT_TYPES = {"application/pdf"}
+
+
+@router.post("/simple-upload", tags=["Documents"], status_code=200)
+async def simple_upload_document(
+    file: UploadFile = File(...),
+):
+    """
+    Upload a PDF document (public helper endpoint).
+
+    Validates:
+    - File type must be application/pdf
+    - File size must be ≤ 5 MB
+
+    Saves the file to the local `uploads/documents/` directory and returns a
+    success response with the saved file name.
+    """
+    # ── Content-type check ───────────────────────────────────────────────────
+    content_type = (file.content_type or "").lower().split(";")[0].strip()
+    if content_type not in _ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=422,
+            detail="Only PDF files are allowed.",
+        )
+
+    # ── Read file (cap at MAX + 1 byte to detect oversize efficiently) ────────
+    content = await file.read(_MAX_SIZE_BYTES + 1)
+    if len(content) > _MAX_SIZE_BYTES:
+        raise HTTPException(
+            status_code=422,
+            detail="File size must be below 5 MB.",
+        )
+
+    # ── Persist to disk with a unique prefix to avoid collisions ─────────────
+    original_name = file.filename or "upload.pdf"
+    safe_name = pathlib.Path(original_name).name  # strip any path traversal
+    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+    dest = _UPLOAD_DIR / unique_name
+    dest.write_bytes(content)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "Document uploaded successfully",
+            "file_name": unique_name,
+        },
+    )
+
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=201)

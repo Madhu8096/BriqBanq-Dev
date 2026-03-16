@@ -22,12 +22,17 @@ export default function InvestorDashboard() {
                 setError(null);
                 const res = await dealsService.getDeals();
                 if (res.success) {
-                    setInvestments(res.data || []);
+                    const data = res.data;
+                    // Handle both raw array (mock) and paginated object (real backend)
+                    setInvestments(Array.isArray(data) ? data : (data?.items || []));
                 } else {
                     setError(res.error || "Failed to load deals");
                 }
             } catch (err) {
-                setError(err.message || "An unexpected error occurred");
+                // If 401, let the global interceptor handle redirect
+                if (err.response?.status !== 401) {
+                    setError(err.message || "An unexpected error occurred");
+                }
             } finally {
                 setLoading(false);
             }

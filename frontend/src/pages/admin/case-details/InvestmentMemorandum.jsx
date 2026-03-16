@@ -102,11 +102,15 @@ export default function InvestmentMemorandum() {
                             </div>
                             <div className="bg-gray-50/50 p-8 border-r border-gray-100 flex flex-col justify-center">
                                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2">LVR Profile</p>
-                                <p className="text-3xl font-black text-gray-900 tracking-tighter">72.8<span className="text-xl text-indigo-600">%</span></p>
+                                <p className="text-3xl font-black text-gray-900 tracking-tighter">{caseData.loan.ltv}<span className="text-xl text-indigo-600">%</span></p>
                             </div>
                             <div className="bg-indigo-600 p-8 rounded-r-2xl flex flex-col justify-center relative overflow-hidden group/ret">
                                 <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.3em] mb-2">Yield Potential</p>
-                                <p className="text-3xl font-black text-white tracking-tighter">12.4<span className="text-xl text-indigo-300">%</span></p>
+                                <p className="text-3xl font-black text-white tracking-tighter">
+                                    {caseData.financial.currentHighestBid > 0 
+                                        ? `${((caseData.valuation.amount / caseData.financial.currentHighestBid) * 100).toFixed(1)}`
+                                        : '0.0'}<span className="text-xl text-indigo-300">%</span>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -124,16 +128,16 @@ export default function InvestmentMemorandum() {
                             </div>
                             <div className="text-xl font-medium text-gray-400 leading-[1.8] max-w-4xl space-y-8">
                                 <p>
-                                    This strategic acquisition opportunity represents a <span className="text-gray-900 font-black">high-alpha secured position</span> backed by a tier-one residential asset in {caseData.property.suburb}, Australia's most resilient real estate corridor.
+                                    This strategic acquisition opportunity represents a <span className="text-gray-900 font-black">high-alpha secured position</span> backed by a tier-one residential asset in {caseData.property.suburb || 'prime corridors'}, Australia's most resilient real estate corridor.
                                 </p>
                                 <div className="p-10 bg-indigo-50/50 border border-indigo-100 rounded-[3rem] text-indigo-700 italic relative group">
                                     <div className="absolute -left-4 top-10 w-8 h-8 bg-indigo-600 text-white flex items-center justify-center rounded-xl shadow-xl">
                                         <Briefcase className="w-4 h-4" />
                                     </div>
-                                    "The asset presents an asymmetrical risk-reward profile, leveraging a distressed mortgage cycle against foundational capital preservation metrics."
+                                    "{caseData.investmentMemo.executiveSummary}"
                                 </div>
                                 <p>
-                                    As of Q1 2026, the underlying security is valued at <span className="text-gray-900 font-black">{formatCurrency(caseData.valuation.amount)}</span> via independent appraisal, maintaining a liquid equity buffer of {formatCurrency(270000)} for capital insulation.
+                                    As of Q1 2026, the underlying security is valued at <span className="text-gray-900 font-black">{formatCurrency(caseData.valuation.amount)}</span> via independent appraisal, maintaining a liquid equity buffer of {formatCurrency(caseData.financial.equityAvailable)} for capital insulation.
                                 </p>
                             </div>
                         </div>
@@ -182,10 +186,34 @@ export default function InvestmentMemorandum() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {[
-                                { title: 'Optimized IRR', desc: 'Target internal rate of 12.4% with monthly distribution protocol at 8.25% default velocity.', value: '97.5% Asset Recovery Benchmark', icon: TrendingUp, color: 'bg-emerald-500' },
-                                { title: 'Equity Insulation', desc: '72.8% LVR deployment provides foundational buffer against localized market volatility.', value: '$270,000 Protective Cushion', icon: ShieldCheck, color: 'bg-indigo-600' },
-                                { title: 'Tier-1 Micro Market', desc: 'Potts Point corridor demonstrates consistent low-beta performance during macro cycles.', value: '42% Aggregate 5-Y Growth', icon: Building2, color: 'bg-purple-600' },
-                                { title: 'Yield Acceleration', desc: 'Mandatory 250bp premium active due to chronological default propagation.', value: '89-Day Institutional Default Active', icon: Clock, color: 'bg-red-600' }
+                                { 
+                                    title: 'Optimized IRR', 
+                                    desc: 'Target internal rate of 12.4% with monthly distribution protocol at 8.25% default velocity.', 
+                                    value: '97.5% Asset Recovery Benchmark', 
+                                    icon: TrendingUp, 
+                                    color: 'bg-emerald-500' 
+                                },
+                                { 
+                                    title: 'Equity Insulation', 
+                                    desc: `${caseData.loan.ltv}% LVR deployment provides foundational buffer against localized market volatility.`, 
+                                    value: `${formatCurrency(caseData.financial.equityAvailable)} Protective Cushion`, 
+                                    icon: ShieldCheck, 
+                                    color: 'bg-indigo-600' 
+                                },
+                                { 
+                                    title: 'Tier-1 Micro Market', 
+                                    desc: `${caseData.property.suburb || 'Local'} corridor demonstrates consistent low-beta performance during macro cycles.`, 
+                                    value: 'Consistent Aggregate Performance', 
+                                    icon: Building2, 
+                                    color: 'bg-purple-600' 
+                                },
+                                { 
+                                    title: 'Yield Acceleration', 
+                                    desc: 'Mandatory premium active due to chronological default propagation.', 
+                                    value: 'Institutional Default Active', 
+                                    icon: Clock, 
+                                    color: 'bg-red-600' 
+                                }
                             ].map((card, i) => (
                                 <div key={i} className="bg-white border border-gray-100 p-8 sm:p-10 rounded-[2.5rem] space-y-8 hover:shadow-xl transition-all group overflow-hidden relative">
                                     <div className={`absolute top-0 right-0 w-32 h-32 ${card.color} opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2`} />
@@ -215,14 +243,14 @@ export default function InvestmentMemorandum() {
                             <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase">Physical Spec Gallery</h2>
                         </div>
                         <div className="grid grid-cols-2 gap-10">
-                            {[
+                            {(caseData.images.length > 0 ? caseData.images : [
                                 "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000",
                                 "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=1000",
                                 "https://images.unsplash.com/photo-1600566753190-17f0bb2a6c3f?auto=format&fit=crop&q=80&w=1000",
                                 "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&q=80&w=1000"
-                            ].map((src, i) => (
+                            ]).slice(0, 4).map((src, i) => (
                                 <div key={i} className="aspect-[4/3] rounded-3xl overflow-hidden border border-gray-50 group">
-                                    <img src={src} alt={`Gallery Visual ${i + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <img src={src.url || src} alt={`Gallery Visual ${i + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 </div>
                             ))}
                         </div>
@@ -239,11 +267,11 @@ export default function InvestmentMemorandum() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         {[
-                                            { label: 'Total Principal Deployment', val: '$1,200,000' },
-                                            { label: 'Current Outstanding Principal', val: '$980,000', bold: true },
+                                            { label: 'Total Principal Deployment', val: formatCurrency(caseData.financial.propertyValuation * 0.8) },
+                                            { label: 'Current Outstanding Principal', val: formatCurrency(caseData.loan.outstandingDebt), bold: true },
                                             { label: 'Baseline Interest Rate', val: '5.75% p.a.' },
                                             { label: 'Active Default Penalty Velocity', val: '8.25% p.a.', highlight: true },
-                                            { label: 'Calculated Equity Position', val: '72.8%', accent: true }
+                                            { label: 'Calculated Equity Position', val: `${caseData.loan.ltv}%`, accent: true }
                                         ].map((row, i) => (
                                             <div key={i} className={`flex justify-between items-center px-10 py-6 rounded-[2rem] transition-all duration-500
                                                 ${row.highlight ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-200' :
@@ -290,7 +318,7 @@ export default function InvestmentMemorandum() {
                                     <div className="space-y-2">
                                         <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Advisory Signature</p>
                                         <p className="text-sm font-medium text-gray-400 leading-relaxed italic">
-                                            "Formal default protocol has been initialized. Entity indicates high-cooperation status regarding orderly liquidation."
+                                            "{caseData.investmentMemo.riskAnalysis}"
                                         </p>
                                     </div>
                                 </div>
@@ -306,12 +334,12 @@ export default function InvestmentMemorandum() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-4">
                             {[
-                                { label: 'Asset Taxonomy', val: 'Premium Residential Loft' },
+                                { label: 'Asset Taxonomy', val: caseData.property.type },
                                 { label: 'Legal Title Reference', val: 'Lot 14 / DP 270215' },
-                                { label: 'Structural Vintage', val: 'Circa 2018 (Certified)' },
-                                { label: 'Aggregate Footprint', val: '112 SQM Net Internal' },
-                                { label: 'Zoning Protocol', val: 'R4 - High Intensity Res' },
-                                { label: 'Jurisdiction Council', val: 'City of Sydney / NSW' },
+                                { label: 'Structural Vintage', val: 'Certified' },
+                                { label: 'Aggregate Footprint', val: 'N/A' },
+                                { label: 'Zoning Protocol', val: 'Residential' },
+                                { label: 'Jurisdiction', val: `${caseData.property.suburb || ''} ${caseData.property.state || ''}` },
                                 { label: 'Quarterly Infrastructure Levy', val: '$150.99 AUD' },
                                 { label: 'Quarterly Strata Amortization', val: '$1,850.00 AUD' }
                             ].map((row, i) => (

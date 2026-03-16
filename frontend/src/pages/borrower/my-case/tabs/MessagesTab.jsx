@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useAuth } from '../../../../context/AuthContext'
 import { borrowerApi } from '../../api'
 
 export default function MessagesTab({ caseId, messages: initialMessages = [] }) {
+  const { user } = useAuth()
   const [messages, setMessages] = useState(initialMessages)
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
@@ -13,8 +15,8 @@ export default function MessagesTab({ caseId, messages: initialMessages = [] }) 
     setSendError(null)
     const optimistic = {
       id: `opt-${Date.now()}`,
-      sender: 'You',
-      initials: 'U',
+      sender: user?.name || 'You',
+      initials: user?.initials || 'U',
       message: body,
       timestamp: 'Sending…',
       isBorrower: true,

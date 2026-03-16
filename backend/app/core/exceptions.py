@@ -87,8 +87,8 @@ class PasswordValidationError(ValidationError):
 
 class DuplicateEmailError(ValidationError):
     error_code = "DUPLICATE_EMAIL"
-    status_code = 409
-    message = "An account with this email already exists"
+    status_code = 400
+    message = "This email address is already registered. Please sign in or use a different email."
 
 
 # ─── State Machine Errors ────────────────────────────────────────────────────

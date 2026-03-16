@@ -18,7 +18,8 @@ export const profileService = {
    */
   async getProfile() {
     try {
-      const res = await borrowerApi.getProfile()
+      // Use the standardized identity endpoint
+      const res = await borrowerApi.get('/api/v1/identity/me')
       const data = res?.data?.data !== undefined ? res.data.data : res?.data
       if (data && typeof data === 'object') {
         // Merge with localStorage to preserve photoUrl if API doesn't return it

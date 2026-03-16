@@ -1,0 +1,16 @@
+﻿User: siddu gadde (munigalam48@gmail.com) [ID: 1e6178ae-a6aa-48f1-a9c1-e42b4ac35842]
+  - Role: BORROWER, Status: APPROVED
+User: madhu munigala (nb72466@gmail.com) [ID: eacd2454-fe3e-4c4e-985a-b42ce53928b5]
+  - Role: BORROWER, Status: APPROVED
+User: siddu gadde (siddugadde123@gmail.com) [ID: c1ef5dbd-5fc0-4962-988b-410cc0626789]
+  - Role: INVESTOR, Status: APPROVED
+User: siddu gadde (shravanidasari10@gmail.com) [ID: 45d7c431-4018-4c1e-b743-59ab0c7900ff]
+  - Role: BORROWER, Status: APPROVED
+User: srikanth madhu (madhuvinee10@gmail.com) [ID: ab705ec3-56d3-442e-a640-6bfa2cd4af22]
+  - Role: LAWYER, Status: APPROVED
+User: Platform Admin (admin@brickbanq.com) [ID: 478d08d3-e6fd-4f5c-bfa3-f2e812306c95]
+  - Role: ADMIN, Status: APPROVED
+User: siddartha G (siddarthagadde11@gmail.com) [ID: 1f044fff-f23c-4ea2-bc58-eec8b24f13f4]
+  - Role: BORROWER, Status: APPROVED
+User: Sample Borrower (borrower@brickbanq.com) [ID: 149c2df3-200b-4284-ab0b-f9b32f815abf]
+  - Role: BORROWER, Status: APPROVED

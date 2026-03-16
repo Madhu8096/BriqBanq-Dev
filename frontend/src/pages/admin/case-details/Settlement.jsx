@@ -10,7 +10,7 @@ import {
 
 export default function Settlement() {
     const { caseData } = useCaseContext()
-    const [messages, setMessages] = useState([
+    const [messages, setMessages] = useState(caseData.messages?.length > 0 ? caseData.messages : [
         { id: 1, sender: 'Sarah Mitchell', role: 'Authorized Conveyancer', time: '10:45 AM', text: 'Settlement confirmed for execution on March 15th. All deeds verified.' },
         { id: 2, type: 'system', time: 'Tue, Feb 18 - 12:00 PM', text: 'PROTOCOL SYNC: Final liquidation authorization received.' },
         { id: 3, sender: 'Lender', role: 'CBA Senior Rep', time: 'Tue, Feb 18 - 2:45 PM', text: 'Discharge authority fully executed and uploaded to secure vault.' }

@@ -6,12 +6,14 @@ import AdminStatCard from '../../components/admin/AdminStatCard'
 import AdminRiskBadge from '../../components/admin/AdminRiskBadge'
 import { MOCK_CASES } from '../../data/mockData'
 
+import { caseService } from '../../api/dataService'
+
 export default function CaseManagement() {
     const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('All Status')
-    const [cases, setCases] = useState(MOCK_CASES)
-    const [allCases, setAllCases] = useState(MOCK_CASES) // Store all cases for filtering
+    const [cases, setCases] = useState([])
+    const [allCases, setAllCases] = useState([]) // Store all cases for filtering
     const [isLoading, setIsLoading] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
 
@@ -21,28 +23,41 @@ export default function CaseManagement() {
     const handleRefresh = async () => {
         setIsLoading(true)
         try {
-            // TODO: Replace with actual API call
-            // const response = await fetch('/api/admin/cases')
-            // const data = await response.json()
-            // setAllCases(data)
+            const res = await caseService.getAllCases(statusFilter === 'All Status' ? null : statusFilter)
+            
+            if (res.success) {
+                // The backend returns { items: [], total: 0, ... }
+                const fetchedItems = res.data.items || []
+                
+                // Map backend format to component format if needed
+                const mappedCases = fetchedItems.map(c => ({
+                    id: c.id,
+                    borrower: c.borrower_name || (c.borrower_id ? c.borrower_id.split('-')[0] + '...' : 'Unknown'),
+                    property: c.property_address || 'N/A',
+                    suburb: c.property_type || '',
+                    debt: c.outstanding_debt || 0,
+                    valuation: c.estimated_value || 0,
+                    status: c.status,
+                    risk: c.risk_level || 'Medium',
+                    created: new Date(c.created_at).toLocaleDateString()
+                }))
 
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 500))
-
-            // For now, reset to mock data
-            setAllCases(MOCK_CASES)
-
-            // Apply current filter after refresh
-            applyFilters(MOCK_CASES, statusFilter, searchTerm)
-
-            console.log('Cases refreshed successfully')
+                setAllCases(mappedCases)
+                setCases(mappedCases)
+            } else {
+                alert(res.error || "Failed to load cases")
+            }
         } catch (error) {
             console.error('Error refreshing cases:', error)
-            alert('Failed to refresh cases. Please try again.')
+            alert('An unexpected error occurred.')
         } finally {
             setIsLoading(false)
         }
     }
+
+    useEffect(() => {
+        handleRefresh()
+    }, [])
 
     // ============================================================================
     // EXPORT FUNCTIONALITY - Generate PDF of all cases
@@ -127,12 +142,39 @@ export default function CaseManagement() {
     }
 
     // Handle status filter change
-    const handleStatusFilterChange = (newStatus) => {
-        setStatusFilter(newStatus)
-        applyFilters(allCases, newStatus, searchTerm)
+    const handleStatusFilterChange = async (newStatusUI) => {
+        setStatusFilter(newStatusUI)
+        
+        let backendStatus = null
+        if (newStatusUI === 'Active') backendStatus = 'LISTED'
+        else if (newStatusUI === 'In Auction') backendStatus = 'AUCTION'
+        else if (newStatusUI === 'Pending') backendStatus = 'SUBMITTED'
+        else if (newStatusUI === 'Completed') backendStatus = 'CLOSED'
 
-        // TODO: Replace with API call when backend is ready
-        // fetchCasesByStatus(newStatus)
+        setIsLoading(true)
+        try {
+            const res = await caseService.getAllCases(backendStatus)
+            if (res.success) {
+                const fetchedItems = res.data.items || []
+                const mappedCases = fetchedItems.map(c => ({
+                    id: c.id,
+                    borrower: c.borrower_name || (c.borrower_id ? c.borrower_id.split('-')[0] + '...' : 'Unknown'),
+                    property: c.property_address || 'N/A',
+                    suburb: c.property_type || '',
+                    debt: c.outstanding_debt || 0,
+                    valuation: c.estimated_value || 0,
+                    status: c.status,
+                    risk: c.risk_level || 'Medium',
+                    created: new Date(c.created_at).toLocaleDateString()
+                }))
+                setAllCases(mappedCases)
+                applyFilters(mappedCases, newStatusUI, searchTerm)
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     // Handle search term change
@@ -159,14 +201,43 @@ export default function CaseManagement() {
     //     }
     // }
 
-    const handleStatusChange = (caseId, newStatus) => {
-        // Update in both cases and allCases
-        const updatedCases = allCases.map(c => c.id === caseId ? { ...c, status: newStatus } : c)
-        setAllCases(updatedCases)
-        applyFilters(updatedCases, statusFilter, searchTerm)
+    const handleStatusChange = async (caseId, newStatusUI) => {
+        let backendStatus = newStatusUI
+        if (newStatusUI === 'Active') backendStatus = 'LISTED'
+        else if (newStatusUI === 'In Auction') backendStatus = 'AUCTION'
+        else if (newStatusUI === 'Pending') backendStatus = 'SUBMITTED'
+        else if (newStatusUI === 'Completed') backendStatus = 'CLOSED'
 
-        // TODO: Update status on backend
-        // updateCaseStatus(caseId, newStatus)
+        try {
+            const res = await caseService.updateCaseStatus(caseId, backendStatus)
+            if (res.success) {
+                // Update local state
+                const updatedCases = allCases.map(c => c.id === caseId ? { ...c, status: backendStatus } : c)
+                setAllCases(updatedCases)
+                applyFilters(updatedCases, statusFilter, searchTerm)
+            } else {
+                alert(res.error || "Failed to update status")
+            }
+        } catch (err) {
+            alert("An error occurred during status update")
+        }
+    }
+
+    const handleDeleteCase = async (caseId) => {
+        if (!window.confirm("Are you sure you want to delete this case? This action cannot be undone.")) return
+
+        try {
+            const res = await caseService.deleteCase(caseId)
+            if (res.success) {
+                const updatedCases = allCases.filter(c => c.id !== caseId)
+                setAllCases(updatedCases)
+                setCases(prev => prev.filter(c => c.id !== caseId))
+            } else {
+                alert(res.error || "Failed to delete case")
+            }
+        } catch (err) {
+            alert("An error occurred during deletion")
+        }
     }
 
     const formatCurrency = (amount) => {
@@ -305,7 +376,14 @@ export default function CaseManagement() {
                                     <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(caseItem.valuation)}</td>
                                     <td className="px-4 py-3">
                                         <select
-                                            value={caseItem.status}
+                                            value={
+                                                caseItem.status === 'LISTED' ? 'Active' :
+                                                caseItem.status === 'AUCTION' ? 'In Auction' :
+                                                caseItem.status === 'SUBMITTED' ? 'Pending' :
+                                                caseItem.status === 'UNDER_REVIEW' ? 'Pending' :
+                                                caseItem.status === 'CLOSED' ? 'Completed' :
+                                                caseItem.status
+                                            }
                                             onChange={(e) => handleStatusChange(caseItem.id, e.target.value)}
                                             className="text-sm border border-gray-300 rounded px-2 py-1"
                                         >
@@ -327,7 +405,10 @@ export default function CaseManagement() {
                                             >
                                                 <Eye className="w-4 h-4 flex-shrink-0" />
                                             </button>
-                                            <button className="text-red-500 hover:text-red-600">
+                                            <button
+                                                onClick={() => handleDeleteCase(caseItem.id)}
+                                                className="text-red-500 hover:text-red-600"
+                                            >
                                                 <Trash2 className="w-4 h-4 flex-shrink-0" />
                                             </button>
                                         </div>

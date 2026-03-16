@@ -15,13 +15,16 @@ import {
     Bell,
     Settings,
     LogOut,
+    CheckSquare,
 } from 'lucide-react'
+
 
 const navItems = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Case Management', path: '/admin/case-management', icon: Briefcase },
     { label: 'All Deals', path: '/admin/all-deals', icon: Tag },
     { label: 'Auction Control', path: '/admin/auction-control', icon: Zap },
+    { label: 'Task Center', path: '/admin/task-center', icon: CheckSquare },
     { label: 'KYC Review Queue', path: '/admin/kyc-review', icon: Users },
     { label: 'Contracts', path: '/admin/contracts', icon: FileText },
     { label: 'Escrow Management', path: '/admin/escrow-management', icon: CircleDot },

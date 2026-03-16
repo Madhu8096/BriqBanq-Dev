@@ -59,8 +59,12 @@ class CaseResponse(BaseModel):
     outstanding_debt: Decimal
     status: CaseStatus
     borrower_id: uuid.UUID
+    borrower_name: Optional[str] = None
     assigned_lawyer_id: Optional[uuid.UUID] = None
+    lawyer_name: Optional[str] = None
     assigned_lender_id: Optional[uuid.UUID] = None
+    lender_name: Optional[str] = None
+    risk_level: str = "Medium"
     reviewed_by: Optional[uuid.UUID] = None
     rejection_reason: Optional[str] = None
     created_at: datetime

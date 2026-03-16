@@ -69,7 +69,7 @@ export default function Sidebar({ open, onClose }) {
         <div className="p-3 border-t border-gray-800">
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/signin')}
             className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />

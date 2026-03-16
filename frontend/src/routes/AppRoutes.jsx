@@ -28,6 +28,14 @@ import LenderContracts from "../pages/lender/LenderContracts";
 
 import LenderNotifications from "../pages/lender/LenderNotifications";
 import LenderSettings from "../pages/lender/LenderSettings";
+import LenderCaseDetails from "../pages/lender/LenderCaseDetails";
+import LenderCommunications from "../pages/lender/LenderCommunications";
+import LenderDocuments from "../pages/lender/LenderDocuments";
+import LenderESignatures from "../pages/lender/LenderESignatures";
+import LenderMyCases from "../pages/lender/LenderMyCases";
+import LenderReports from "../pages/lender/LenderReports";
+import LenderSubmitNewCase from "../pages/lender/LenderSubmitNewCase";
+import LenderTaskCenter from "../pages/lender/LenderTaskCenter";
 
 // Lawyer Panel
 import LawyerLayout from "../pages/lawyer/LawyerLayout.jsx";
@@ -48,6 +56,7 @@ import HomePage from "../pages/home/HomePage";
 import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
 import SignIn from "../pages/auth/SignIn";
 import SignUp from "../pages/auth/SignUp";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
 import ReceiverDashboard from "../pages/receiver/ReceiverDashboard";
 
 import AdminDashboardLayout from "../components/admin/AdminDashboardLayout";
@@ -64,6 +73,19 @@ import AdminNotifications from "../pages/admin/Notifications";
 import AdminSettings from "../pages/admin/Settings";
 import AdminConsole from "../pages/admin/AdminConsole";
 import AdminESignatures from "../pages/admin/ESignatures";
+import AdminBuyNowRoom from "../pages/admin/AdminBuyNowRoom";
+import AdminTaskCenter from "../pages/admin/AdminTaskCenter";
+import AdminKYCReviewDetail from "../pages/admin/KYCReviewDetail";
+import AdminCaseDetailsLayout from "../pages/admin/case-details/CaseDetailsLayout";
+import AdminCaseOverview from "../pages/admin/case-details/Overview";
+import AdminCaseProperty from "../pages/admin/case-details/Property";
+import AdminCaseDocuments from "../pages/admin/case-details/Documents";
+import AdminCaseInvestmentMemorandum from "../pages/admin/case-details/InvestmentMemorandum";
+import AdminCaseSettlement from "../pages/admin/case-details/Settlement";
+import AdminCaseBids from "../pages/admin/case-details/Bids";
+import AdminCaseMessages from "../pages/admin/case-details/Messages";
+import AdminCaseActivity from "../pages/admin/case-details/Activity";
+
 
 // Borrower Imports
 import BorrowerLayout from "../pages/borrower/BorrowerLayout";
@@ -76,6 +98,8 @@ import BorrowerTaskCenter from "../pages/borrower/TaskCenter";
 import BorrowerAuctionRoom from "../pages/borrower/AuctionRoom";
 import BorrowerNotifications from "../pages/borrower/Notifications";
 import BorrowerSettings from "../pages/borrower/Settings";
+import NewCase from "../pages/borrower/NewCase";
+import { CaseProvider } from "../context/CaseContext";
 
 export default function AppRoutes() {
   return (
@@ -86,21 +110,37 @@ export default function AppRoutes() {
       <Route path="/signup" element={<SignUp />} />
 
       {/* Admin Panel */}
-      <Route path="/admin" element={<RouteErrorBoundary routeLabel="the admin panel"><AdminDashboardLayout /></RouteErrorBoundary>}>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="case-management" element={<AdminCaseManagement />} />
-        <Route path="all-deals" element={<AdminAllDeals />} />
-        <Route path="auction-control" element={<AdminAuctionControl />} />
-        <Route path="kyc-review" element={<AdminKYCReviewQueue />} />
-        <Route path="contracts" element={<AdminContracts />} />
-        <Route path="escrow-management" element={<AdminEscrowManagement />} />
-        <Route path="document-library" element={<AdminDocumentLibrary />} />
-        <Route path="reports-analytics" element={<AdminReportsAnalytics />} />
-        <Route path="e-signatures" element={<AdminESignatures />} />
-        <Route path="admin-console" element={<AdminConsole />} />
-        <Route path="notifications" element={<AdminNotifications />} />
-        <Route path="settings" element={<AdminSettings />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin" element={<RouteErrorBoundary routeLabel="the admin panel"><AdminDashboardLayout /></RouteErrorBoundary>}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="case-management" element={<AdminCaseManagement />} />
+          <Route path="all-deals" element={<AdminAllDeals />} />
+          <Route path="auction-control" element={<AdminAuctionControl />} />
+          <Route path="kyc-review" element={<AdminKYCReviewQueue />} />
+          <Route path="contracts" element={<AdminContracts />} />
+          <Route path="escrow-management" element={<AdminEscrowManagement />} />
+          <Route path="document-library" element={<AdminDocumentLibrary />} />
+          <Route path="reports-analytics" element={<AdminReportsAnalytics />} />
+          <Route path="e-signatures" element={<AdminESignatures />} />
+          <Route path="admin-console" element={<AdminConsole />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="buy-now/:id" element={<AdminBuyNowRoom />} />
+          <Route path="task-center" element={<AdminTaskCenter />} />
+          <Route path="kyc-review/:id" element={<AdminKYCReviewDetail />} />
+          <Route path="case-details/:id" element={<CaseProvider><AdminCaseDetailsLayout /></CaseProvider>}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<AdminCaseOverview />} />
+            <Route path="property" element={<AdminCaseProperty />} />
+            <Route path="documents" element={<AdminCaseDocuments />} />
+            <Route path="investment-memorandum" element={<AdminCaseInvestmentMemorandum />} />
+            <Route path="settlement" element={<AdminCaseSettlement />} />
+            <Route path="bids" element={<AdminCaseBids />} />
+            <Route path="messages" element={<AdminCaseMessages />} />
+            <Route path="activity" element={<AdminCaseActivity />} />
+          </Route>
+        </Route>
       </Route>
 
 
@@ -109,6 +149,7 @@ export default function AppRoutes() {
       <Route path="/borrower" element={<RouteErrorBoundary routeLabel="the borrower panel"><BorrowerLayout /></RouteErrorBoundary>}>
         <Route index element={<Navigate to="/borrower/dashboard" replace />} />
         <Route path="dashboard" element={<BorrowerDashboard />} />
+        <Route path="new-case" element={<NewCase />} />
         <Route path="my-case" element={<MyCase />} />
         <Route path="e-signatures" element={<BorrowerESignatures />} />
         <Route path="contracts" element={<BorrowerContracts />} />
@@ -120,36 +161,46 @@ export default function AppRoutes() {
       </Route>
 
       {/* Investor Routes Layout */}
-      <Route path="/investor" element={<InvestorLayout />}>
-        <Route index element={<Navigate to="/investor/dashboard" replace />} />
-        <Route path="dashboard" element={<InvestorDashboard />} />
-        <Route path="deals" element={<InvestorAllDeals />} />
-        <Route path="auctions" element={<InvestorAuctions />} />
-        <Route path="auctions/:id" element={<InvestorAuctionRoom />} />
-        <Route path="contracts" element={<InvestorContracts />} />
-        <Route path="escrow" element={<InvestorEscrow />} />
-        <Route path="tasks" element={<InvestorTaskCenter />} />
-        <Route path="reports" element={<InvestorReports />} />
-        <Route path="documents" element={<InvestorDocuments />} />
-        <Route path="contracts/:id" element={<InvestorContractSigning />} />
-        <Route path="place-bid/:id" element={<InvestorPlaceBid />} />
-        <Route path="buy-now/:id" element={<InvestorBuyNowRoom />} />
-        <Route path="case-details/:id" element={<InvestorCaseDetails />} />
-        <Route path="notifications" element={<InvestorNotifications />} />
-        <Route path="settings" element={<InvestorSettings />} />
-      </Route>
+      <Route element={<ProtectedRoute />}>
+        <Route path="/investor" element={<InvestorLayout />}>
+          <Route index element={<Navigate to="/investor/dashboard" replace />} />
+          <Route path="dashboard" element={<InvestorDashboard />} />
+          <Route path="deals" element={<InvestorAllDeals />} />
+          <Route path="auctions" element={<InvestorAuctions />} />
+          <Route path="auctions/:id" element={<InvestorAuctionRoom />} />
+          <Route path="contracts" element={<InvestorContracts />} />
+          <Route path="escrow" element={<InvestorEscrow />} />
+          <Route path="tasks" element={<InvestorTaskCenter />} />
+          <Route path="reports" element={<InvestorReports />} />
+          <Route path="documents" element={<InvestorDocuments />} />
+          <Route path="contracts/:id" element={<InvestorContractSigning />} />
+          <Route path="place-bid/:id" element={<InvestorPlaceBid />} />
+          <Route path="buy-now/:id" element={<InvestorBuyNowRoom />} />
+          <Route path="case-details/:id" element={<InvestorCaseDetails />} />
+          <Route path="notifications" element={<InvestorNotifications />} />
+          <Route path="settings" element={<InvestorSettings />} />
+        </Route>
 
-      {/* Lender Routes Layout */}
-      <Route path="/lender" element={<LenderLayout />}>
-        <Route index element={<Navigate to="/lender/dashboard" replace />} />
-        <Route path="dashboard" element={<LenderDashboard />} />
-        <Route path="deals" element={<LenderAllDeals />} />
-        <Route path="auctions" element={<LenderAuctions />} />
-        <Route path="auctions/:id" element={<LenderAuctionRoom />} />
-        <Route path="buy-now/:id" element={<LenderBuyNowRoom />} />
-        <Route path="contracts" element={<LenderContracts />} />
-        <Route path="notifications" element={<LenderNotifications />} />
-        <Route path="settings" element={<LenderSettings />} />
+        {/* Lender Routes Layout */}
+        <Route path="/lender" element={<LenderLayout />}>
+          <Route index element={<Navigate to="/lender/dashboard" replace />} />
+          <Route path="dashboard" element={<LenderDashboard />} />
+          <Route path="deals" element={<LenderAllDeals />} />
+          <Route path="auctions" element={<LenderAuctions />} />
+          <Route path="auctions/:id" element={<LenderAuctionRoom />} />
+          <Route path="buy-now/:id" element={<LenderBuyNowRoom />} />
+          <Route path="contracts" element={<LenderContracts />} />
+          <Route path="notifications" element={<LenderNotifications />} />
+          <Route path="settings" element={<LenderSettings />} />
+          <Route path="submit-case" element={<LenderSubmitNewCase />} />
+          <Route path="reports" element={<LenderReports />} />
+          <Route path="case-details/:id" element={<LenderCaseDetails />} />
+          <Route path="communications" element={<LenderCommunications />} />
+          <Route path="documents" element={<LenderDocuments />} />
+          <Route path="e-signatures" element={<LenderESignatures />} />
+          <Route path="my-cases" element={<LenderMyCases />} />
+          <Route path="tasks" element={<LenderTaskCenter />} />
+        </Route>
       </Route>
 
       {/* Lawyer Panel */}

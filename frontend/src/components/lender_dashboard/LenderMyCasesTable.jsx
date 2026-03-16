@@ -15,10 +15,10 @@ export default function LenderMyCasesTable({ cases = [], onDelete, onStatusUpdat
     const filteredCases = useMemo(() => {
         return cases.filter(item => {
             const matchesSearch =
-                item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.borrower.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.suburb && item.suburb.toLowerCase().includes(searchTerm.toLowerCase()));
+                (item.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.borrower || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.property || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (item.suburb || "").toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesStatus = statusFilter === "All Status" || item.status === statusFilter;
 

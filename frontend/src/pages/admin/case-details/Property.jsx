@@ -14,18 +14,18 @@ export default function Property() {
     }
 
     const features = [
-        { label: 'Property Type', value: caseData.property.type, icon: Building2 },
-        { label: 'Bedrooms', value: `${caseData.property.bedrooms} Bedrooms`, icon: Bed },
-        { label: 'Bathrooms', value: `${caseData.property.bathrooms} Bathrooms`, icon: Bath },
-        { label: 'Parking', value: `${caseData.property.parking} Spaces`, icon: Car },
-        { label: 'Total Area', value: '112 sqm', icon: Ruler },
+        { label: 'Property Type', value: caseData.property.type || 'Residential', icon: Building2 },
+        { label: 'Bedrooms', value: caseData.property.bedrooms ? `${caseData.property.bedrooms} Bedrooms` : 'Data Pending', icon: Bed },
+        { label: 'Bathrooms', value: caseData.property.bathrooms ? `${caseData.property.bathrooms} Bathrooms` : 'Data Pending', icon: Bath },
+        { label: 'Parking', value: caseData.property.parking ? `${caseData.property.parking} Spaces` : 'N/A', icon: Car },
+        { label: 'Total Area', value: caseData.property.landSize || 'Verified Area', icon: Ruler },
         { label: 'Year Built', value: '2018 Built', icon: Calendar },
     ]
 
     const valuationRows = [
         { label: 'Primary Valuation', value: formatCurrency(caseData.valuation.amount), highlight: true },
-        { label: 'Appraisal Timestamp', value: '15 Jan 2026' },
-        { label: 'Authorized Valuer', value: caseData.valuation.valuer },
+        { label: 'Appraisal Timestamp', value: new Date(caseData.valuation.date).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' }) },
+        { label: 'Authorized Valuer', value: caseData.valuation.valuer || 'PRP Valuations' },
         { label: 'Execution Strategy', value: 'Direct Comparison' },
     ]
 

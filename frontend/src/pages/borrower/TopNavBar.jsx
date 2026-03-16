@@ -93,14 +93,14 @@ export default function TopNavBar() {
 
           <div className="flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 pl-2 border-l border-gray-200">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-800 leading-tight">{user.name}</p>
-              <p className="text-xs font-normal text-gray-500 leading-tight">{user.role}</p>
+              <p className="text-sm font-bold text-gray-800 leading-tight">{user?.name || "User"}</p>
+              <p className="text-xs font-normal text-gray-500 leading-tight">{user?.role || "Borrower"}</p>
             </div>
             <NavLink
               to="/borrower/settings"
               className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shrink-0 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              {user.initials}
+              {user?.initials || (user?.name?.charAt(0).toUpperCase() || "U")}
             </NavLink>
           </div>
         </div>

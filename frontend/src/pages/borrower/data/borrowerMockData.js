@@ -26,8 +26,8 @@ export const MOCK_BORROWER_CASE = {
     valuer: 'Preston Rowe Paterson',
   },
   borrower: {
-    name: 'Sarah Mitchell',
-    email: 'sarah.mitchell@email.com',
+    name: 'Madhu Munigala',
+    email: 'madhumunigala@gmail.com',
     phone: '+61 412 345 678',
     dateOfBirth: '1985-06-15',
     kycStatus: 'Completed',
@@ -127,7 +127,7 @@ export const MOCK_BORROWER_CASE = {
   recentActivity: [
     { type: 'bid', label: 'New bid placed', detail: 'Platinum Capital Partners bid $1,100,000', time: '02 Mar 2026, 15:11 AEST' },
     { type: 'document', label: 'Document uploaded', detail: 'Property inspection report added', time: '02 Mar 2026, 13:26 AEST' },
-    { type: 'message', label: 'Message received', detail: 'Sarah Mitchell sent a message', time: '02 Mar 2026, 11:26 AEST' },
+    { type: 'message', label: 'Message received', detail: 'Madhu Munigala sent a message', time: '02 Mar 2026, 11:26 AEST' },
   ],
 }
 
@@ -238,16 +238,16 @@ export const MOCK_SECURITY_ALERTS = [
 ]
 
 export const MOCK_RECENT_ACTIVITY = [
-  { type: 'created', label: 'ENVELOPE CREATED', user: 'Sarah Johnson', time: '2026-02-07 02:52:00 AEDT' },
-  { type: 'hash', label: 'DOCUMENT HASH COMPUTED', user: 'Sarah Johnson', time: '2026-02-07 02:52:35 AEDT' },
-  { type: 'added', label: 'RECIPIENTS ADDED', user: 'Sarah Johnson', time: '2026-02-07 02:53:10 AEDT' },
+  { type: 'created', label: 'ENVELOPE CREATED', user: 'Madhu Munigala', time: '2026-02-07 02:52:00 AEDT' },
+  { type: 'hash', label: 'DOCUMENT HASH COMPUTED', user: 'Madhu Munigala', time: '2026-02-07 02:52:35 AEDT' },
+  { type: 'added', label: 'RECIPIENTS ADDED', user: 'Madhu Munigala', time: '2026-02-07 02:53:10 AEDT' },
   { type: 'completed', label: 'RISK ASSESSMENT COMPLETED', user: 'Approval System', time: '2026-02-07 02:54:20 AEDT' },
-  { type: 'approved', label: 'ENVELOPE APPROVED', user: 'John Smith (Approver)', time: '2026-02-07 02:55:13 AEDT' },
+  { type: 'approved', label: 'ENVELOPE APPROVED', user: 'Madhu Munigala (Approver)', time: '2026-02-07 02:55:13 AEDT' },
 ]
 
 export const MOCK_BORROWER_TASKS = [
   { id: 1, title: 'Update accounting records — February entries', desc: 'Review and reconcile February accounting entries in Grow accounting.', status: 'Completed', priority: 'Done', dueLabel: 'Overdue (30 d)', tags: ['Accounting', 'Reconciliation'], caseId: null, module: 'Accounting', actions: [] },
-  { id: 2, title: 'Follow up with client — Contract of Sale', desc: 'Contact Sarah Mitchell regarding outstanding contract of sale documents.', status: 'Overdue', priority: 'High', dueLabel: 'Overdue (Feb 27)', tags: ['Client Communication'], caseId: 'MIP-2026-001', module: 'Brickbanq', actions: ['viewCase'] },
+  { id: 2, title: 'Follow up with client — Contract of Sale', desc: 'Contact Madhu Munigala regarding outstanding contract of sale documents.', status: 'Overdue', priority: 'High', dueLabel: 'Overdue (Feb 27)', tags: ['Client Communication'], caseId: 'MIP-2026-001', module: 'Brickbanq', actions: ['viewCase'] },
   { id: 3, title: 'Verify enforcement steps for MIP-2026-002', desc: 'Check statutory notices and enforcement procedures are complete.', status: 'Pending', priority: 'Urgent', dueLabel: 'Due Today', tags: ['Compliance'], caseId: 'MIP-2026-002', module: 'Brickbanq', actions: ['viewCase', 'startTask'] },
   { id: 4, title: 'Upload Statement of Advice', desc: 'Prepare and upload compliance statement of advice for case MIP-2026-001.', status: 'InProgress', priority: 'High', dueLabel: 'Tomorrow', tags: ['Documentation'], caseId: 'MIP-2026-001', module: 'Brickbanq', actions: ['moveToPending', 'markComplete'] },
   { id: 5, title: 'Review loan documentation for MIP-2026-001', desc: 'Complete legal review of all case documents and verify NCCP compliance.', status: 'Pending', priority: 'High', dueLabel: 'Mar 2, 2026', tags: ['Legal Review'], caseId: 'MIP-2026-001', module: 'Brickbanq', actions: ['viewCase', 'startTask'] },
@@ -257,9 +257,9 @@ export const MOCK_BORROWER_TASKS = [
 ]
 
 export const MOCK_BORROWER_PROFILE = {
-  firstName: 'David',
-  lastName: 'Williams',
-  email: 'david.williams@example.com',
+  firstName: 'Madhu',
+  lastName: 'Munigala',
+  email: 'madhumunigala@gmail.com',
   phone: '+61 412 345 678',
   jobTitle: 'Investment Manager',
   company: 'Platinum Capital Partners',
@@ -318,14 +318,14 @@ export const MOCK_BORROWER_DOCUMENTS = [
 
 // My Case page: case messages (borrower left/grey, other party right/blue)
 export const MOCK_MY_CASE_MESSAGES = [
-  { id: 1, sender: 'Sarah Mitchell', role: 'Borrower', initials: 'SM', message: 'I have uploaded the additional property documentation as requested.', timestamp: 'about 6 hours ago', isBorrower: true },
-  { id: 2, sender: 'David Williams', role: 'Investor', initials: 'DW', message: 'Thank you. Could you also provide the strata report?', timestamp: 'about 5 hours ago', isBorrower: false },
-  { id: 3, sender: 'Sarah Mitchell', role: 'Borrower', initials: 'SM', message: 'Yes, I will upload it within the next hour.', timestamp: 'about 5 hours ago', isBorrower: true },
+  { id: 1, sender: 'Madhu Munigala', role: 'Borrower', initials: 'MM', message: 'I have uploaded the additional property documentation as requested.', timestamp: 'about 6 hours ago', isBorrower: true },
+  { id: 2, sender: 'David Wilson', role: 'Investor', initials: 'DW', message: 'Thank you. Could you also provide the strata report?', timestamp: 'about 5 hours ago', isBorrower: false },
+  { id: 3, sender: 'Madhu Munigala', role: 'Borrower', initials: 'MM', message: 'Yes, I will upload it within the next hour.', timestamp: 'about 5 hours ago', isBorrower: true },
 ]
 
 // My Case Documents tab: uploaded documents table
 export const MOCK_MY_CASE_UPLOADED_DOCS = [
-  { id: 'd1', name: 'Property Inspection Report.pdf', type: 'Inspection', uploadedBy: 'Sarah Mitchell', date: '02 Mar 2026' },
+  { id: 'd1', name: 'Property Inspection Report.pdf', type: 'Inspection', uploadedBy: 'Madhu Munigala', date: '02 Mar 2026' },
   { id: 'd2', name: 'Valuation Report.pdf', type: 'Valuation', uploadedBy: 'Preston Rowe Paterson', date: '15 Jan 2026' },
 ]
 
@@ -581,22 +581,22 @@ export const MOCK_GOVSIGN_ALERTS = [
 ]
 
 export const MOCK_GOVSIGN_ACTIVITY = [
-  { id: '1', action: 'ENVELOPE CREATED', user: 'Sarah Johnson', hash: 'share.eoc...', time: '2024-02-21 14:26:53.123 AEDT' },
-  { id: '2', action: 'DOCUMENT HASH COMPUTED', user: 'Sarah Johnson', hash: 'share.fEnBcKeC...', time: '2024-02-21 14:26:12.456 AEDT' },
-  { id: '3', action: 'RECIPIENTS ADDED', user: 'Sarah Johnson', hash: 'share.uYbGcNc...', time: '2024-02-21 14:25:03.789 AEDT' },
+  { id: '1', action: 'ENVELOPE CREATED', user: 'Madhu Munigala', hash: 'share.eoc...', time: '2024-02-21 14:26:53.123 AEDT' },
+  { id: '2', action: 'DOCUMENT HASH COMPUTED', user: 'Madhu Munigala', hash: 'share.fEnBcKeC...', time: '2024-02-21 14:26:12.456 AEDT' },
+  { id: '3', action: 'RECIPIENTS ADDED', user: 'Madhu Munigala', hash: 'share.uYbGcNc...', time: '2024-02-21 14:25:03.789 AEDT' },
   { id: '4', action: 'RISK ASSESSMENT COMPLETED', user: 'Approval System', hash: '', time: '2024-02-21 14:24:02.987 AEDT' },
   { id: '5', action: 'ENVELOPE APPROVED', user: 'John Smith (Approver)', hash: 'share.fZaKbZk...', time: '2024-02-21 14:20:13.345 AEDT' },
 ]
 
 export const MOCK_GOVSIGN_ENVELOPES = [
-  { id: 'MBI-2021-0001', title: 'Defence Procurement Contract - Project Nighthawk', sender: 'Sarah Johnson', type: 'Procurement', risk: 'URGENT', status: 'In Signing', progress: '2/3', progressVal: 2 / 3, sla: '23h 37m' },
+  { id: 'MBI-2021-0001', title: 'Defence Procurement Contract - Project Nighthawk', sender: 'Madhu Munigala', type: 'Procurement', risk: 'URGENT', status: 'In Signing', progress: '2/3', progressVal: 2 / 3, sla: '23h 37m' },
   { id: 'MBI-2021-0002', title: 'Banking Loan Agreement - Commonwealth Infrastructure', sender: 'Michael Brown', type: 'Contract', risk: 'PROTECTED', status: 'Pending Approval', progress: '1/4', progressVal: 0.25, sla: '47h 12m' },
   { id: 'MBI-2021-0003', title: 'Company Resolution - Board Appointment s127', sender: 'Melissa Wilson', type: 'Board Resolution', risk: 'OFFICIAL', status: 'Completed', progress: '2/2', progressVal: 1, sla: 'Complete' },
   { id: 'MBI-2021-0004', title: 'Deed of Guarantee with Witness Attestation', sender: 'David Lee', type: 'Deed', risk: 'PROTECTED', status: 'In Signing', progress: '1/3', progressVal: 1 / 3, sla: '7h 45m' },
 ]
 
 export const MOCK_GOVSIGN_DOCUMENTS = [
-  { id: 'doc-1', name: 'Defence_Procurement_Contract_Nighthawk.pdf', type: 'PDF', size: '2.4 MB', uploadedDate: '2026-02-21', uploadedBy: 'Sarah Johnson', status: 'Signed', envelopeId: 'MBI-2021-0001', hash: 'sha256:a7f39c2...' },
+  { id: 'doc-1', name: 'Defence_Procurement_Contract_Nighthawk.pdf', type: 'PDF', size: '2.4 MB', uploadedDate: '2026-02-21', uploadedBy: 'Madhu Munigala', status: 'Signed', envelopeId: 'MBI-2021-0001', hash: 'sha256:a7f39c2...' },
   { id: 'doc-2', name: 'Banking_Loan_Agreement_Commonwealth.pdf', type: 'PDF', size: '1.8 MB', uploadedDate: '2026-02-20', uploadedBy: 'Michael Brown', status: 'Pending', envelopeId: 'MBI-2021-0002', hash: 'sha256:b8e4a1d...' },
   { id: 'doc-3', name: 'Board_Resolution_s127_Appointment.docx', type: 'DOCX', size: '456 KB', uploadedDate: '2026-02-19', uploadedBy: 'Melissa Wilson', status: 'Signed', envelopeId: 'MBI-2021-0003', hash: 'sha256:c9f5b2e...' },
   { id: 'doc-4', name: 'Deed_of_Guarantee_Witness.pdf', type: 'PDF', size: '3.1 MB', uploadedDate: '2026-02-18', uploadedBy: 'David Lee', status: 'In Signing', envelopeId: 'MBI-2021-0004', hash: 'sha256:d0a6c3f...' },
@@ -617,7 +617,7 @@ export const MOCK_GOVSIGN_HSM_CLUSTER = {
 }
 
 export const MOCK_GOVSIGN_CERTIFICATES = [
-  { id: 'cert-1', subject: 'CN=Sarah Johnson, O=Defence, OU=Procurement, C=AU', issuer: 'GovSign Root CA - Defence', serial: '3A:2E:82:3F:88:AC:20:96', algorithm: 'RSA-2048 + SHA-512', validFrom: '2023-08-15', validTo: '2025-08-01', status: 'Active', tags: ['HSM-Backed', 'SECRET'] },
+  { id: 'cert-1', subject: 'CN=Madhu Munigala, O=Defence, OU=Procurement, C=AU', issuer: 'GovSign Root CA - Defence', serial: '3A:2E:82:3F:88:AC:20:96', algorithm: 'RSA-2048 + SHA-512', validFrom: '2023-08-15', validTo: '2025-08-01', status: 'Active', tags: ['HSM-Backed', 'SECRET'] },
   { id: 'cert-2', subject: 'CN=Michael Brown, O=Commonwealth Bank, OU=Legal, C=AU', issuer: 'GovSign Root CA - Banking', serial: '2a:3d:14:18:1b:2c:30:96', algorithm: 'ECDSA P-384 + SHA-384', validFrom: '2023-09-21', validTo: '2025-09-21', status: 'Active', tags: ['HSM-Backed', 'PROTECTED'] },
   { id: 'cert-3', subject: 'CN=Emma Wilson, O=Corporate Services, OU=Company Secretary, C=AU', issuer: 'GovSign Root CA - Corporate', serial: '2c:4f:16:1a:1d:2e:32:a0', algorithm: 'RSA-2048 + SHA-512', validFrom: '2024-01-10', validTo: '2026-01-10', status: 'Active', tags: ['HSM-Backed', 'OFFICIAL'] },
   { id: 'cert-4', subject: 'CN=Robert Taylor, O=Defence, OU=Intelligence, C=AU', issuer: 'GovSign Root CA - Defence', serial: '28:02:16:1B:1E:30:B0:0C', algorithm: 'RSA-2048 + SHA-512', validFrom: '2024-08-20', validTo: '2026-08-20', status: 'Expiring', expiringIn: '28 days', tags: ['HSM-Backed', 'TOP SECRET'] },
@@ -630,9 +630,9 @@ export const MOCK_GOVSIGN_EVIDENCE_CHAIN = {
 }
 
 export const MOCK_GOVSIGN_EVIDENCE_EVENTS = [
-  { id: 'EVT-0001', type: 'ENVELOPE_CREATED', actor: 'Sarah Johnson', originIp: '192.168.1.1', eventHash: 'sha256:d1c9ef0d...', previousHash: 'Genesis Event', timestamp: '2026-02-21 16:30:00.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'FIDO2 + MFA', genesis: true },
-  { id: 'EVT-0002', type: 'DOCUMENT_HASH_COMPUTED', actor: 'Sarah Johnson', originIp: '192.168.1.1', eventHash: 'sha256:a1b2c3d4...', previousHash: 'sha256:d1c9ef0d...', timestamp: '2026-02-21 16:29:45.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'Session MFA' },
-  { id: 'EVT-0003', type: 'RECIPIENTS_ADDED', actor: 'Sarah Johnson', originIp: '192.168.1.1', eventHash: 'sha256:e5f6a7b8...', previousHash: 'sha256:a1b2c3d4...', timestamp: '2026-02-21 16:29:30.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'FIDO2 + MFA' },
+  { id: 'EVT-0001', type: 'ENVELOPE_CREATED', actor: 'Madhu Munigala', originIp: '192.168.1.1', eventHash: 'sha256:d1c9ef0d...', previousHash: 'Genesis Event', timestamp: '2026-02-21 16:30:00.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'FIDO2 + MFA', genesis: true },
+  { id: 'EVT-0002', type: 'DOCUMENT_HASH_COMPUTED', actor: 'Madhu Munigala', originIp: '192.168.1.1', eventHash: 'sha256:a1b2c3d4...', previousHash: 'sha256:d1c9ef0d...', timestamp: '2026-02-21 16:29:45.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'Session MFA' },
+  { id: 'EVT-0003', type: 'RECIPIENTS_ADDED', actor: 'Madhu Munigala', originIp: '192.168.1.1', eventHash: 'sha256:e5f6a7b8...', previousHash: 'sha256:a1b2c3d4...', timestamp: '2026-02-21 16:29:30.000 (UTC)', device: 'Windows 11 - Chrome 121', auth: 'FIDO2 + MFA' },
   { id: 'EVT-0004', type: 'RISK_ASSESSMENT_COMPLETED', actor: 'Approval System', originIp: '10.0.0.1', eventHash: 'sha256:c9d0e1f2...', previousHash: 'sha256:e5f6a7b8...', timestamp: '2026-02-21 16:29:15.000 (UTC)', device: 'System', auth: null },
   { id: 'EVT-0009', type: 'HSM_SIGNATURE_APPLIED', actor: 'System', originIp: '10.0.0.1', eventHash: 'sha256:28:02:16:1B...', previousHash: 'sha256:c9d0e1f2...', timestamp: '2026-02-21 16:29:00.000 (UTC)', device: 'HSM Cluster', auth: 'HSM', certificateSerial: '28:02:16:1B...B0:0C', hsmCluster: 'HSM-CLUSTER-01-SYD', algorithm: 'ECDSAP256+SHA-256', tsa: 'E-SIGN-TSA-GOV-AU' },
 ]

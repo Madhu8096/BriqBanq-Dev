@@ -20,12 +20,15 @@ export default function InvestorAllDeals() {
         setError(null);
         const res = await dealsService.getDeals();
         if (res.success) {
-          setDeals(res.data || []);
+          const data = res.data;
+          setDeals(Array.isArray(data) ? data : (data?.items || []));
         } else {
           setError(res.error || "Failed to load deals.");
         }
       } catch (err) {
-        setError(err.message || "An unexpected error occurred.");
+        if (err.response?.status !== 401) {
+          setError(err.message || "An unexpected error occurred.");
+        }
       } finally {
         setLoading(false);
       }

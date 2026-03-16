@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
 
 export default function Header({ setIsOpen, basePath = "/investor" }) {
-  const { user } = useAuth();
+  const { user, currentRole } = useAuth();
   const { notifications } = useNotifications();
   const navigate = useNavigate();
   const [isRoleOpen, setIsRoleOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function Header({ setIsOpen, basePath = "/investor" }) {
             className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-lg text-[11px] font-bold text-[#4338CA] hover:bg-[#E0E7FF] transition-colors"
           >
             <Briefcase size={14} />
-            <span className="hidden sm:inline">Lender</span>
+            <span className="hidden sm:inline capitalize">{currentRole || "User"}</span>
             <ChevronDown size={12} className={`transition-transform duration-200 ${isRoleOpen ? 'rotate-180' : ''}`} />
           </button>
           {isRoleOpen && (
@@ -80,11 +80,11 @@ export default function Header({ setIsOpen, basePath = "/investor" }) {
         <div className="h-6 w-px bg-gray-100 mx-1 hidden sm:block" />
         <button className="flex items-center gap-2 px-1.5 py-1 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100">
           <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-100">
-            {user?.name?.charAt(0) || "D"}
+            {user?.name?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="hidden lg:block text-left">
             <p className="text-sm font-medium text-gray-900 leading-none">
-              {user?.name || "David Williams"}
+              {user?.name || "User"}
             </p>
           </div>
         </button>

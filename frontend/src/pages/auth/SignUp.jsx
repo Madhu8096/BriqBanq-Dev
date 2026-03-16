@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { USER_ROLES, getDashboardPath } from "./authConfig";
 
+import { authService } from "../../api/dataService";
+
 export default function SignUp() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -24,21 +26,59 @@ export default function SignUp() {
       setError("Please select your role.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character.");
       return;
     }
     setLoading(true);
     try {
-      const mockToken = btoa(JSON.stringify({ sub: email, role, exp: Date.now() / 1000 + 86400 }));
-      const userData = {
+      // Split Name into First and Last
+      const nameParts = name.trim().split(/\s+/);
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "User";
+
+      const registerPayload = {
         email: email.trim(),
-        name: name.trim(),
-        role,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        requested_roles: [role.toUpperCase()]
       };
-      login(mockToken, userData);
-      navigate(getDashboardPath(role), { replace: true });
+
+      const registration = await authService.register(registerPayload);
+      
+      if (!registration.success) {
+        setError(registration.error || "Registration failed.");
+        setLoading(false);
+        return;
+      }
+
+      // Automatically login after signup (get tokens)
+      const loginResult = await authService.login(email.trim(), password);
+      
+        if (loginResult.success && loginResult.data?.access_token) {
+          const { access_token } = loginResult.data;
+          const userData = {
+            id: registration.data.id,
+            email: registration.data.email,
+            name: `${registration.data.first_name} ${registration.data.last_name}`,
+            role: role.toLowerCase(),
+          };
+          
+          // Update AuthContext state
+          login(access_token, userData);
+        
+        // Role-based redirection
+        const redirectPath = getDashboardPath(role.toLowerCase());
+        console.log(`[Signup] Redirecting to: ${redirectPath}`);
+        navigate(redirectPath, { replace: true });
+      } else {
+        // Registration worked but login failed
+        setError(loginResult.error || "Account created, but login failed. Please sign in manually.");
+      }
     } catch (err) {
+      console.error("[Signup] Unexpected error:", err);
       setError(err.message || "Sign up failed.");
     } finally {
       setLoading(false);

@@ -89,15 +89,7 @@ app = FastAPI(
 )
 
 
-# ─── CORS Middleware ─────────────────────────────────────────────────────────
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"] if settings.debug else [],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 # ─── Global Exception Handler ────────────────────────────────────────────────
@@ -188,3 +180,12 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs" if settings.debug else "Disabled in production",
     }
+# ─── CORS Middleware (Must be last to be outermost) ──────────────────────────
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

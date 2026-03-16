@@ -73,8 +73,11 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState(() => {
         try {
             const saved = localStorage.getItem('brickbanq_notifications');
-            return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
-        } catch {
+            if (!saved) return INITIAL_NOTIFICATIONS;
+            const parsed = JSON.parse(saved);
+            return Array.isArray(parsed) ? parsed : INITIAL_NOTIFICATIONS;
+        } catch (error) {
+            console.error("Failed to parse notifications from localStorage:", error);
             return INITIAL_NOTIFICATIONS;
         }
     });

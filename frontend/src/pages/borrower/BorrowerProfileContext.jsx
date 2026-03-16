@@ -1,7 +1,7 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
-const defaultUser = { name: 'David Williams', role: 'Borrower', initials: 'DW' }
-const defaultValue = { profile: null, setProfile: () => {}, user: defaultUser, setUser: () => {} }
+const defaultValue = { profile: null, setProfile: () => {}, user: null, setUser: () => {} }
 export const BorrowerProfileContext = createContext(defaultValue)
 
 export function useBorrowerProfile() {
@@ -9,8 +9,15 @@ export function useBorrowerProfile() {
 }
 
 export function BorrowerProfileProvider({ children }) {
+  const { user: authUser } = useAuth()
   const [profile, setProfile] = useState(null)
-  const [user, setUser] = useState(defaultUser)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    if (authUser) {
+      setUser(authUser)
+    }
+  }, [authUser])
   return (
     <BorrowerProfileContext.Provider value={{ profile, setProfile, user, setUser }}>
       {children}

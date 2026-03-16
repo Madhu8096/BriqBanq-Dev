@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AlertTriangle, Info, ChevronRight } from "lucide-react";
 
 export default function LenderAlerts() {
@@ -16,13 +16,13 @@ export default function LenderAlerts() {
                     <p className="text-[#B45309] text-[13px] mb-3 font-medium opacity-80 leading-snug">
                         2 cases require quarterly compliance review before auction listing can proceed.
                     </p>
-                    <button
-                        onClick={() => navigate('/lender/my-cases')}
+                    <Link
+                        to="/lender/my-cases"
                         className="inline-flex items-center gap-1.5 text-[#92400E] text-[12px] font-bold hover:underline group"
                     >
                         Review Relevant Cases
                         <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -37,6 +37,7 @@ export default function LenderAlerts() {
                         Property market showing 3.2% increase in target suburbs this quarter.
                     </p>
                     <button
+                        onClick={() => navigate('/lender/reports')}
                         className="inline-flex items-center gap-1.5 text-[#075985] text-[12px] font-bold hover:underline group"
                     >
                         View Trend Analysis

@@ -102,7 +102,7 @@ async def logout(
     return MessageResponse(message="Logged out successfully")
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserWithRolesResponse)
 async def get_current_profile(
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),

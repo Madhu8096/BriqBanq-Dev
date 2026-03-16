@@ -74,47 +74,60 @@ export default function Documents() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {caseData.documents.map((doc, idx) => (
-                                <tr key={doc.id} className="hover:bg-gray-50/50 transition-all group">
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                                                <FileText className="w-5 h-5" />
+                            {caseData.documents && caseData.documents.length > 0 ? (
+                                caseData.documents.map((doc, idx) => (
+                                    <tr key={doc.id || idx} className="hover:bg-gray-50/50 transition-all group">
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-black text-gray-900 block group-hover:underline underline-offset-4 decoration-indigo-200">{doc.name}</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{doc.size || '2.4 MB'} • {doc.extension || 'PDF'}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="text-sm font-black text-gray-900 block group-hover:underline underline-offset-4 decoration-indigo-200">{doc.name}</span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">2.4 MB • PDF</span>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className="px-3 py-1 bg-white border border-gray-100 text-gray-600 text-[10px] font-black rounded-lg uppercase tracking-widest shadow-sm">
+                                                {doc.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[8px] font-black text-indigo-600 border border-white">
+                                                    {(doc.uploadedBy || 'S M').split(' ').map(n => n[0]).join('')}
+                                                </div>
+                                                <span className="text-xs text-gray-600 font-black">{doc.uploadedBy || 'Sarah Mitchell'}</span>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className="px-3 py-1 bg-white border border-gray-100 text-gray-600 text-[10px] font-black rounded-lg uppercase tracking-widest shadow-sm">
-                                            {doc.type}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[8px] font-black text-indigo-600 border border-white">
-                                                {doc.uploadedBy.split(' ').map(n => n[0]).join('')}
+                                        </td>
+                                        <td className="px-8 py-6 text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                            {doc.date}
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <button className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-indigo-600 rounded-lg transition-all" title="View Preview">
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <button className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-emerald-600 rounded-lg transition-all" title="Download">
+                                                    <Download className="w-4 h-4" />
+                                                </button>
                                             </div>
-                                            <span className="text-xs text-gray-600 font-black">{doc.uploadedBy}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-xs text-gray-400 font-bold uppercase tracking-widest">
-                                        {doc.date}
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                            <button className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-indigo-600 rounded-lg transition-all" title="View Preview">
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                            <button className="p-2 bg-white border border-gray-100 text-gray-400 hover:text-emerald-600 rounded-lg transition-all" title="Download">
-                                                <Download className="w-4 h-4" />
-                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="px-8 py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 border border-gray-100">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No documents identified for this case</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

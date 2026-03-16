@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import StatCard from './StatCard'
 import ActionCard from './ActionCard'
 import TimelineEvent from './TimelineEvent'
+import { caseService } from '../../api/dataService'
 import { borrowerApi } from './api'
 import {
   FALLBACK_STATS,
@@ -82,6 +83,30 @@ export default function Dashboard() {
         else if (t?.events) setTimeline(t.events)
         const hasAnyData = (s && (toNum(s.propertyValue ?? s.property_value) || s.caseId || s.case_id)) || (Array.isArray(a) && a.length > 0) || (Array.isArray(t) && t.length > 0) || (t?.timeline?.length > 0) || (t?.events?.length > 0)
         if (!hasAnyData) {
+          // Try to fetch from modern caseService if borrowerApi failed/returned empty
+          const modernRes = await caseService.getMyCases()
+          if (modernRes.success && modernRes.data && modernRes.data.length > 0) {
+            const c = modernRes.data[0]
+            setStats({
+              propertyValue: toNum(c.estimated_value),
+              outstandingDebt: toNum(c.outstanding_debt),
+              documentsRemaining: 2, // Mocking based on new case state
+              documentsTotal: 12,
+              unreadMessages: 0
+            })
+            setCaseId(c.id)
+            setProperty({
+              address: c.property_address || '',
+              location: '',
+              bedrooms: 3,
+              bathrooms: 2,
+              landSize: 250
+            })
+            setNextActions(FALLBACK_ACTIONS)
+            setTimeline([{ id: 1, type: 'submitted', title: 'Case submitted for review', date: 'Just now', status: 'complete' }])
+            return
+          }
+
           setStats(FALLBACK_STATS)
           setCaseId(FALLBACK_CASE_ID)
           try { localStorage.setItem('borrowerCaseId', FALLBACK_CASE_ID) } catch { /* ignore */ }

@@ -397,3 +397,65 @@ async def get_case(
     case = await service.get_case(case_id)
     CasePolicy.can_view_case(current_user, str(case.borrower_id))
     return case
+
+
+@router.get("/{case_id}/export")
+async def export_case_report(
+    case_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Export a case report as JSON."""
+    service = CaseService(db)
+    case = await service.get_case(case_id)
+    CasePolicy.can_view_case(current_user, str(case.borrower_id))
+
+    # Construct complete report data
+    report_data = {
+        "case_id": str(case.id),
+        "title": case.title,
+        "status": case.status.value,
+        "borrower_name": case.borrower_name,
+        "property_address": case.property_address,
+        "property_type": case.property_type,
+        "estimated_value": float(case.estimated_value),
+        "outstanding_debt": float(case.outstanding_debt),
+        "lender_name": case.lender_name,
+        "lawyer_name": case.lawyer_name,
+        "risk_level": case.risk_level,
+        "created_at": case.created_at.isoformat(),
+        "exported_at": uuid.uuid4().hex, # Placeholder for unique export ID if needed
+    }
+    
+    return report_data
+
+@router.delete("/{case_id}", response_model=MessageResponse)
+async def delete_case_endpoint(
+    case_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+    trace_id: str = Depends(get_trace_id),
+):
+    """Delete a case (admin only)."""
+    CasePolicy.can_list_all_cases(current_user) # Using "list_all_cases" policy which is admin-only
+    service = CaseService(db)
+    await service.delete_case(
+        case_id=case_id,
+        admin_id=uuid.UUID(current_user["user_id"]),
+        trace_id=trace_id,
+    )
+    
+    from app.modules.audit.service import AuditService
+    audit_service = AuditService(db)
+    await audit_service.log(
+        actor_id=current_user["user_id"],
+        actor_role="ADMIN",
+        entity_type="case",
+        entity_id=str(case_id),
+        action="DELETE_CASE",
+        before_state=None,
+        after_state=None,
+        trace_id=trace_id,
+    )
+    
+    return MessageResponse(message="Case deleted successfully")

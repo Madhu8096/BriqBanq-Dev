@@ -60,7 +60,7 @@ export default function Sidebar({ open, onClose }) {
       <div className="p-4 border-t border-slate-700">
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/signin')}
           className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors w-full"
         >
           <span className="text-lg">🚪</span>

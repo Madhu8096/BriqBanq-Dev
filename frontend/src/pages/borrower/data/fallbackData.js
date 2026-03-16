@@ -50,7 +50,7 @@ export const FALLBACK_CASE = {
 export const FALLBACK_ACTIVITY = [
   { id: 1, type: 'bid', title: 'New bid placed', description: 'Premium Capital Partners bid $1,100,000', time: '14 Feb 2026, 22:42 AEST' },
   { id: 2, type: 'document', title: 'Document uploaded', description: 'Property Valuation Report added', time: '14 Feb 2026, 20:23' },
-  { id: 3, type: 'message', title: 'Message received', description: 'Sarah Mitchell sent a message', time: '14 Feb 2026, 10:14 AEST' }
+  { id: 3, type: 'message', title: 'Message received', description: 'Madhu Munigala sent a message', time: '14 Feb 2026, 10:14 AEST' }
 ]
 
 export const FALLBACK_CONTRACTS = [
@@ -60,7 +60,7 @@ export const FALLBACK_CONTRACTS = [
 
 export const FALLBACK_NOTIFICATIONS = [
   { id: 1, type: 'bid', title: 'New Bid Placed', message: 'A new bid of A$1,100,000 has been placed on MIP-2024-001', time: 'about 20 hours ago', isNew: true, read: false },
-  { id: 2, type: 'message', title: 'New Message', message: 'Sarah Mitchell sent you a message about MIP-2024-003', time: 'about 22 hours ago', isNew: true, read: false },
+  { id: 2, type: 'message', title: 'New Message', message: 'Madhu Munigala sent you a message about MIP-2024-003', time: 'about 22 hours ago', isNew: true, read: false },
   { id: 3, type: 'auction', title: 'Auction Ending Soon', message: 'MIP-2024-002 auction ends in 30 minutes', time: 'about 24 hours ago', isNew: false, read: true },
   { id: 4, type: 'kyc', title: 'KYC Approved', message: 'Your KYC verification has been approved', time: '3 days ago', isNew: false, read: true },
   { id: 5, type: 'contract', title: 'Contract Ready for Signature', message: 'Contract for MIP-2024-005 is ready for your digital signature', time: '4 days ago', isNew: true, read: false },
@@ -69,8 +69,8 @@ export const FALLBACK_NOTIFICATIONS = [
 ]
 
 export const FALLBACK_PROFILE = {
-  firstName: 'David',
-  lastName: 'Williams',
-  email: 'david.williams@email.com',
+  firstName: 'Madhu',
+  lastName: 'Munigala',
+  email: 'madhumunigala@gmail.com',
   phone: '+61 4XX XXX XXX'
 }

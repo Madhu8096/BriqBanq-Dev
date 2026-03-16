@@ -39,7 +39,7 @@ export default function LenderHeroSection() {
                         New MIP Case
                     </button>
                     <button
-                        onClick={() => navigate('/lender/deals')}
+                        onClick={() => navigate('/lender/auctions')}
                         className="bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all border border-white/20 backdrop-blur-sm active:scale-95"
                     >
                         <Gavel size={14} />

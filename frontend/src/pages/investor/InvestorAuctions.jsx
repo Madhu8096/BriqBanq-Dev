@@ -25,12 +25,15 @@ export default function InvestorAuctions() {
         setError(null);
         const res = await auctionService.getAuctions();
         if (res.success) {
-          setAuctions(res.data || []);
+          const data = res.data;
+          setAuctions(Array.isArray(data) ? data : (data?.items || []));
         } else {
           setError(res.error || "Failed to load auctions.");
         }
       } catch (err) {
-        setError(err.message || "An unexpected error occurred.");
+        if (err.response?.status !== 401) {
+          setError(err.message || "An unexpected error occurred.");
+        }
       } finally {
         setLoading(false);
       }

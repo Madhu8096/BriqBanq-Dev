@@ -4,9 +4,10 @@ import { CheckCircle2, Info } from "lucide-react";
 export default function InvestorAlerts({ investments = [] }) {
     const navigate = useNavigate();
 
-    // Calculate dynamic alerts
-    const activeOpportunities = investments.filter(i => i.status === 'Active' || !['Sold', 'Settled'].includes(i.status));
-    const upcomingSettlements = investments.filter(i => i.status === 'Sold');
+    // Calculate dynamic alerts with defensive checks
+    const safeInvestments = Array.isArray(investments) ? investments : [];
+    const activeOpportunities = safeInvestments.filter(i => i && (i.status === 'Active' || !['Sold', 'Settled'].includes(i.status)));
+    const upcomingSettlements = safeInvestments.filter(i => i && i.status === 'Sold');
 
     // Fallbacks if no data
     const newOppsCount = activeOpportunities.length > 0 ? activeOpportunities.length : 3;

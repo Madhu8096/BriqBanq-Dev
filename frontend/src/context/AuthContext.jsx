@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import api from "../services/api";
 
 // Simple JWT decoder – returns null on invalid token so app never crashes
 const jwtDecode = (token) => {
@@ -54,41 +55,70 @@ export const AuthProvider = ({ children }) => {
             logout();
             return;
         }
-        try {
-            const storedUser = safeGetItem("user", null);
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                if (!safeGetItem("currentRole", null)) {
-                    setCurrentRole(parsedUser.role || "investor");
+
+        const fetchProfile = async () => {
+            try {
+                // Try fetching from localStorage first for immediate UI
+                const storedUser = safeGetItem("user", null);
+                if (storedUser) {
+                    setUser(JSON.parse(storedUser));
                 }
-            } else {
-                const userData = {
-                    ...decoded,
-                    name: decoded.name || "David Williams",
-                    role: decoded.role || "investor",
+
+                // Fetch fresh profile from backend
+                const response = await api.get("/api/v1/identity/me");
+                const userData = response.data;
+                
+                // Normalize for UI compatibility
+                const normalizedUser = {
+                    ...userData,
+                    first_name: userData.first_name || userData.name?.split(' ')[0] || "User",
+                    last_name: userData.last_name || userData.name?.split(' ').slice(1).join(' ') || "",
+                    name: userData.name || (userData.first_name ? `${userData.first_name} ${userData.last_name}` : "User"),
+                    role: userData.role || userData.user_roles?.[0]?.role_type || "Borrower"
                 };
-                setUser(userData);
+
+                setUser(normalizedUser);
+                localStorage.setItem("user", JSON.stringify(normalizedUser));
+                
                 if (!safeGetItem("currentRole", null)) {
-                    setCurrentRole(userData.role);
+                    setCurrentRole(normalizedUser.role);
+                    localStorage.setItem("currentRole", normalizedUser.role);
+                }
+            } catch (err) {
+                console.error("Auth: failed to fetch profile", err);
+                // If it's a 401, logout
+                if (err.response?.status === 401) {
+                    logout();
                 }
             }
-        } catch (err) {
-            console.error("Auth: invalid stored user", err);
-            logout();
-        }
+        };
+
+        fetchProfile();
     }, [token]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
     const login = (newToken, userData) => {
+        const normalizedUser = userData ? {
+            ...userData,
+            first_name: userData.first_name || userData.name?.split(' ')[0] || "User",
+            last_name: userData.last_name || userData.name?.split(' ').slice(1).join(' ') || "",
+            name: userData.name || (userData.first_name ? `${userData.first_name} ${userData.last_name}` : "User"),
+            role: userData.role || userData.roles?.[0]?.role_type || "Borrower"
+        } : null;
+
+        // Atomic storage update
         localStorage.setItem("token", newToken);
-        if (userData) {
-            localStorage.setItem("user", JSON.stringify(userData));
-            localStorage.setItem("currentRole", userData.role || "investor");
-            setUser(userData);
-            setCurrentRole(userData.role || "investor");
+        if (normalizedUser) {
+            localStorage.setItem("user", JSON.stringify(normalizedUser));
+            localStorage.setItem("currentRole", normalizedUser.role);
         }
+
+        // Atomic state update
         setToken(newToken);
+        if (normalizedUser) {
+            setUser(normalizedUser);
+            setCurrentRole(normalizedUser.role);
+        }
     };
 
     const switchRole = (role) => {

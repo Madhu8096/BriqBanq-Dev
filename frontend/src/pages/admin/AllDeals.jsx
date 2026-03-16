@@ -1,100 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Map, List, Eye, Timer, Calendar, BedDouble, Bath, Car } from 'lucide-react'
-
-const properties = [
-    {
-        id: 'MIP-2026-001',
-        type: 'auction',
-        address: '45 Victoria Street',
-        suburb: 'Potts Point, NSW 2011',
-        badge: { label: '● LIVE AUCTION', variant: 'live' },
-        bedrooms: 2,
-        bathrooms: 2,
-        parking: 1,
-        loanAmount: 980000,
-        currentBid: 1100000,
-        buyNowPrice: 1075000,
-        lvr: 78.4,
-        returnRate: 12.4,
-        propertyType: 'Apartment',
-        countdown: '2h 45m',
-        bids: 7,
-        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400',
-        dealType: 'auction'
-    },
-    {
-        id: 'MIP-2026-002',
-        type: 'buy_now',
-        address: '128 Brighton Boulevard',
-        suburb: 'North Bondi, NSW',
-        badge: { label: 'BUY NOW - FIXED PRICE', variant: 'active' },
-        bedrooms: 4,
-        bathrooms: 3,
-        parking: 2,
-        loanAmount: 2100000,
-        buyNowPrice: 2485000,
-        lvr: 65.6,
-        returnRate: 12.4,
-        propertyType: 'House',
-        auctionDate: '18 Feb 2026',
-        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400',
-        dealType: 'buy_now'
-    },
-    {
-        id: 'MIP-2026-003',
-        type: 'auction',
-        address: '7 Park Lane',
-        suburb: 'South Yarra, VIC',
-        badge: { label: '● LIVE AUCTION', variant: 'live' },
-        bedrooms: 3,
-        bathrooms: 2,
-        parking: 2,
-        loanAmount: 1600000,
-        buyNowPrice: 1688000,
-        lvr: 86.5,
-        returnRate: 12.4,
-        propertyType: 'Townhouse',
-        bids: 12,
-        image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400',
-        dealType: 'auction'
-    },
-    {
-        id: 'MIP-2026-004',
-        type: 'buy_now',
-        address: '92 George Street',
-        suburb: 'Brisbane CBD, QLD',
-        badge: { label: 'BUY NOW - FIXED PRICE', variant: 'active' },
-        bedrooms: 2,
-        bathrooms: 1,
-        parking: 1,
-        loanAmount: 480000,
-        buyNowPrice: 520000,
-        lvr: 92.3,
-        returnRate: 11.8,
-        propertyType: 'Apartment',
-        bids: 5,
-        image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400',
-        dealType: 'buy_now'
-    },
-    {
-        id: 'MIP-2026-005',
-        type: 'sold',
-        address: '156 Stirling Highway',
-        suburb: 'Nedlands, WA',
-        badge: { label: 'SOLD', variant: 'sold' },
-        bedrooms: 5,
-        bathrooms: 3,
-        parking: 3,
-        loanAmount: 1950000,
-        buyNowPrice: 2800000,
-        lvr: 69.6,
-        returnRate: 13.2,
-        propertyType: 'House',
-        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400',
-        dealType: 'sold'
-    },
-]
+import { Search, Map, List, Eye, Timer, Calendar, BedDouble, Bath, Car, Loader2 } from 'lucide-react'
+import { adminDealService } from '../../api/dataService'
 
 export default function AllDeals() {
     const navigate = useNavigate()
@@ -103,19 +10,68 @@ export default function AllDeals() {
     const [statusFilter, setStatusFilter] = useState('All Status')
     const [sortBy, setSortBy] = useState('Newest')
     const [viewMode, setViewMode] = useState('grid')
+    const [properties, setProperties] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+
+    const fetchDeals = async () => {
+        setLoading(true)
+        try {
+            const res = await adminDealService.getAllDeals(statusFilter === 'All Status' ? null : statusFilter)
+            if (res.success) {
+                // Map backend deals to UI format
+                const mapped = (res.data.items || []).map(d => ({
+                    id: d.id,
+                    type: d.status.toLowerCase(),
+                    address: d.title,
+                    suburb: 'MIP Project', // Backend doesn't have suburb yet
+                    badge: { 
+                        label: d.status.toUpperCase(), 
+                        variant: d.status.toLowerCase() === 'listed' ? 'live' : d.status.toLowerCase() 
+                    },
+                    bedrooms: 0,
+                    bathrooms: 0,
+                    parking: 0,
+                    loanAmount: 0,
+                    currentBid: 0,
+                    buyNowPrice: d.asking_price || 0,
+                    lvr: 0,
+                    returnRate: 0,
+                    propertyType: 'MIP Asset',
+                    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400',
+                    dealType: d.status.toLowerCase() === 'listed' ? 'auction' : 'buy_now'
+                }))
+                setProperties(mapped)
+            } else {
+                setError(res.error || "Failed to load deals")
+            }
+        } catch (err) {
+            console.error("AllDeals: Error fetching data", err)
+            setError("Unexpected error loading deals")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchDeals()
+    }, [statusFilter])
 
     const openDealRoom = (property) => {
         if (property.dealType === 'auction') {
-            navigate(`/admin/auction-room/${property.id}`)
+            navigate(`/admin/auction-control?id=${property.id}`)
         } else if (property.dealType === 'buy_now') {
-            navigate(`/admin/buy-now-room/${property.id}`)
+            navigate(`/admin/buy-now/${property.id}`)
         } else {
-            navigate(`/admin/case-details/${property.id}`)
+            navigate(`/admin/case-management`)
         }
     }
 
     const formatCurrency = (amount) => {
-        return `$${(amount / 1000).toFixed(0)}k`
+        if (!amount || amount === 0) return 'A$0'
+        if (amount >= 1000000) return `A$${(amount / 1000000).toFixed(1)}M`
+        if (amount >= 1000) return `A$${(amount / 1000).toFixed(0)}K`
+        return `A$${amount}`
     }
 
     const getBadgeStyles = (variant) => {

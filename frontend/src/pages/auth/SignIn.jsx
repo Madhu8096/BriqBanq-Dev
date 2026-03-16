@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { USER_ROLES, getDashboardPath } from "./authConfig";
 
+import { authService } from "../../api/dataService";
+
 export default function SignIn() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -15,25 +17,35 @@ export default function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!email.trim() || !password) {
-      setError("Please enter email and password.");
+    if (!email.trim() || !password || !password.trim()) {
+      setError("Please enter your email and password.");
       return;
     }
     if (!role) {
-      setError("Please select your role.");
+      setError("Please select your role explicitly.");
       return;
     }
     setLoading(true);
     try {
-      // Demo: accept any email/password and log in with selected role
-      const mockToken = btoa(JSON.stringify({ sub: email, role, exp: Date.now() / 1000 + 86400 }));
+      const response = await authService.login(email.trim(), password.trim());
+
+      if (!response.success || !response.data?.access_token) {
+        throw new Error(response.error || "Login failed. Please check your credentials.");
+      }
+
+      const { access_token } = response.data;
+      
+      // Store intended role in userData to ensure proper dashboard selection
       const userData = {
         email: email.trim(),
-        name: email.trim().split("@")[0].replace(/[._]/g, " ") || "User",
-        role,
+        role: role.toLowerCase(),
       };
-      login(mockToken, userData);
-      navigate(getDashboardPath(role), { replace: true });
+      
+      login(access_token, userData);
+      
+      // Navigate to matched dashboard
+      const dashboardPath = getDashboardPath(role.toLowerCase());
+      navigate(dashboardPath, { replace: true });
     } catch (err) {
       setError(err.message || "Sign in failed.");
     } finally {
@@ -71,7 +83,7 @@ export default function SignIn() {
                 type="button"
                 onClick={() => {
                   setEmail(`${r.id}@brickbanq.com`);
-                  setPassword("password123");
+                  setPassword(r.id === 'admin' ? "AdminPassword123!" : "password123");
                   setRole(r.id);
                 }}
                 className="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-emerald-500/20 text-white/80 hover:text-emerald-300 transition-colors border border-white/5"

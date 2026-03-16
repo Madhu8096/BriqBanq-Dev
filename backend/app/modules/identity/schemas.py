@@ -26,6 +26,36 @@ class UserRegisterRequest(BaseModel):
         ..., min_length=1, description="List of roles to request"
     )
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Lowercase email before validation."""
+        if isinstance(v, str):
+            return v.lower().strip()
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        """Validate password complexity and length."""
+        import re
+        error_msg = "Password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character."
+        
+        # Check length
+        if len(v) < 8:
+            raise ValueError(error_msg)
+            
+        # Check complexity
+        if not all([
+            re.search(r"[A-Z]", v),
+            re.search(r"[a-z]", v),
+            re.search(r"\d", v),
+            re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v)
+        ]):
+            raise ValueError(error_msg)
+            
+        return v
+
     @field_validator("requested_roles")
     @classmethod
     def validate_roles(cls, v):
@@ -41,6 +71,14 @@ class UserLoginRequest(BaseModel):
     """User login request."""
     email: EmailStr
     password: str
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Lowercase email before validation."""
+        if isinstance(v, str):
+            return v.lower().strip()
+        return v
 
 
 class TokenRefreshRequest(BaseModel):
@@ -59,6 +97,26 @@ class ChangePasswordRequest(BaseModel):
     """Change password request."""
     current_password: str
     new_password: str = Field(..., min_length=PASSWORD_MIN_LENGTH)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_complexity(cls, v: str) -> str:
+        """Validate new password complexity and length."""
+        import re
+        error_msg = "Password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character."
+        
+        if len(v) < 8:
+            raise ValueError(error_msg)
+            
+        if not all([
+            re.search(r"[A-Z]", v),
+            re.search(r"[a-z]", v),
+            re.search(r"\d", v),
+            re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", v)
+        ]):
+            raise ValueError(error_msg)
+            
+        return v
 
 
 # ─── Response Schemas ────────────────────────────────────────────────────────
@@ -85,6 +143,8 @@ class AuthTokenResponse(BaseModel):
     expires_in: int
 
 
+from app.modules.roles.schemas import UserRoleResponse
+
 class UserWithRolesResponse(BaseModel):
     """User response with roles included."""
     id: uuid.UUID
@@ -93,7 +153,7 @@ class UserWithRolesResponse(BaseModel):
     last_name: str
     phone: Optional[str] = None
     status: UserStatus
-    roles: List[dict]
+    user_roles: List[UserRoleResponse]
     created_at: datetime
     updated_at: datetime
 

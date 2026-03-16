@@ -16,6 +16,7 @@ class User(BaseEntityMixin, Base):
 
     __tablename__ = "users"
 
+    # Email must be unique across the entire system regardless of role
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     first_name = Column(String(100), nullable=False)
@@ -28,8 +29,18 @@ class User(BaseEntityMixin, Base):
     )
 
     # Relationships
-    user_roles = relationship("UserRole", back_populates="user", lazy="selectin")
-    kyc_records = relationship("KYCRecord", back_populates="user", lazy="selectin")
+    user_roles = relationship(
+        "UserRole",
+        back_populates="user",
+        lazy="selectin",
+        foreign_keys="[UserRole.user_id]",
+    )
+    kyc_records = relationship(
+        "KYCRecord",
+        back_populates="user",
+        lazy="selectin",
+        foreign_keys="[KYCRecord.user_id]",
+    )
 
     __table_args__ = (
         Index("ix_users_email_status", "email", "status"),

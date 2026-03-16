@@ -76,6 +76,11 @@ class CaseRepository:
         await self.db.refresh(case)
         return case
 
+    async def delete(self, case: Case) -> None:
+        """Delete a case."""
+        await self.db.delete(case)
+        await self.db.flush()
+
     async def get_for_review(
         self, offset: int = 0, limit: int = 20
     ) -> List[Case]:

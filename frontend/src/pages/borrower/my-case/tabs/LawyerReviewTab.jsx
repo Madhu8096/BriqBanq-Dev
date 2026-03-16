@@ -1,19 +1,21 @@
 import { useState } from 'react'
+import { useAuth } from '../../../../context/AuthContext'
 import { borrowerApi } from '../../api'
 import {
   MOCK_LAWYER_REVIEW_DOCS,
   MOCK_ENFORCEMENT_STEPS,
   MOCK_LOAN_COMPLIANCE_ITEMS,
+  MOCK_BORROWER_CASE,
 } from '../../data/borrowerMockData'
-import { MOCK_BORROWER_CASE } from '../../data/borrowerMockData'
 
 export default function LawyerReviewTab({ caseId }) {
+  const { user } = useAuth()
   const [nccpYes, setNccpYes] = useState(true)
   const [enforcement, setEnforcement] = useState(
-    MOCK_ENFORCEMENT_STEPS.map((s) => ({ ...s }))
+    (MOCK_ENFORCEMENT_STEPS || []).map((s) => ({ ...s }))
   )
   const [compliance, setCompliance] = useState(
-    MOCK_LOAN_COMPLIANCE_ITEMS.map((c) => ({ ...c }))
+    (MOCK_LOAN_COMPLIANCE_ITEMS || []).map((c) => ({ ...c }))
   )
   const [reviewNotes, setReviewNotes] = useState('')
   const [soaFile, setSoaFile] = useState(null)
@@ -111,7 +113,7 @@ export default function LawyerReviewTab({ caseId }) {
         )}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600">
           <span>Property: {addr || '—'}</span>
-          <span>Borrower: {c.borrower?.name || c.borrower || '—'}</span>
+          <span>Borrower: {typeof c.borrower === 'string' ? c.borrower : (c.borrower?.name || '—')}</span>
           <span>Outstanding Debt: ${Number(c.lender?.outstandingDebt ?? c.financials?.outstandingPrincipal ?? 980000).toLocaleString()}</span>
           <span>Valuation: ${Number(c.property?.valuation ?? 1250000).toLocaleString()}</span>
         </div>
@@ -146,9 +148,9 @@ export default function LawyerReviewTab({ caseId }) {
       </section>
 
       <section className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Document Review ({reviewedCount}/{MOCK_LAWYER_REVIEW_DOCS.length})</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Document Review ({reviewedCount}/{(MOCK_LAWYER_REVIEW_DOCS || []).length})</h2>
         <ul className="mt-4 divide-y divide-gray-200">
-          {MOCK_LAWYER_REVIEW_DOCS.map((doc) => (
+          {(MOCK_LAWYER_REVIEW_DOCS || []).map((doc) => (
             <li key={doc.id} className="flex items-center justify-between py-3 first:pt-0">
               <div className="flex items-center gap-3">
                 <span className="w-4 h-4 border border-gray-400 rounded" aria-hidden />
@@ -226,7 +228,7 @@ export default function LawyerReviewTab({ caseId }) {
           <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
             <option>Borrower</option>
           </select>
-          <span className="text-sm text-gray-600">David Williams DW</span>
+          <span className="text-sm text-gray-600">{user?.name || "User"} {user?.initials || (user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || "U")}</span>
         </div>
         <div
           className="mt-4 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"

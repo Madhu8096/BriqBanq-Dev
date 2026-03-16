@@ -256,6 +256,12 @@ class CaseService:
         case.version += 1
         return await self.repository.update(case)
 
+    async def delete_case(self, case_id: uuid.UUID, admin_id: uuid.UUID, trace_id: str) -> None:
+        """Delete a case (admin only)."""
+        case = await self._get_case_or_404(case_id)
+        # Any specific deletion logic (e.g. check status, related records) goes here
+        await self.repository.delete(case)
+
     async def get_borrower_cases(
         self,
         borrower_id: uuid.UUID,
