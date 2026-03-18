@@ -6,7 +6,8 @@ No business logic in routes.
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db, get_trace_id
 from app.modules.identity.policies import IdentityPolicy
@@ -14,6 +15,8 @@ from app.modules.identity.schemas import (
     AuthTokenResponse,
     ChangePasswordRequest,
     MessageResponse,
+    OTPSendRequest,
+    OTPVerifyRequest,
     TokenRefreshRequest,
     UserLoginRequest,
     UserRegisterRequest,
@@ -22,7 +25,10 @@ from app.modules.identity.schemas import (
     UserWithRolesResponse,
 )
 from app.modules.identity.service import UserService
-from app.shared.enums import UserStatus
+from app.modules.roles.service import RoleService
+from app.modules.audit.service import AuditService
+from app.shared.enums import UserStatus, RoleType
+from app.core.constants import AUDIT_ACTION_CREATE
 
 router = APIRouter(prefix="/identity", tags=["Identity"])
 
@@ -61,6 +67,59 @@ async def register_user(
         trace_id=trace_id,
     )
 
+    return user
+
+
+@router.post("/send-otp", status_code=status.HTTP_200_OK)
+async def send_otp(
+    request: OTPSendRequest,
+    db=Depends(get_db),
+    trace_id: str = Depends(get_trace_id),
+):
+    """
+    Send a 6-digit OTP to the provided email.
+    Validates if user already exists.
+    """
+    service = UserService(db)
+    await service.send_otp(request.email)
+    return {"message": "Success"}
+
+
+@router.post("/verify-otp", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def verify_otp(
+    request: OTPVerifyRequest,
+    db=Depends(get_db),
+    trace_id: str = Depends(get_trace_id),
+):
+    """
+    Verify OTP and register user.
+    Hashes password and creates record if valid.
+    """
+    service = UserService(db)
+    user = await service.verify_otp_and_register(request, trace_id)
+    
+    # Create role requests
+    role_service = RoleService(db)
+    for role_name in [request.role.upper()]:
+        await role_service.request_role(
+            user_id=user.id,
+            role_type=role_name,
+            trace_id=trace_id
+        )
+
+    # Audit log
+    audit_service = AuditService(db)
+    await audit_service.log(
+        actor_id=str(user.id),
+        actor_role="NEW_USER",
+        entity_type="user",
+        entity_id=str(user.id),
+        action="REGISTER_OTP",
+        before_state=None,
+        after_state={"email": user.email, "status": user.status.value, "role": request.role},
+        trace_id=trace_id,
+    )
+    
     return user
 
 

@@ -154,18 +154,18 @@ export default function MyCase() {
 
   const handleExportReport = async () => {
     try {
-      const res = await caseService.exportCaseReport(c.id)
-      if (res.success) {
-        const report = res.data
-        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
+      const result = await caseService.exportCaseReport(c.id)
+      if (result instanceof Blob) {
+        const url = URL.createObjectURL(result)
         const a = document.createElement('a')
         a.href = url
-        a.download = `Case-Report-${c.id}.json`
+        a.download = `Case-Report-${c.id}.pdf`
+        document.body.appendChild(a)
         a.click()
+        document.body.removeChild(a)
         URL.revokeObjectURL(url)
       } else {
-        alert("Export failed: " + (res.error || "Unknown error"))
+        alert("Export failed: " + (result?.error || "No data received"))
       }
     } catch (err) {
       console.error("Export error:", err)
@@ -285,7 +285,7 @@ export default function MyCase() {
         items={[
           { label: 'Dashboard', path: '/borrower/dashboard', icon: 'home' },
           { label: 'Cases', path: '/borrower/dashboard' },
-          { label: c.id },
+          { label: 'Case Details' },
         ]}
       />
 

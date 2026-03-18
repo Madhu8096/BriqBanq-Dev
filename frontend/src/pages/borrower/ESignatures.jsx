@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { borrowerApi } from './api'
+import GlobalDatePicker from '../../components/common/GlobalDatePicker'
 import {
   MOCK_GOVSIGN_STATS,
   MOCK_GOVSIGN_TASKS,
@@ -1196,11 +1197,11 @@ export default function ESignatures() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">From date</label>
-                    <input type="date" value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                    <GlobalDatePicker value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">To date</label>
-                    <input type="date" value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                    <GlobalDatePicker value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} />
                   </div>
                   <button
                     type="button"

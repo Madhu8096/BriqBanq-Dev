@@ -8,21 +8,20 @@ export default function CaseHeader({ caseId, status, riskLevel, property, borrow
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-gray-900">{caseId}</h1>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             {status && (
-              <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-purple-600 text-white">
+              <span className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full bg-purple-600 text-white uppercase tracking-wider">
                 {status}
               </span>
             )}
             {riskLevel && (
-              <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-amber-400 text-amber-900">
+              <span className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full bg-amber-400 text-amber-900 uppercase tracking-wider">
                 {riskLevel}
               </span>
             )}
           </div>
           {propertyAddress && (
-            <p className="text-sm text-gray-600">{propertyAddress}</p>
+            <p className="text-lg font-medium text-gray-900 leading-tight">{propertyAddress}</p>
           )}
         </div>
         <div className="flex gap-2 shrink-0">

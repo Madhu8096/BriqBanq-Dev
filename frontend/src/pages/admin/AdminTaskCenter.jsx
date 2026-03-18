@@ -5,6 +5,7 @@ import {
     Search, Calendar, Plus, Edit2, Trash2, ExternalLink, X
 } from "lucide-react";
 import { adminTaskService } from '../../api/dataService';
+import GlobalDatePicker from '../../components/common/GlobalDatePicker';
 
 export default function AdminTaskCenter() {
     const [tasks, setTasks] = useState([]);
@@ -217,8 +218,21 @@ export default function AdminTaskCenter() {
                                         <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-extrabold border ${task.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : task.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' : task.status === 'In progress' ? 'bg-blue-50 text-[#1C4ED8] border-blue-100' : 'bg-gray-50 text-gray-700 border-gray-200'} ${task.checked && task.status !== 'Completed' ? 'opacity-50' : ''}`}>
                                             {task.status === 'Completed' ? <CheckCircle2 size={10} /> : <Clock size={10} />}{task.status}
                                         </span>
-                                        <div className={`flex items-center gap-1.5 text-[11px] sm:text-[12px] font-bold ${task.dueDate && task.dueDate.includes('Overdue') ? 'text-red-500 font-extrabold' : task.dueDate === 'Today' ? 'text-[#F97316] font-extrabold' : task.dueDate === 'Tomorrow' ? 'text-[#F59E0B] font-extrabold' : 'text-gray-500'}`}>
-                                            <Calendar size={13} className="text-gray-400" />{task.dueDate}
+                                        <div className="relative group">
+                                            <GlobalDatePicker 
+                                                value={task.dueDateObj}
+                                                onChange={(e) => {
+                                                    const newDate = e.target.value;
+                                                    setTasks(tasks.map(t => t.id === task.id ? { 
+                                                        ...t, 
+                                                        dueDate: new Date(newDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                                                        dueDateObj: new Date(newDate)
+                                                    } : t));
+                                                }}
+                                                className="!w-auto"
+                                                inputClassName="!h-auto !p-0 !bg-transparent !border-none !shadow-none !text-[11px] !sm:text-[12px] !font-bold !cursor-pointer hover:!text-blue-600 !w-24"
+                                            />
+                                            {task.dueDate && task.dueDate.includes('Overdue') && <span className="absolute -top-1 -right-1 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
                                         </div>
                                         <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-bold text-[#64748B] bg-gray-50 px-2 py-1 rounded">
                                             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>{task.module}
@@ -261,7 +275,7 @@ export default function AdminTaskCenter() {
                                 <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Description</label><textarea rows="2" value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} placeholder="Enter task description..." className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] focus:ring-1 focus:ring-[#1C4ED8] transition-colors resize-none"></textarea></div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Priority</label><select value={newTask.priority} onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })} className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors bg-white font-medium shadow-sm">{['Low','Medium','High','Urgent'].map(o => <option key={o}>{o}</option>)}</select></div>
-                                    <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label><input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} className="w-full px-4 py-1.5 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors font-medium text-gray-700 shadow-sm" /></div>
+                                    <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label><GlobalDatePicker value={newTask.dueDate} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} /></div>
                                 </div>
                                 <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Module</label><select value={newTask.module} onChange={(e) => setNewTask({ ...newTask, module: e.target.value })} className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors bg-white font-medium text-gray-700 shadow-sm">{['Brickbanq','Accounting','CRM','Compliance'].map(o => <option key={o}>{o}</option>)}</select></div>
                             </div>
@@ -288,7 +302,7 @@ export default function AdminTaskCenter() {
                                 <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Description</label><textarea rows="2" value={editingTask.description} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors resize-none"></textarea></div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Priority</label><select value={editingTask.priority} onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value })} className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors bg-white font-medium">{['Low','Medium','High','Urgent'].map(o => <option key={o}>{o}</option>)}</select></div>
-                                    <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label><input type="date" value={editingTask.dueDateObj ? editingTask.dueDateObj.toISOString().split('T')[0] : ''} onChange={(e) => setEditingTask({ ...editingTask, dueDateObj: new Date(e.target.value), dueDate: e.target.value })} className="w-full px-4 py-1.5 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors font-medium text-gray-700" /></div>
+                                    <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label><GlobalDatePicker value={editingTask.dueDateObj ? editingTask.dueDateObj.toISOString().split('T')[0] : ''} onChange={(e) => setEditingTask({ ...editingTask, dueDateObj: new Date(e.target.value), dueDate: e.target.value })} /></div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><label className="block text-[11px] font-bold text-gray-700 mb-0.5">Status</label><select value={editingTask.status} onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value })} className="w-full px-4 py-2 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] transition-colors bg-white font-medium">{['Pending','In progress','Overdue','Completed'].map(o => <option key={o}>{o}</option>)}</select></div>

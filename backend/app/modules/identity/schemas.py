@@ -26,6 +26,19 @@ class UserRegisterRequest(BaseModel):
         ..., min_length=1, description="List of roles to request"
     )
 
+class OTPSendRequest(BaseModel):
+    """Request to send an OTP."""
+    email: EmailStr
+
+class OTPVerifyRequest(BaseModel):
+    """Request to verify an OTP and register."""
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    password: str = Field(..., min_length=8)
+    role: str = Field(..., min_length=1)
+
     @field_validator("email", mode="before")
     @classmethod
     def normalize_email(cls, v: str) -> str:

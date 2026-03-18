@@ -28,19 +28,24 @@ from app.core.exceptions import (
     TokenExpiredError,
 )
 
-# Password hashing context using bcrypt
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+# Using bcrypt directly to avoid passlib bug with some versions/environments
+import bcrypt
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt."""
     validate_password_strength(password)
-    return password_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hash."""
-    return password_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'), 
+            hashed_password.encode('utf-8')
+        )
+    except Exception:
+        return False
 
 
 def validate_password_strength(password: str) -> None:

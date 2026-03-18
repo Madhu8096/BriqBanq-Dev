@@ -21,7 +21,8 @@ export default function LenderAuctions() {
                 setError(null);
                 const res = await auctionService.getAuctions();
                 if (res.success) {
-                    setAuctions(res.data || []);
+                    const data = res.data;
+                    setAuctions(Array.isArray(data) ? data : (data?.items || []));
                 } else {
                     setError(res.error || "Failed to load auctions.");
                 }

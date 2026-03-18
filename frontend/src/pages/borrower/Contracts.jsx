@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { jsPDF } from 'jspdf'
 import StatusPill from './components/StatusPill'
+import GlobalDatePicker from '../../components/common/GlobalDatePicker'
 import { MOCK_BORROWER_CONTRACTS } from './data/borrowerMockData'
 
 const formatNum = (n) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
@@ -348,11 +349,9 @@ export default function Contracts() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                  <input
-                    type="date"
+                  <GlobalDatePicker
                     value={formData.date}
                     onChange={(e) => setFormData((f) => ({ ...f, date: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
                 </div>

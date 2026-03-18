@@ -111,3 +111,7 @@ class Case(BaseEntityMixin, Base):
 
     def __repr__(self) -> str:
         return f"<Case(id={self.id}, title={self.title}, status={self.status})>"
+
+
+# Avoid circular import but ensure all models are in registry
+from app.modules.documents.models import Document  # noqa: E402

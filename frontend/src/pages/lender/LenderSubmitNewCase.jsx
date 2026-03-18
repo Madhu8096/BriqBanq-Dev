@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { casesService, activityService } from '../../api/dataService';
 import { useNotifications } from '../../context/NotificationContext';
+import GlobalDatePicker from '../../components/common/GlobalDatePicker';
 import {
     Shield, ChevronLeft, ChevronRight, Check, Info,
     Search, MapPin, Lock, FileCheck, DollarSign, Clock,
@@ -487,7 +488,7 @@ function EntityStep({ formData, updateFormData, setFormValue }) {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Date of Birth *</label>
-                                <input required type="date" name="dob" value={formData.dob || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all" />
+                                <GlobalDatePicker required name="dob" value={formData.dob} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-blue-100" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Phone Number *</label>
@@ -565,7 +566,7 @@ function EntityStep({ formData, updateFormData, setFormValue }) {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Registration Date</label>
-                                    <input required type="date" name="registrationDate" value={formData.registrationDate || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-purple-100 transition-all" />
+                                    <GlobalDatePicker required name="registrationDate" value={formData.registrationDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-purple-100" />
                                 </div>
                             </div>
                         </div>
@@ -607,7 +608,7 @@ function EntityStep({ formData, updateFormData, setFormValue }) {
                                             </div>
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Date of Birth *</label>
-                                                <input required type="date" value={item.dob} onChange={(e) => updateItem('directors', item.id, 'dob', e.target.value)} className="w-full h-12 bg-gray-50/50 border border-gray-100 rounded-xl px-4 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all" />
+                                                <GlobalDatePicker required value={item.dob} onChange={(e) => updateItem('directors', item.id, 'dob', e.target.value)} className="w-full" inputClassName="h-12 bg-gray-50/50 border-gray-100 rounded-xl px-4 focus:bg-white focus:ring-4 focus:ring-blue-50" />
                                             </div>
                                         </div>
                                     </div>
@@ -697,7 +698,7 @@ function EntityStep({ formData, updateFormData, setFormValue }) {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Establishment Date</label>
-                                    <input required type="date" name="trustDate" value={formData.trustDate || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-orange-100 transition-all" />
+                                    <GlobalDatePicker required name="trustDate" value={formData.trustDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-orange-100" />
                                 </div>
                             </div>
                         </div>
@@ -2983,7 +2984,7 @@ function PropertyFeaturesStep({ formData, updateFormData }) {
 
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Insurance Expiry Date</label>
-                        <input required type="date" name="insuranceExpiryDate" value={formData.insuranceExpiryDate || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all" />
+                        <GlobalDatePicker required name="insuranceExpiryDate" value={formData.insuranceExpiryDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-emerald-100" />
                     </div>
 
                     <div className="space-y-2">
@@ -3007,7 +3008,7 @@ function PropertyFeaturesStep({ formData, updateFormData }) {
 
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Last Sale Date</label>
-                        <input required type="date" name="lastSaleDate" value={formData.lastSaleDate || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all" />
+                        <GlobalDatePicker required name="lastSaleDate" value={formData.lastSaleDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-emerald-100" />
                     </div>
 
                     <div className="space-y-2">
@@ -3017,7 +3018,7 @@ function PropertyFeaturesStep({ formData, updateFormData }) {
 
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Prior Sale Date</label>
-                        <input required type="date" name="priorSaleDate" value={formData.priorSaleDate || ''} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-emerald-100 transition-all" />
+                        <GlobalDatePicker required name="priorSaleDate" value={formData.priorSaleDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-emerald-100" />
                     </div>
                 </div>
             </div>
@@ -3107,7 +3108,7 @@ function LoanDetailsStep({ formData, updateFormData, setFormValue }) {
 
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Loan Start Date</label>
-                        <input required type="date" name="loanStartDate" value={formData.loanStartDate} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-purple-100 transition-all" />
+                        <GlobalDatePicker required name="loanStartDate" value={formData.loanStartDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-purple-100" />
                     </div>
 
                     <div className="space-y-2">
@@ -3135,7 +3136,7 @@ function LoanDetailsStep({ formData, updateFormData, setFormValue }) {
 
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Default Notice Date</label>
-                        <input required type="date" name="defaultNoticeDate" value={formData.defaultNoticeDate} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-purple-100 transition-all" />
+                        <GlobalDatePicker required name="defaultNoticeDate" value={formData.defaultNoticeDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-purple-100" />
                     </div>
                 </div>
 
@@ -3149,7 +3150,7 @@ function LoanDetailsStep({ formData, updateFormData, setFormValue }) {
                         </div>
                         <div className="space-y-2">
                             <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Valuation Date</label>
-                            <input required type="date" name="valuationDate" value={formData.valuationDate} onChange={updateFormData} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 outline-none focus:bg-white focus:ring-4 focus:ring-purple-100 transition-all" />
+                            <GlobalDatePicker required name="valuationDate" value={formData.valuationDate} onChange={updateFormData} className="w-full" inputClassName="h-14 bg-gray-50/50 border-gray-100 rounded-2xl px-6 focus:bg-white focus:ring-4 focus:ring-purple-100" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Valuation Provider</label>
@@ -3658,9 +3659,10 @@ function PropertyDetailsStep({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                         <div className="space-y-2">
                             <label className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-widest">Security Agreement Date</label>
-                            <input required
-                                type="date"
-                                className="w-full h-14 bg-white border border-gray-100 rounded-2xl px-6 text-[13px] font-medium text-slate-600 focus:ring-4 focus:ring-purple-100 transition-all outline-none shadow-sm cursor-text"
+                            <GlobalDatePicker
+                                required
+                                className="w-full"
+                                inputClassName="h-14 bg-white border-gray-100 rounded-2xl px-6 focus:ring-4 focus:ring-purple-100 shadow-sm"
                             />
                             <p className="text-[10px] font-medium text-gray-400 mt-1">Date when security agreement was executed</p>
                         </div>

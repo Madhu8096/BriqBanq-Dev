@@ -3,10 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import {
     Activity, AlertCircle, AlertTriangle, ArrowRight, ArrowUpRight, Bath, BedDouble, Bell, Briefcase, Building, Calendar, Car, Check, CheckCircle, CheckCircle2, CheckSquare, ChevronDown, ChevronRight, ClipboardCheck, ClipboardList, Clock, Copy, DollarSign, Download, Edit3, ExternalLink, Eye, FileCheck, FileSearch, FileText, Filter, Flag, Gavel, Handshake, Hash, HelpCircle, History, Home, Image as ImageIcon, Info, Layers, LayoutDashboard, Link as LinkIcon, Lock, Mail, MapPin, Maximize2, MessageSquare, MoreHorizontal, Paperclip, Pause, PenTool, PieChart, Plus, PlusCircle, Printer, RefreshCw, Scale, Search, SearchIcon, Send, Settings, Share, Shield, ShieldCheck, Sparkles, Target, TrendingUp, Upload, User, Users, Wallet, X, XCircle, Zap
 } from "lucide-react";
+import GlobalDatePicker from "../../components/common/GlobalDatePicker";
 import BidsTab from "./case-details-tabs/BidsTab";
 import MessagesTab from "./case-details-tabs/MessagesTab";
 import { LoadingState, ErrorState } from "../../components/common/States";
-import { dealsService, auctionService } from "../../api/dataService";
+import { dealsService, auctionService, caseService } from "../../api/dataService";
 
 export default function InvestorCaseDetails() {
     const { id } = useParams();
@@ -347,6 +348,30 @@ export default function InvestorCaseDetails() {
 
     const removeUploadingFile = (id) => {
         setUploadingFiles(prev => prev.filter(f => f.id !== id));
+    };
+
+    const handleExportReport = async () => {
+        try {
+            const result = await caseService.exportCaseReport(id || caseData.id);
+            if (result instanceof Blob) {
+                const url = URL.createObjectURL(result);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Case-Report-${id || caseData.id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                setToast({ show: true, message: "Report exported successfully!", type: "success" });
+            } else {
+                setToast({ show: true, message: "Export failed: " + (result?.error || "No data received"), type: "error" });
+            }
+        } catch (err) {
+            console.error("Export error:", err);
+            setToast({ show: true, message: "Failed to export report.", type: "error" });
+        } finally {
+            setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
+        }
     };
 
     const handleSave = async () => {
@@ -908,7 +933,11 @@ export default function InvestorCaseDetails() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button id="btn-export-report" className="px-4 py-2 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+                        <button
+                            id="btn-export-report"
+                            onClick={handleExportReport}
+                            className="px-4 py-2 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+                        >
                             Export Report
                         </button>
                         <button
@@ -3760,9 +3789,7 @@ export default function InvestorCaseDetails() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Deadline</label>
-                                    <input
-                                        type="date"
-                                        className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-[20px] text-[14px] font-bold text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition-all shadow-sm"
+                                    <GlobalDatePicker
                                         value={newTask.date}
                                         onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
                                     />
@@ -4016,9 +4043,7 @@ export default function InvestorCaseDetails() {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Due Date</label>
-                                    <input
-                                        type="date"
-                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] font-bold text-gray-900 focus:bg-white focus:border-blue-500 outline-none transition-all"
+                                    <GlobalDatePicker
                                         value={newChecklistItem.dueDate}
                                         onChange={(e) => setNewChecklistItem({ ...newChecklistItem, dueDate: e.target.value })}
                                     />

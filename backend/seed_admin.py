@@ -2,7 +2,7 @@ import asyncio
 import uuid
 import sys
 import os
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -10,8 +10,6 @@ from sqlalchemy.ext.asyncio import create_async_engine
 sys.path.append(os.getcwd())
 
 from app.core.config import settings
-
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def seed_admin():
     print(f"Connecting to: {settings.database_url}")
@@ -22,7 +20,8 @@ async def seed_admin():
     try:
         email = "admin@brickbanq.com"
         password = "AdminPassword123!"
-        hashed_password = password_context.hash(password)
+        # Use bcrypt directly to avoid passlib 72-byte bug
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         user_id = uuid.uuid4()
         
         async with local_engine.begin() as conn:

@@ -19,7 +19,8 @@ export default function LenderAllDeals() {
                 setError(null);
                 const res = await dealsService.getDeals();
                 if (res.success) {
-                    setDeals(res.data || []);
+                    const data = res.data;
+                    setDeals(Array.isArray(data) ? data : (data?.items || []));
                 } else {
                     setError(res.error || "Failed to load deals.");
                 }

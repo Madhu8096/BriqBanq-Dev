@@ -5,6 +5,7 @@ import { contractService, activityService } from "../../api/dataService";
 import { LoadingState, ErrorState, EmptyState } from "../../components/common/States";
 import { formatCurrency } from "../../utils/formatters";
 import { useNotifications } from "../../context/NotificationContext";
+import GlobalDatePicker from "../../components/common/GlobalDatePicker";
 
 // ... (rest of the helper components)
 const FormInput = ({ label, name, value, onChange, type = "text", required, placeholder, error, min, step }) => (
@@ -520,14 +521,11 @@ export default function LenderContracts() {
                                 />
 
                                 <div className="md:col-span-2">
-                                    <FormInput
-                                        label="Date"
-                                        required
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => handleInputChange('date', e.target.value)}
-                                        error={formErrors.date}
-                                    />
+                                <GlobalDatePicker
+                                    required
+                                    value={formData.date}
+                                    onChange={(e) => handleInputChange('date', e.target.value)}
+                                />
                                 </div>
                             </div>
 

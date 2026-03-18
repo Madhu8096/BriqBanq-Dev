@@ -5,6 +5,7 @@ import { contractService } from "../../api/dataService";
 import { LoadingState, ErrorState, EmptyState } from "../../components/common/States";
 import { formatCurrency } from "../../utils/formatters";
 import { useNotifications } from "../../context/NotificationContext";
+import GlobalDatePicker from "../../components/common/GlobalDatePicker";
 
 // Helper Components (Inline for now as they are missing in the project)
 const FormInput = ({ label, name, value, onChange, type = "text", required, placeholder, error, min, step }) => (
@@ -500,14 +501,14 @@ export default function InvestorContracts() {
                 />
 
                 <div className="md:col-span-2">
-                  <FormInput
-                    label="Date"
-                    required
-                    type="date"
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <GlobalDatePicker
                     value={formData.date}
                     onChange={(e) => handleInputChange('date', e.target.value)}
-                    error={formErrors.date}
                   />
+                  {formErrors.date && <p className="text-xs text-red-500 mt-1">{formErrors.date}</p>}
                 </div>
               </div>
 

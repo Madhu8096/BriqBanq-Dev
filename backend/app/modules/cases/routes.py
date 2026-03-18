@@ -6,7 +6,7 @@ Calls service layer only. No direct DB calls. No business logic.
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.core.dependencies import get_current_user, get_db, get_trace_id
 from app.modules.cases.policies import CasePolicy
@@ -20,6 +20,7 @@ from app.modules.cases.schemas import (
     CaseStatusUpdateRequest,
 )
 from app.modules.cases.service import CaseService
+from app.modules.cases.pdf_service import CasePDFService
 from app.modules.identity.schemas import MessageResponse
 from app.shared.enums import CaseStatus
 
@@ -407,33 +408,63 @@ async def get_case(
 
 @router.get("/{case_id}/export")
 async def export_case_report(
-    case_id: uuid.UUID,
+    case_id: str,
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    """Export a case report as JSON."""
+    """Export a case report as PDF."""
     service = CaseService(db)
-    case = await service.get_case(case_id)
-    CasePolicy.can_view_case(current_user, str(case.borrower_id))
-
-    # Construct complete report data
-    report_data = {
-        "case_id": str(case.id),
-        "title": case.title,
-        "status": case.status.value,
-        "borrower_name": case.borrower_name,
-        "property_address": case.property_address,
-        "property_type": case.property_type,
-        "estimated_value": float(case.estimated_value),  # type: ignore[arg-type]
-        "outstanding_debt": float(case.outstanding_debt),  # type: ignore[arg-type]
-        "lender_name": case.lender_name,
-        "lawyer_name": case.lawyer_name,
-        "risk_level": case.risk_level,
-        "created_at": case.created_at.isoformat(),
-        "exported_at": uuid.uuid4().hex, # Placeholder for unique export ID if needed
-    }
     
-    return report_data
+    # Try to convert to UUID to see if it's a real case
+    is_uuid = True
+    try:
+        uuid_obj = uuid.UUID(case_id)
+    except ValueError:
+        is_uuid = False
+
+    if is_uuid:
+        case = await service.get_case(uuid_obj)
+        CasePolicy.can_view_case(current_user, str(case.borrower_id))
+
+        # Construct complete report data from DB
+        report_data = {
+            "id": str(case.id),
+            "title": case.title,
+            "status": case.status.value,
+            "borrower_name": case.borrower_name,
+            "property_address": case.property_address,
+            "property_type": case.property_type,
+            "estimated_value": float(case.estimated_value),
+            "outstanding_debt": float(case.outstanding_debt),
+            "lender_name": case.lender_name,
+            "lawyer_name": case.lawyer_name,
+            "risk_level": case.risk_level,
+            "created_at": case.created_at.isoformat(),
+        }
+    else:
+        # Fallback to mock data for non-UUID IDs (e.g. MIP-2026-001)
+        from datetime import datetime
+        report_data = {
+            "id": case_id,
+            "title": f"Mock Case: {case_id}",
+            "status": "In Auction",
+            "borrower_name": "Madhu Munigala",
+            "property_address": "45 Victoria Street, Potts Point, NSW 2011",
+            "property_type": "Apartment",
+            "estimated_value": 1250000.0,
+            "outstanding_debt": 980000.0,
+            "lender_name": "Commonwealth Bank",
+            "lawyer_name": "Jennifer Wong",
+            "risk_level": "Medium",
+            "created_at": datetime.utcnow().isoformat(),
+        }
+    
+    pdf_service = CasePDFService()
+    pdf_stream = pdf_service.generate_case_report(report_data)
+    
+    response = Response(content=pdf_stream.getvalue(), media_type="application/pdf")
+    response.headers["Content-Disposition"] = f"attachment; filename=Case-Report-{case_id}.pdf"
+    return response
 
 @router.delete("/{case_id}", response_model=MessageResponse)
 async def delete_case_endpoint(

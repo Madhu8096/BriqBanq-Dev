@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useCaseContext } from '../../../context/CaseContext'
 import ManageCaseModal from '../../../components/admin/case/ManageCaseModal'
+import { caseService } from '../../../api/dataService'
 
 const tabs = [
     { label: 'Overview', icon: Home, path: 'overview' },
@@ -48,6 +49,27 @@ export default function CaseDetailsLayout() {
         </div>
     )
 
+    const handleExportReport = async () => {
+        try {
+            const result = await caseService.exportCaseReport(caseData.id);
+            if (result instanceof Blob) {
+                const url = URL.createObjectURL(result);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Case-Report-${caseData.id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                alert("Export failed: " + (result?.error || "No data received"));
+            }
+        } catch (err) {
+            console.error("Export error:", err);
+            alert("Failed to export report.");
+        }
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-AU', {
             style: 'currency',
@@ -79,7 +101,10 @@ export default function CaseDetailsLayout() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 hover:shadow-lg transition-all">
+                         <button 
+                            onClick={handleExportReport}
+                            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 hover:shadow-lg transition-all"
+                        >
                             <Download className="w-5 h-5" />
                         </button>
                         <button className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 hover:shadow-lg transition-all">

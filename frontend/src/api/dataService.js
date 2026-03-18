@@ -52,6 +52,12 @@ const apiFetch = async (url, options = {}) => {
             data: finalData,
             ...rest
         });
+        
+        // Handle direct blob responses
+        if (rest.responseType === 'blob') {
+            return response.data; // Return the blob directly
+        }
+        
         return { success: true, data: response.data };
     } catch (err) {
         console.error(`[API REAL FAIL] ${url}`, err);
@@ -259,6 +265,18 @@ export const authService = {
             data: userData
         });
     },
+    sendOTP: async (email) => {
+        return apiFetch("/api/v1/identity/send-otp", {
+            method: 'POST',
+            data: { email }
+        });
+    },
+    verifyOTP: async (verifyData) => {
+        return apiFetch("/api/v1/identity/verify-otp", {
+            method: 'POST',
+            data: verifyData
+        });
+    },
     changePassword: async (payload) => {
         if (USE_SIMULATOR) return simulateBackend({ success: true }, `changePassword`);
         return apiFetch("/api/auth/change-password", { method: 'POST', body: JSON.stringify(payload) });
@@ -386,7 +404,7 @@ export const caseService = {
     },
     exportCaseReport: async (caseId) => {
         if (USE_SIMULATOR) return simulateBackend({ success: true }, "exportCaseReport");
-        return apiFetch(`/api/v1/cases/${caseId}/export`);
+        return apiFetch(`/api/v1/cases/${caseId}/export`, { responseType: 'blob' });
     },
     deleteCase: async (caseId) => {
         if (USE_SIMULATOR) return simulateBackend({ success: true }, "deleteCase");

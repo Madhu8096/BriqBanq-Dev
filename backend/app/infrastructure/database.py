@@ -52,3 +52,10 @@ async def init_db():
 async def close_db():
     """Close database connections."""
     await engine.dispose()
+
+# Import all models here to ensure they are registered with Base.metadata
+# for init_db() to work correctly.
+from app.modules.identity.models import User
+from app.modules.roles.models import UserRole
+from app.modules.documents.models import Document
+from app.modules.cases.models import Case

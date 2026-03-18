@@ -4,6 +4,7 @@ import {
     CheckSquare, AlertCircle, Clock, Flag, BarChart2, CheckCircle2,
     Search, Calendar, ArrowUpSquare, Plus, Edit2, Trash2, ExternalLink, X
 } from "lucide-react";
+import GlobalDatePicker from '../../components/common/GlobalDatePicker';
 
 export default function InvestorTaskCenter() {
     const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -492,13 +493,21 @@ export default function InvestorTaskCenter() {
                                         </span>
 
                                         {/* Due Date */}
-                                        <div className={`flex items-center gap-1.5 text-[11px] sm:text-[12px] font-bold ${task.dueDate.includes('Overdue') ? 'text-red-500 font-extrabold' :
-                                            task.dueDate === 'Today' ? 'text-[#F97316] font-extrabold' :
-                                                task.dueDate === 'Tomorrow' ? 'text-[#F59E0B] font-extrabold' :
-                                                    'text-gray-500'
-                                            }`}>
-                                            <Calendar size={13} className="text-gray-400" />
-                                            {task.dueDate}
+                                        <div className="relative group">
+                                            <GlobalDatePicker 
+                                                value={task.dueDateObj}
+                                                onChange={(e) => {
+                                                    const newDate = e.target.value;
+                                                    setTasks(tasks.map(t => t.id === task.id ? { 
+                                                        ...t, 
+                                                        dueDate: new Date(newDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                                                        dueDateObj: new Date(newDate)
+                                                    } : t));
+                                                }}
+                                                className="!w-auto"
+                                                inputClassName="!h-auto !p-0 !bg-transparent !border-none !shadow-none !text-[11px] !sm:text-[12px] !font-bold !cursor-pointer hover:!text-blue-600 !w-24"
+                                            />
+                                            {task.dueDate && task.dueDate.includes('Overdue') && <span className="absolute -top-1 -right-1 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
                                         </div>
 
                                         {/* Module Badge */}
@@ -628,11 +637,9 @@ export default function InvestorTaskCenter() {
                                     </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label>
-                                        <input
-                                            type="date"
+                                        <GlobalDatePicker
                                             value={newTask.dueDate}
                                             onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                                            className="w-full px-4 py-1.5 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] focus:ring-1 focus:ring-[#1C4ED8] transition-colors font-medium text-gray-700 shadow-sm"
                                         />
                                     </div>
                                 </div>
@@ -727,11 +734,9 @@ export default function InvestorTaskCenter() {
                                     </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-gray-700 mb-0.5">Due Date</label>
-                                        <input
-                                            type="date"
+                                        <GlobalDatePicker
                                             value={editingTask.dueDateObj.toISOString().split('T')[0]}
                                             onChange={(e) => setEditingTask({ ...editingTask, dueDateObj: new Date(e.target.value), dueDate: e.target.value })}
-                                            className="w-full px-4 py-1.5 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#1C4ED8] focus:ring-1 focus:ring-[#1C4ED8] transition-colors font-medium text-gray-700"
                                         />
                                     </div>
                                 </div>

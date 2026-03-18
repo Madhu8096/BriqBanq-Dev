@@ -9,6 +9,7 @@ Contains ALL business logic for user management.
 """
 
 import uuid
+import random
 from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,6 +38,8 @@ from app.modules.identity.schemas import (
     ChangePasswordRequest,
     UserRegisterRequest,
     UserUpdateRequest,
+    OTPSendRequest,
+    OTPVerifyRequest,
 )
 from app.shared.enums import RoleType, UserStatus
 
@@ -47,6 +50,82 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repository = UserRepository(db)
+
+    async def send_otp(self, email: str) -> None:
+        """
+        Generate and send a 6-digit OTP.
+        - Checks if user already exists
+        - Generates random 6-digit OTP
+        - Stores in Redis for 5 minutes
+        - Mocks email sending
+        """
+        # Check if user already exists
+        existing_user = await self.repository.get_by_email(email)
+        if existing_user:
+            raise DuplicateEmailError(message="User already exists with this email")
+
+        # Generate 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        
+        # Store in Redis: Key = otp:{email}, Expiry = 5 mins (300s)
+        await redis_client.set(f"otp:{email}", otp, expire=300)
+        
+        # Reset attempts counter
+        await redis_client.set(f"otp_attempts:{email}", "0", expire=300)
+
+        # Mock send email
+        print(f"\n[MOCK EMAIL] To: {email}")
+        print(f"[MOCK EMAIL] Your Brickbanq OTP is: {otp}")
+        print(f"[MOCK EMAIL] Expires in 5 minutes.\n")
+
+    async def verify_otp_and_register(
+        self,
+        request: OTPVerifyRequest,
+        trace_id: str,
+    ) -> User:
+        """
+        Verify OTP and create user.
+        - Validates OTP matches and not expired
+        - Checks max attempts (3)
+        - Calls registration logic if valid
+        - Deletes OTP from Redis
+        """
+        # 1. Check attempts
+        attempts_key = f"otp_attempts:{request.email}"
+        attempts_str = await redis_client.get(attempts_key)
+        attempts = int(attempts_str) if attempts_str else 0
+        
+        if attempts >= 3:
+            raise InvalidCredentialsError(message="Maximum OTP attempts exceeded. Please request a new one.")
+
+        # 2. Check OTP
+        stored_otp = await redis_client.get(f"otp:{request.email}")
+        
+        if not stored_otp:
+            raise InvalidCredentialsError(message="OTP expired or not found. Please resend.")
+
+        if stored_otp != request.otp:
+            # Increment attempts
+            await redis_client.incr(attempts_key)
+            raise InvalidCredentialsError(message=f"Invalid OTP. {2 - attempts} attempts remaining.")
+
+        # 3. OTP is valid - register user
+        # Adapt request for register_user call
+        reg_request = UserRegisterRequest(
+            email=request.email,
+            password=request.password,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            requested_roles=[request.role.upper()]
+        )
+        
+        user = await self.register_user(reg_request, trace_id)
+        
+        # 4. Cleanup Redis
+        await redis_client.delete(f"otp:{request.email}")
+        await redis_client.delete(attempts_key)
+        
+        return user
 
     async def register_user(
         self,

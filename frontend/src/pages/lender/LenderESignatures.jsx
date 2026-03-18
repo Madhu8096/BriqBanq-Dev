@@ -6,6 +6,7 @@ import {
     Cpu, Globe, Terminal, UserCheck, AlertCircle, FileCheck,
     UploadCloud, PenTool, RefreshCw, Briefcase, Trash2, X, ArrowLeft, AlertTriangle
 } from "lucide-react";
+import GlobalDatePicker from '../../components/common/GlobalDatePicker';
 import { borrowerApi } from '../borrower/api';
 // Redefined mock data to match Figma exactly
 const MOCK_DATA = {
@@ -1066,21 +1067,21 @@ function ReportsTab({ types, reports, onGenerate }) {
 
                     <div className="w-[180px]">
                         <label className="block text-sm font-bold text-[#111827] mb-2 opacity-70">From date</label>
-                        <input
-                            type="date"
+                        <GlobalDatePicker
                             value={fromDate}
                             onChange={(e) => setFromDate(e.target.value)}
-                            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all uppercase shadow-sm"
+                            className="w-full"
+                            inputClassName="bg-white border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-sm"
                         />
                     </div>
 
                     <div className="w-[180px]">
                         <label className="block text-sm font-bold text-[#111827] mb-2 opacity-70">To date</label>
-                        <input
-                            type="date"
+                        <GlobalDatePicker
                             value={toDate}
                             onChange={(e) => setToDate(e.target.value)}
-                            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all uppercase shadow-sm"
+                            className="w-full"
+                            inputClassName="bg-white border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-sm"
                         />
                     </div>
 
