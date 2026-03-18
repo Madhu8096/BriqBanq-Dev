@@ -108,6 +108,10 @@ export default function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/borrower-dashboard" element={<Navigate to="/borrower/dashboard" replace />} />
+      <Route path="/lender-dashboard" element={<Navigate to="/lender/dashboard" replace />} />
+      <Route path="/investor-dashboard" element={<Navigate to="/investor/dashboard" replace />} />
+      <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
 
       {/* Admin Panel */}
       <Route element={<ProtectedRoute />}>

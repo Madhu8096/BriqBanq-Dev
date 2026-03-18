@@ -20,7 +20,7 @@ class CaseCreateRequest(BaseModel):
     property_type: str = Field(..., min_length=1, max_length=50)
     estimated_value: Decimal = Field(..., gt=0)
     outstanding_debt: Decimal = Field(..., gt=0)
-    interest_rate: Optional[Decimal] = Field(None, gt=0)
+    interest_rate: Optional[Decimal] = Field(None, ge=0, le=999.99)
     tenure: Optional[int] = Field(None, gt=0)
 
 
@@ -32,7 +32,7 @@ class CaseUpdateRequest(BaseModel):
     property_type: Optional[str] = Field(None, max_length=50)
     estimated_value: Optional[Decimal] = Field(None, gt=0)
     outstanding_debt: Optional[Decimal] = Field(None, gt=0)
-    interest_rate: Optional[Decimal] = Field(None, gt=0)
+    interest_rate: Optional[Decimal] = Field(None, ge=0, le=999.99)
     tenure: Optional[int] = Field(None, gt=0)
 
 

@@ -1,3 +1,4 @@
+import DatePicker from '../../components/common/DatePicker'
 import { useState } from 'react'
 
 const STEPS = [
@@ -274,7 +275,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Agreement Date</label>
-                  <input type="text" value={formData.securityAgreementDate} onChange={(e) => update('securityAgreementDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#3474E1] focus:border-[#3474E1]" placeholder="mm/dd/yyyy" />
+                  <DatePicker value={formData.securityAgreementDate} onChange={(val) => update('securityAgreementDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-[#3474E1] focus:border-[#3474E1]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Description of Secured Property</label>
@@ -363,7 +364,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Registration Date</label>
-                    <input type="text" value={formData.registrationDate} onChange={(e) => update('registrationDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="mm/dd/yyyy" />
+                    <DatePicker value={formData.registrationDate} onChange={(val) => update('registrationDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Company Type</label>
@@ -448,7 +449,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Establishment Date</label>
-                    <input type="text" value={formData.trustEstablishmentDate} onChange={(e) => update('trustEstablishmentDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="mm/dd/yyyy" />
+                    <DatePicker value={formData.trustEstablishmentDate} onChange={(val) => update('trustEstablishmentDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
                   </div>
                 </div>
               </section>
@@ -495,7 +496,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Birth *</label>
-                    <input type="text" value={formData.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" placeholder="mm/dd/yyyy" />
+                    <DatePicker value={formData.dateOfBirth} onChange={(val) => update('dateOfBirth', val)} className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-900 bg-white" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number *</label>
@@ -836,7 +837,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Loan Start Date</label>
-                <input type="text" value={formData.loanStartDate} onChange={(e) => update('loanStartDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                <DatePicker value={formData.loanStartDate} onChange={(val) => update('loanStartDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Repayment Type</label>
@@ -859,7 +860,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Default Notice Date</label>
-                <input type="text" value={formData.defaultNoticeDate} onChange={(e) => update('defaultNoticeDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                <DatePicker value={formData.defaultNoticeDate} onChange={(val) => update('defaultNoticeDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
               </div>
             </div>
             <section>
@@ -875,7 +876,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Valuation Date</label>
-                  <input type="text" value={formData.valuationDate} onChange={(e) => update('valuationDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                  <DatePicker value={formData.valuationDate} onChange={(val) => update('valuationDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Upload Valuation Report *</label>
@@ -979,7 +980,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Insurance Expiry Date</label>
-                  <input type="text" value={formData.insuranceExpiry} onChange={(e) => update('insuranceExpiry', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                  <DatePicker value={formData.insuranceExpiry} onChange={(val) => update('insuranceExpiry', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Upload Insurance Policy</label>
@@ -999,7 +1000,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Last Sale Date</label>
-                  <input type="text" value={formData.lastSaleDate} onChange={(e) => update('lastSaleDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                  <DatePicker value={formData.lastSaleDate} onChange={(val) => update('lastSaleDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Prior Sale Price (A$)</label>
@@ -1007,7 +1008,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Prior Sale Date</label>
-                  <input type="text" value={formData.priorSaleDate} onChange={(e) => update('priorSaleDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+                  <DatePicker value={formData.priorSaleDate} onChange={(val) => update('priorSaleDate', val)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
                 </div>
               </div>
             </div>

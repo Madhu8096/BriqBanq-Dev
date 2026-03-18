@@ -69,12 +69,15 @@ export const AuthProvider = ({ children }) => {
                 const userData = response.data;
                 
                 // Normalize for UI compatibility
+                const roleData = userData.role || (userData.user_roles && userData.user_roles[0]?.role_type);
+                const normalizedRole = roleData ? roleData.toLowerCase() : "borrower";
+
                 const normalizedUser = {
                     ...userData,
                     first_name: userData.first_name || userData.name?.split(' ')[0] || "User",
                     last_name: userData.last_name || userData.name?.split(' ').slice(1).join(' ') || "",
                     name: userData.name || (userData.first_name ? `${userData.first_name} ${userData.last_name}` : "User"),
-                    role: userData.role || userData.user_roles?.[0]?.role_type || "Borrower"
+                    role: normalizedRole
                 };
 
                 setUser(normalizedUser);
@@ -98,12 +101,15 @@ export const AuthProvider = ({ children }) => {
     /* eslint-enable react-hooks/set-state-in-effect */
 
     const login = (newToken, userData) => {
+        const roleData = userData?.role || (userData?.user_roles && userData?.user_roles[0]?.role_type);
+        const normalizedRole = roleData ? roleData.toLowerCase() : "borrower";
+
         const normalizedUser = userData ? {
             ...userData,
             first_name: userData.first_name || userData.name?.split(' ')[0] || "User",
             last_name: userData.last_name || userData.name?.split(' ').slice(1).join(' ') || "",
             name: userData.name || (userData.first_name ? `${userData.first_name} ${userData.last_name}` : "User"),
-            role: userData.role || userData.roles?.[0]?.role_type || "Borrower"
+            role: normalizedRole
         } : null;
 
         // Atomic storage update

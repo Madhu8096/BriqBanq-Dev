@@ -33,18 +33,23 @@ class User(BaseEntityMixin, Base):
         "UserRole",
         back_populates="user",
         lazy="selectin",
-        foreign_keys="[UserRole.user_id]",
+        primaryjoin="User.id == UserRole.user_id",
     )
     kyc_records = relationship(
         "KYCRecord",
         back_populates="user",
         lazy="selectin",
-        foreign_keys="[KYCRecord.user_id]",
+        primaryjoin="User.id == KYCRecord.user_id",
     )
 
     __table_args__ = (
         Index("ix_users_email_status", "email", "status"),
     )
 
+    @property
+    def full_name(self) -> str:
+        """Helper to get full name."""
+        return f"{self.first_name} {self.last_name}".strip()
+
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email={self.email}, status={self.status})>"
+        return f"<User(id={self.id}, email={self.email}, full_name={self.full_name})>"

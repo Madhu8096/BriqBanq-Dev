@@ -21,6 +21,8 @@ class RedisClient:
         self._redis: Optional[aioredis.Redis] = None
         self._is_enabled: bool = True
         self._conn_error_logged: bool = False
+        self._memory_data = {}      # Fallback storage: {key: value}
+        self._memory_expires = {}   # Expiration storage: {key: timestamp}
 
     async def connect(self):
         """Initialize Redis connection and check connectivity."""
@@ -51,25 +53,52 @@ class RedisClient:
 
     async def get(self, key: str) -> Optional[str]:
         """Get a value by key with fallback."""
-        if not self._is_enabled or not self._redis:
+        if self._is_enabled and self._redis:
+            try:
+                val = await self._redis.get(key)
+                logger.debug("redis_get", key=key, exists=val is not None)
+                return val
+            except (ConnectionError, TimeoutError) as e:
+                self._handle_conn_failure(e)
+        
+        # Memory Fallback
+        import time
+        now = time.time()
+        if key in self._memory_expires and self._memory_expires[key] < now:
+            # Expired
+            del self._memory_data[key]
+            del self._memory_expires[key]
             return None
-        try:
-            return await self._redis.get(key)
-        except (ConnectionError, TimeoutError) as e:
-            self._handle_conn_failure(e)
-            return None
+        
+        val = self._memory_data.get(key)
+        logger.debug("redis_get_memory", key=key, exists=val is not None)
+        return val
 
     async def set(self, key: str, value: str, expire: Optional[int] = None) -> None:
         """Set a key-value pair with fallback."""
-        if not self._is_enabled or not self._redis:
-            return
-        try:
-            await self._redis.set(key, value, ex=expire)
-        except (ConnectionError, TimeoutError) as e:
-            self._handle_conn_failure(e)
+        if self._is_enabled and self._redis:
+            try:
+                await self._redis.set(key, value, ex=expire)
+                logger.debug("redis_set", key=key, expire=expire)
+                return
+            except (ConnectionError, TimeoutError) as e:
+                self._handle_conn_failure(e)
+        
+        # Memory Fallback
+        self._memory_data[key] = str(value)
+        if expire:
+            import time
+            self._memory_expires[key] = time.time() + expire
+        elif key in self._memory_expires:
+            del self._memory_expires[key]
+        logger.debug("redis_set_memory", key=key, expire=expire)
 
     async def delete(self, key: str) -> None:
         """Delete a key with fallback."""
+        # Memory cleanup always
+        self._memory_data.pop(key, None)
+        self._memory_expires.pop(key, None)
+
         if not self._is_enabled or not self._redis:
             return
         try:
@@ -89,13 +118,17 @@ class RedisClient:
 
     async def incr(self, key: str) -> int:
         """Increment a key with fallback."""
-        if not self._is_enabled or not self._redis:
-            return 0
-        try:
-            return await self._redis.incr(key)
-        except (ConnectionError, TimeoutError) as e:
-            self._handle_conn_failure(e)
-            return 0
+        if self._is_enabled and self._redis:
+            try:
+                return await self._redis.incr(key)
+            except (ConnectionError, TimeoutError) as e:
+                self._handle_conn_failure(e)
+        
+        # Memory Fallback
+        current_val = int(self._memory_data.get(key, 0))
+        new_val = current_val + 1
+        self._memory_data[key] = str(new_val)
+        return new_val
 
     async def expire(self, key: str, seconds: int) -> None:
         """Set expiry on a key with fallback."""

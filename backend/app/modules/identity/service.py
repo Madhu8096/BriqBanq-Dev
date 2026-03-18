@@ -31,6 +31,7 @@ from app.core.security import (
 )
 from app.core.config import settings
 from app.infrastructure.redis import redis_client
+from app.infrastructure.email_service import EmailService
 from app.modules.identity.models import User
 from app.modules.identity.repository import UserRepository
 from app.modules.identity.schemas import (
@@ -65,18 +66,27 @@ class UserService:
             raise DuplicateEmailError(message="User already exists with this email")
 
         # Generate 6-digit OTP
+        import random
         otp = str(random.randint(100000, 999999))
         
-        # Store in Redis: Key = otp:{email}, Expiry = 5 mins (300s)
-        await redis_client.set(f"otp:{email}", otp, expire=300)
+        # Store in Redis: Key = otp:{email}, Expiry = 10 mins (600s)
+        await redis_client.set(f"otp:{email}", otp, expire=600)
         
         # Reset attempts counter
-        await redis_client.set(f"otp_attempts:{email}", "0", expire=300)
+        await redis_client.set(f"otp_attempts:{email}", "0", expire=600)
 
-        # Mock send email
-        print(f"\n[MOCK EMAIL] To: {email}")
-        print(f"[MOCK EMAIL] Your Brickbanq OTP is: {otp}")
-        print(f"[MOCK EMAIL] Expires in 5 minutes.\n")
+        import structlog
+        log = structlog.get_logger()
+        log.info("otp_generated", email=email, otp=otp, expiry=600)
+
+        # Send real email via SMTP
+        try:
+            await EmailService.send_otp_email(email, otp)
+        except Exception as e:
+            # We don't want to crash the whole request if email fails 
+            # (though normally we would want to inform user)
+            # Re-raising so the route can handle it and return 500 or 400
+            raise e
 
     async def verify_otp_and_register(
         self,
@@ -99,8 +109,17 @@ class UserService:
             raise InvalidCredentialsError(message="Maximum OTP attempts exceeded. Please request a new one.")
 
         # 2. Check OTP
-        stored_otp = await redis_client.get(f"otp:{request.email}")
+        otp_key = f"otp:{request.email}"
+        stored_otp = await redis_client.get(otp_key)
         
+        import structlog
+        log = structlog.get_logger()
+        log.info("otp_verification_attempt", 
+                 email=request.email, 
+                 entered_otp=request.otp, 
+                 stored_otp=stored_otp,
+                 match=(stored_otp == request.otp))
+
         if not stored_otp:
             raise InvalidCredentialsError(message="OTP expired or not found. Please resend.")
 
@@ -110,22 +129,46 @@ class UserService:
             raise InvalidCredentialsError(message=f"Invalid OTP. {2 - attempts} attempts remaining.")
 
         # 3. OTP is valid - register user
+        # Split full_name
+        name_parts = request.full_name.strip().split(None, 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else "User"
+
         # Adapt request for register_user call
         reg_request = UserRegisterRequest(
             email=request.email,
             password=request.password,
-            first_name=request.first_name,
-            last_name=request.last_name,
+            full_name=request.full_name,
+            first_name=first_name,
+            last_name=last_name,
             requested_roles=[request.role.upper()]
         )
         
         user = await self.register_user(reg_request, trace_id)
         
-        # 4. Cleanup Redis
+        # Add role to the response object (it's in the schema now)
+        setattr(user, "role", request.role.lower())
+        
+        # 4. Generate tokens for auto-login
+        # At this point the user is newly created, so we can just use the role they selected
+        access_token = create_access_token(
+            user_id=str(user.id),
+            roles=[request.role.upper()],
+        )
+        refresh_token = create_refresh_token(user_id=str(user.id))
+        
+        tokens = AuthTokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.jwt_access_token_expire_minutes * 60,
+        )
+
+        # 5. Cleanup Redis
         await redis_client.delete(f"otp:{request.email}")
         await redis_client.delete(attempts_key)
         
-        return user
+        return user, tokens
 
     async def register_user(
         self,

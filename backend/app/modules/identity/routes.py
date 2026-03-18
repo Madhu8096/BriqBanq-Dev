@@ -7,7 +7,10 @@ No business logic in routes.
 import uuid
 
 from fastapi import APIRouter, Depends, status
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = structlog.get_logger()
 
 from app.core.dependencies import get_current_user, get_db, get_trace_id
 from app.modules.identity.policies import IdentityPolicy
@@ -20,6 +23,7 @@ from app.modules.identity.schemas import (
     TokenRefreshRequest,
     UserLoginRequest,
     UserRegisterRequest,
+    UserRegistrationResponse,
     UserResponse,
     UserUpdateRequest,
     UserWithRolesResponse,
@@ -80,12 +84,21 @@ async def send_otp(
     Send a 6-digit OTP to the provided email.
     Validates if user already exists.
     """
-    service = UserService(db)
-    await service.send_otp(request.email)
-    return {"message": "Success"}
+    print(f"\n[DEBUG] Incoming /send-otp request for email: {request.email}")
+    logger.info("send_otp_request_received", email=request.email, trace_id=trace_id)
+    
+    try:
+        service = UserService(db)
+        await service.send_otp(request.email)
+        print(f"[DEBUG] /send-otp SUCCESS for email: {request.email}")
+        return {"message": "Success"}
+    except Exception as e:
+        print(f"[DEBUG] /send-otp FAILED for email: {request.email}. Error: {str(e)}")
+        logger.exception("send_otp_failed", email=request.email, error=str(e))
+        raise
 
 
-@router.post("/verify-otp", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/verify-otp", status_code=status.HTTP_201_CREATED)
 async def verify_otp(
     request: OTPVerifyRequest,
     db=Depends(get_db),
@@ -96,7 +109,7 @@ async def verify_otp(
     Hashes password and creates record if valid.
     """
     service = UserService(db)
-    user = await service.verify_otp_and_register(request, trace_id)
+    user, tokens = await service.verify_otp_and_register(request, trace_id)
     
     # Create role requests
     role_service = RoleService(db)
@@ -120,7 +133,10 @@ async def verify_otp(
         trace_id=trace_id,
     )
     
-    return user
+    return UserRegistrationResponse.model_validate({
+        "user": user,
+        "tokens": tokens
+    }).model_dump()
 
 
 @router.post("/login", response_model=AuthTokenResponse)

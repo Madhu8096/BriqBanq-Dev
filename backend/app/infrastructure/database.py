@@ -45,6 +45,14 @@ async def get_db_session():
 
 async def init_db():
     """Initialize database tables (for development only)."""
+    # Import all models here to ensure they are registered with Base.metadata
+    # for init_db() to work correctly.
+    from app.modules.identity.models import User
+    from app.modules.roles.models import UserRole
+    from app.modules.documents.models import Document
+    from app.modules.cases.models import Case
+    from app.modules.kyc.models import KYCRecord
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -52,10 +60,3 @@ async def init_db():
 async def close_db():
     """Close database connections."""
     await engine.dispose()
-
-# Import all models here to ensure they are registered with Base.metadata
-# for init_db() to work correctly.
-from app.modules.identity.models import User
-from app.modules.roles.models import UserRole
-from app.modules.documents.models import Document
-from app.modules.cases.models import Case

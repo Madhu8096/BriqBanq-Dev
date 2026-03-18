@@ -73,6 +73,15 @@ class Settings(BaseSettings):
         default="10/minute", description="Registration rate limit"
     )
 
+    # Email (SMTP)
+    mail_username: str = Field(default="brickbanq@gmail.com", description="SMTP username")
+    mail_password: Optional[str] = Field(default=None, description="SMTP password (App Password)")
+    mail_from: str = Field(default="brickbanq@gmail.com", description="SMTP sender email")
+    mail_port: int = Field(default=587, description="SMTP port")
+    mail_server: str = Field(default="smtp.gmail.com", description="SMTP server")
+    mail_tls: bool = Field(default=True, description="Use TLS")
+    mail_ssl: bool = Field(default=False, description="Use SSL")
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

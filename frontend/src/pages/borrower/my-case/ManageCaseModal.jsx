@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import DatePicker from '../../../components/common/DatePicker'
 
 const TABS = [
   { id: 'case-details', label: 'Case Details', icon: '📋' },
@@ -415,12 +416,10 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Valuation Date</label>
-                      <input
-                        type="text"
+                      <DatePicker
                         value={caseDetails.valuationDate}
-                        onChange={(e) => updateCaseDetail('valuationDate', e.target.value)}
+                        onChange={(dateStr) => updateCaseDetail('valuationDate', dateStr)}
                         placeholder="MM/DD/YYYY"
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                     <div>

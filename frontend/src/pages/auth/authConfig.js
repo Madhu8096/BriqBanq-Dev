@@ -8,10 +8,11 @@ export const USER_ROLES = [
 
 export function getDashboardPath(role) {
   switch (role) {
-    case "borrower": return "/borrower/dashboard";
-    case "lender": return "/lender/dashboard";
-    case "lawyer": return "/lawyer/dashboard";
-    case "investor": return "/investor/dashboard";
+    case "borrower": return "/borrower-dashboard";
+    case "lender": return "/lender-dashboard";
+    case "lawyer": return "/lawyer-dashboard";
+    case "invester":
+    case "investor": return "/investor-dashboard";
     case "admin": return "/admin";
     default: return "/dashboard";
   }

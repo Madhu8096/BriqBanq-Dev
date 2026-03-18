@@ -24,13 +24,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("[API 401] Token expired or unauthorized. Logging out...");
-      // Use clean clearing
-      localStorage.clear(); 
+      const url = error.config?.url || "";
+      const isAuthEndpoint = url.includes("/login") || url.includes("/verify-otp") || url.includes("/send-otp");
       
-      // Redirect to signin if not already there
-      if (!window.location.pathname.includes("/signin")) {
-        window.location.href = "/signin";
+      if (!isAuthEndpoint) {
+        console.warn("[API 401] Token expired or unauthorized. Logging out...");
+        localStorage.clear(); 
+        
+        if (!window.location.pathname.includes("/signin")) {
+          window.location.href = "/signin";
+        }
       }
     }
     return Promise.reject(error);

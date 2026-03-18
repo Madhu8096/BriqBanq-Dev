@@ -69,8 +69,7 @@ export default function SignUp() {
       const verifyPayload = {
         email: email.trim(),
         otp,
-        first_name: firstName,
-        last_name: lastName,
+        full_name: name.trim(),
         password,
         role: role.toLowerCase()
       };
@@ -78,24 +77,36 @@ export default function SignUp() {
       const result = await authService.verifyOTP(verifyPayload);
       
       if (result.success) {
-        // Automatically login after successful verification
-        const loginResult = await authService.login(email.trim(), password);
+        // Automatically login using returned tokens
+        const { user: userData, tokens } = result.data;
         
-        if (loginResult.success && loginResult.data?.access_token) {
-          const { access_token } = loginResult.data;
-          const userData = {
-            id: result.data.id,
-            email: result.data.email,
-            name: `${result.data.first_name} ${result.data.last_name}`,
-            role: role.toLowerCase(),
+        if (tokens && tokens.access_token) {
+          // Normalizing user for UI compatibility (AuthContext already does some of this, but we'll be safe)
+          const normalizedUser = {
+            ...userData,
+            name: userData.full_name || userData.name || `${userData.first_name} ${userData.last_name}`,
+            role: userData.role || role.toLowerCase()
           };
           
-          login(access_token, userData);
-          const redirectPath = getDashboardPath(role.toLowerCase());
+          login(tokens.access_token, normalizedUser);
+          
+          const redirectPath = getDashboardPath(normalizedUser.role);
           navigate(redirectPath, { replace: true });
         } else {
-          setError("Account verified, but login failed. Please sign in manually.");
-          setShowOTPModal(false);
+          // Fallback: manual login if tokens are missing
+          const loginResult = await authService.login(email.trim(), password);
+          if (loginResult.success && loginResult.data?.access_token) {
+            login(loginResult.data.access_token, {
+              ...result.data,
+              name: result.data.full_name || `${result.data.first_name} ${result.data.last_name}`,
+              role: result.data.role || role.toLowerCase()
+            });
+            const redirectPath = getDashboardPath(role.toLowerCase());
+            navigate(redirectPath, { replace: true });
+          } else {
+            setError("Account verified, but login failed. Please sign in manually.");
+            setShowOTPModal(false);
+          }
         }
       } else {
         setError(result.error || "Verification failed.");
@@ -108,7 +119,13 @@ export default function SignUp() {
   };
 
   const handleResendOTP = async () => {
-    return await authService.sendOTP(email.trim());
+    setLoading(true);
+    try {
+      const response = await authService.sendOTP(email.trim());
+      return response;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

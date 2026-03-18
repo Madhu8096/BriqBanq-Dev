@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Breadcrumb from './components/Breadcrumb'
 import { borrowerApi } from './api'
 import { MOCK_KYC_STEPS, MOCK_KYC_DRAFT_KEY, MOCK_KYC_STATUS_KEY, MOCK_BORROWER_PROFILE } from './data/borrowerMockData'
+import DatePicker from '../../components/common/DatePicker'
 
 const getInitialForm = () => {
   try {
@@ -265,12 +266,10 @@ export default function IdentityVerification() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
-                <input
-                  type="text"
-                  placeholder="mm/dd/yyyy"
+                <DatePicker
                   value={form.dob}
-                  onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  onChange={(dateStr) => setForm((f) => ({ ...f, dob: dateStr }))}
+                  placeholder="MM/DD/YYYY"
                 />
               </div>
               <div>

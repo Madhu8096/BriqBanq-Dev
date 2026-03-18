@@ -231,3 +231,39 @@
 .animate-fade-in {
   animation: fade-in 0.5s ease-out forwards;
 }
+
+/* Material Design DatePicker Overrides */
+.react-datepicker-custom-wrapper .react-datepicker {
+  @apply font-sans border-0 bg-transparent;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__header {
+  @apply bg-transparent border-b-0 p-0;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__month-container {
+  @apply float-none w-full bg-transparent;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__month {
+  @apply m-4 mt-0;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__day-name {
+  @apply text-[#33A8A0] font-medium text-[13px] w-9 m-1 mt-2;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__day {
+  @apply w-9 h-9 leading-9 m-1 transition-colors outline-none;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__day--selected,
+.react-datepicker-custom-wrapper .react-datepicker__day--keyboard-selected {
+  /* Prevent default blue square */
+  background-color: transparent !important;
+  color: inherit;
+}
+
+.react-datepicker-custom-wrapper .react-datepicker__triangle {
+  display: none !important;
+}

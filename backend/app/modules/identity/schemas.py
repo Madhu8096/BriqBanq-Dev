@@ -19,23 +19,43 @@ class UserRegisterRequest(BaseModel):
     """User registration request."""
     email: EmailStr
     password: str = Field(..., min_length=PASSWORD_MIN_LENGTH)
-    first_name: str = Field(..., min_length=1, max_length=100)
-    last_name: str = Field(..., min_length=1, max_length=100)
+    full_name: str = Field(..., min_length=1, max_length=200)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = Field(None, max_length=20)
     requested_roles: List[str] = Field(
         ..., min_length=1, description="List of roles to request"
     )
 
+    @field_validator("requested_roles")
+    @classmethod
+    def validate_roles(cls, v):
+        from app.shared.enums import RoleType
+        valid_roles = [r.value for r in RoleType]
+        for role in v:
+            if role not in valid_roles:
+                raise ValueError(f"Invalid role: {role}. Must be one of {valid_roles}")
+        return v
+
 class OTPSendRequest(BaseModel):
     """Request to send an OTP."""
     email: EmailStr
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Lowercase email before validation."""
+        if isinstance(v, str):
+            return v.lower().strip()
+        return v
 
 class OTPVerifyRequest(BaseModel):
     """Request to verify an OTP and register."""
     email: EmailStr
     otp: str = Field(..., min_length=6, max_length=6)
-    first_name: str = Field(..., min_length=1, max_length=100)
-    last_name: str = Field(..., min_length=1, max_length=100)
+    full_name: str = Field(..., min_length=1, max_length=200)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     password: str = Field(..., min_length=8)
     role: str = Field(..., min_length=1)
 
@@ -69,14 +89,13 @@ class OTPVerifyRequest(BaseModel):
             
         return v
 
-    @field_validator("requested_roles")
+    @field_validator("role")
     @classmethod
-    def validate_roles(cls, v):
+    def validate_single_role(cls, v: str) -> str:
         from app.shared.enums import RoleType
         valid_roles = [r.value for r in RoleType]
-        for role in v:
-            if role not in valid_roles:
-                raise ValueError(f"Invalid role: {role}. Must be one of {valid_roles}")
+        if v.upper() not in valid_roles:
+            raise ValueError(f"Invalid role: {v}. Must be one of {valid_roles}")
         return v
 
 
@@ -138,10 +157,12 @@ class UserResponse(BaseModel):
     """User response model."""
     id: uuid.UUID
     email: str
-    first_name: str
-    last_name: str
+    full_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = None
     status: UserStatus
+    role: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -162,13 +183,22 @@ class UserWithRolesResponse(BaseModel):
     """User response with roles included."""
     id: uuid.UUID
     email: str
-    first_name: str
-    last_name: str
+    full_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = None
     status: UserStatus
     user_roles: List[UserRoleResponse]
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserRegistrationResponse(BaseModel):
+    """Combined response for successful registration/OTP verification."""
+    user: UserResponse
+    tokens: AuthTokenResponse
 
     model_config = {"from_attributes": True}
 

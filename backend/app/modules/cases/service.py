@@ -72,37 +72,10 @@ class CaseService:
             outstanding_debt=outstanding_debt,
             interest_rate=interest_rate,
             tenure=tenure,
-            status=CaseStatus.SUBMITTED,
+            status=CaseStatus.DRAFT,
             borrower_id=borrower_id,
         )
         case = await self.repository.create(case)
-
-        # Notify Admin
-        try:
-            admin_users = await UserRepository(self.db).get_users_by_role(RoleType.ADMIN)
-            notif_service = NotificationService(self.db)
-            for admin in admin_users:
-                await notif_service.create_notification(
-                    user_id=admin.id,
-                    title="New Case Created",
-                    message=f"A new case '{case.title}' has been created and requires your review.",
-                    entity_type="case",
-                    entity_id=str(case.id),
-                    trace_id=trace_id
-                )
-            
-            # Notify Borrower
-            await notif_service.create_notification(
-                user_id=borrower_id,
-                title="Case Status: Pending",
-                message="Your case is pending review.",
-                entity_type="case",
-                entity_id=str(case.id),
-                trace_id=trace_id
-            )
-        except Exception as e:
-            print(f"Failed to send case creation notifications: {e}")
-
         return case
 
     async def update_case(
@@ -176,7 +149,34 @@ class CaseService:
         case.status = CaseStatus.SUBMITTED  # type: ignore[assignment]
         case.rejection_reason = None  # type: ignore[assignment]  # Clear any previous rejection
         case.version += 1
-        return await self.repository.update(case)
+        case = await self.repository.update(case)
+
+        # Notify Admin & Borrower on submission
+        try:
+            admin_users = await UserRepository(self.db).get_users_by_role(RoleType.ADMIN)
+            notif_service = NotificationService(self.db)
+            for admin in admin_users:
+                await notif_service.create_notification(
+                    user_id=admin.id,
+                    title="New Case Submitted",
+                    message=f"A new case '{case.title}' has been submitted and requires your review.",
+                    entity_type="case",
+                    entity_id=str(case.id),
+                    trace_id=trace_id
+                )
+            
+            await notif_service.create_notification(
+                user_id=borrower_id,
+                title="Case Status: Pending",
+                message="Your case has been submitted and is pending review.",
+                entity_type="case",
+                entity_id=str(case.id),
+                trace_id=trace_id
+            )
+        except Exception as e:
+            print(f"Failed to send submission notifications: {e}")
+
+        return case
 
     async def start_review(
         self, case_id: uuid.UUID, reviewer_id: uuid.UUID, trace_id: str

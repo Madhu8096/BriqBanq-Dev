@@ -59,7 +59,7 @@ async def create_case(
         entity_id=str(case.id),
         action="CREATE_CASE",
         before_state=None,
-        after_state={"status": "SUBMITTED", "title": case.title},
+        after_state={"status": "DRAFT", "title": case.title},
         trace_id=trace_id,
     )
 
