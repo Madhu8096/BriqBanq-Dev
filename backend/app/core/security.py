@@ -122,7 +122,7 @@ def decode_token(token: str) -> dict:
             settings.jwt_secret_key,
             algorithms=[settings.jwt_algorithm],
         )
-        return payload
+        return dict(payload)
     except JWTError as e:
         if "expired" in str(e).lower():
             raise TokenExpiredError()

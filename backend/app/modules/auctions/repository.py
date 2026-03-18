@@ -36,6 +36,17 @@ class AuctionRepository:
         )
         return list(result.scalars().all())
 
+    async def get_by_case_id(self, case_id: uuid.UUID) -> List[Auction]:
+        """Indirect lookup via Deal."""
+        from app.modules.deals.models import Deal
+        result = await self.db.execute(
+            select(Auction)
+            .join(Deal, Auction.deal_id == Deal.id)
+            .where(Deal.case_id == case_id)
+            .order_by(Auction.created_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def get_all(
         self, status: Optional[AuctionStatus] = None, offset: int = 0, limit: int = 20
     ) -> List[Auction]:
@@ -51,7 +62,7 @@ class AuctionRepository:
         if status:
             query = query.where(Auction.status == status)
         result = await self.db.execute(query)
-        return result.scalar()
+        return result.scalar() or 0
 
     async def update(self, auction: Auction) -> Auction:
         await self.db.flush()

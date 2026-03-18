@@ -4,7 +4,7 @@ Provides database sessions, current user extraction, and role enforcement.
 """
 
 import uuid
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ from app.infrastructure.database import get_db_session
 from app.infrastructure.redis import redis_client
 
 
-async def get_db(request: Request) -> AsyncSession:
+async def get_db(request: Request):
     """Get database session dependency."""
     async for session in get_db_session():
         yield session

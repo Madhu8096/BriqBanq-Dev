@@ -1,0 +1,13 @@
+{
+  "source_directories": [
+    "backend"
+  ],
+  "search_path": [
+    "backend/env/Lib/site-packages"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "backend/env/**"
+  ]
+}

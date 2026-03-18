@@ -145,7 +145,12 @@ async def list_auctions(
     auction_status = AuctionStatus(status) if status else None
     offset = (page - 1) * page_size
     auctions, total = await service.get_all_auctions(status=auction_status, offset=offset, limit=page_size)
-    return AuctionListResponse(items=auctions, total=total, page=page, page_size=page_size)
+    return AuctionListResponse(
+        items=[AuctionResponse.model_validate(a) for a in auctions],
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.get("/{auction_id}", response_model=AuctionResponse)

@@ -73,36 +73,36 @@ class SettlementService:
         In INTERNAL escrow mode, releases funds via wallet service.
         """
         settlement = await self._get_or_404(settlement_id)
-        if settlement.status != SettlementStatus.PENDING:
+        if settlement.status.value != SettlementStatus.PENDING.value:  # type: ignore[attr-defined]
             raise InvalidStateTransitionError(
                 message=f"Cannot process settlement in {settlement.status.value} state"
             )
 
-        settlement.status = SettlementStatus.IN_PROGRESS
+        settlement.status = SettlementStatus.IN_PROGRESS  # type: ignore[assignment]
         settlement.version += 1
         settlement = await self.repository.update(settlement)
 
         try:
             # Release escrow if applicable
-            if settlement.escrow_id:
+            if settlement.escrow_id is not None:  # type: ignore[comparison-overlap]
                 from app.modules.escrow.service import EscrowService
                 escrow_service = EscrowService(self.db)
                 await escrow_service.release_escrow(
-                    settlement.escrow_id, reason="Settlement completed", trace_id=trace_id
+                    settlement.escrow_id, reason="Settlement completed", trace_id=trace_id  # type: ignore[arg-type]
                 )
 
             # Settle the deal
             from app.modules.deals.service import DealService
             deal_service = DealService(self.db)
-            await deal_service.settle_deal(settlement.deal_id, trace_id)
+            await deal_service.settle_deal(settlement.deal_id, trace_id)  # type: ignore[arg-type]
 
-            settlement.status = SettlementStatus.COMPLETED
+            settlement.status = SettlementStatus.COMPLETED  # type: ignore[assignment]
             settlement.version += 1
             return await self.repository.update(settlement)
 
         except Exception as e:
-            settlement.status = SettlementStatus.FAILED
-            settlement.failure_reason = str(e)
+            settlement.status = SettlementStatus.FAILED  # type: ignore[assignment]
+            settlement.failure_reason = str(e)  # type: ignore[assignment]
             settlement.version += 1
             await self.repository.update(settlement)
             raise
@@ -112,8 +112,8 @@ class SettlementService:
     ) -> Settlement:
         """Mark a settlement as failed."""
         settlement = await self._get_or_404(settlement_id)
-        settlement.status = SettlementStatus.FAILED
-        settlement.failure_reason = reason
+        settlement.status = SettlementStatus.FAILED  # type: ignore[assignment]
+        settlement.failure_reason = reason  # type: ignore[assignment]
         settlement.version += 1
         return await self.repository.update(settlement)
 

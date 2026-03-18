@@ -45,6 +45,16 @@ class DealResponse(BaseModel):
     updated_at: datetime
     version: int
 
+    # Case related fields (joined)
+    property_address: Optional[str] = None
+    suburb: Optional[str] = None
+    state: Optional[str] = None
+    postcode: Optional[str] = None
+    property_type: Optional[str] = None
+    estimated_value: Optional[Decimal] = None
+    interest_rate: Optional[Decimal] = None
+    tenure: Optional[int] = None
+
     model_config = {"from_attributes": True}
 
 

@@ -49,6 +49,7 @@ class CaseStatus(str, enum.Enum):
     LISTED = "LISTED"
     AUCTION = "AUCTION"
     FUNDED = "FUNDED"
+    REJECTED = "REJECTED"
     CLOSED = "CLOSED"
 
 

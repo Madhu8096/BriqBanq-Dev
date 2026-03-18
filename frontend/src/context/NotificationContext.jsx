@@ -1,65 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { notificationService } from '../api/dataService';
 
 const NotificationContext = createContext();
 
-const INITIAL_NOTIFICATIONS = [
-    {
-        id: 1,
-        type: 'bid',
-        title: 'New Bid Placed',
-        message: 'A new bid of A$1,100,000 has been placed on MIP-2024-001',
-        time: 'about 4 hours ago',
-        unread: true,
-    },
-    {
-        id: 2,
-        type: 'message',
-        title: 'New Message',
-        message: 'Sarah Mitchell sent you a message about MIP-2024-003',
-        time: 'about 5 hours ago',
-        unread: true,
-    },
-    {
-        id: 3,
-        type: 'alert',
-        title: 'Auction Ending Soon',
-        message: 'MIP-2024-002 auction ends in 30 minutes',
-        time: 'about 7 hours ago',
-        unread: false,
-    },
-    {
-        id: 4,
-        type: 'bid',
-        title: 'Bid Outbid',
-        message: 'Your bid on MIP-2024-001 has been outbid',
-        time: '1 day ago',
-        unread: false,
-    },
-    {
-        id: 5,
-        type: 'kyc',
-        title: 'KYC Approved',
-        message: 'Your KYC verification has been approved',
-        time: '2 days ago',
-        unread: false,
-    },
-    {
-        id: 6,
-        type: 'contract',
-        title: 'Contract Ready for Signature',
-        message: 'Contract for MIP-2024-005 is ready for your digital signature',
-        time: '3 days ago',
-        unread: true,
-    },
-    {
-        id: 7,
-        type: 'payment',
-        title: 'Payment Received',
-        message: 'Your payment of A$1,050,000 has been received and confirmed',
-        time: '4 days ago',
-        unread: false,
-    }
-];
+const INITIAL_NOTIFICATIONS = [];
 
 export const useNotifications = () => {
     const context = useContext(NotificationContext);
@@ -70,26 +14,27 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-    const [notifications, setNotifications] = useState(() => {
-        try {
-            const saved = localStorage.getItem('brickbanq_notifications');
-            if (!saved) return INITIAL_NOTIFICATIONS;
-            const parsed = JSON.parse(saved);
-            return Array.isArray(parsed) ? parsed : INITIAL_NOTIFICATIONS;
-        } catch (error) {
-            console.error("Failed to parse notifications from localStorage:", error);
-            return INITIAL_NOTIFICATIONS;
-        }
-    });
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Persist to LocalStorage whenever changes occur
+    const fetchNotifications = useCallback(async () => {
+        setLoading(true);
+        const result = await notificationService.getNotifications();
+        if (result.success) {
+            setNotifications(result.data || []);
+        }
+        setLoading(false);
+    }, []);
+
+    // Initial fetch and periodic polling
     useEffect(() => {
-        try {
-            localStorage.setItem('brickbanq_notifications', JSON.stringify(notifications));
-        } catch (_) {}
-    }, [notifications]);
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
 
     const addNotification = useCallback((notification) => {
+        // Optimistically add notification (might be needed for local triggers)
         setNotifications(prev => [
             {
                 id: Date.now(),
@@ -101,32 +46,49 @@ export const NotificationProvider = ({ children }) => {
         ]);
     }, []);
 
-    const markAsRead = useCallback((id) => {
-        setNotifications(prev => prev.map(n =>
-            n.id === id ? { ...n, unread: false } : n
-        ));
+    const markAsRead = useCallback(async (id) => {
+        const result = await notificationService.markAsRead(id);
+        if (result.success) {
+            setNotifications(prev => prev.map(n =>
+                n.id === id ? { ...n, unread: false } : n
+            ));
+        }
     }, []);
 
-    const markAllRead = useCallback(() => {
-        setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    const markAllRead = useCallback(async () => {
+        const result = await notificationService.markAllAsRead();
+        if (result.success) {
+            setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+        }
     }, []);
 
-    const deleteNotification = useCallback((id) => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
+    const deleteNotification = useCallback(async (id) => {
+        const result = await notificationService.deleteNotification(id);
+        if (result.success) {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        }
     }, []);
 
-    const deleteAllNotifications = useCallback(() => {
-        setNotifications([]);
+    const deleteAllNotifications = useCallback(async () => {
+        const result = await notificationService.deleteAllNotifications();
+        if (result.success) {
+            setNotifications([]);
+        }
     }, []);
+
+    const unreadCount = notifications.filter(n => n.unread).length;
 
     return (
         <NotificationContext.Provider value={{
             notifications,
+            loading,
+            unreadCount,
             addNotification,
             markAsRead,
             markAllRead,
             deleteNotification,
-            deleteAllNotifications
+            deleteAllNotifications,
+            refreshNotifications: fetchNotifications
         }}>
             {children}
         </NotificationContext.Provider>

@@ -6,13 +6,14 @@ Every domain model inherits from this.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 
 
 class UUIDMixin:
     """UUID primary key mixin."""
-    id = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
@@ -22,12 +23,12 @@ class UUIDMixin:
 
 class TimestampMixin:
     """Created/updated timestamp mixin."""
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
@@ -37,7 +38,7 @@ class TimestampMixin:
 
 class ImmutableTimestampMixin:
     """Created-only timestamp for immutable records (audit_logs, ledger_entries)."""
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -46,7 +47,7 @@ class ImmutableTimestampMixin:
 
 class VersionMixin:
     """Optimistic locking via version column."""
-    version = Column(
+    version: Mapped[int] = mapped_column(
         Integer,
         default=1,
         nullable=False,

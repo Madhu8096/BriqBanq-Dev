@@ -52,11 +52,11 @@ class ContractService:
     async def send_for_signatures(self, contract_id: uuid.UUID, trace_id: str) -> Contract:
         """DRAFT → PENDING_SIGNATURES."""
         contract = await self._get_or_404(contract_id)
-        if contract.status != ContractStatus.DRAFT:
+        if contract.status.value != ContractStatus.DRAFT.value:  # type: ignore[attr-defined]
             raise InvalidStateTransitionError(
                 message=f"Cannot send for signatures from {contract.status.value}"
             )
-        contract.status = ContractStatus.PENDING_SIGNATURES
+        contract.status = ContractStatus.PENDING_SIGNATURES  # type: ignore[assignment]
         contract.version += 1
         return await self.contract_repo.update(contract)
 
@@ -66,7 +66,7 @@ class ContractService:
     ) -> ContractSignature:
         """Record a signature and auto-progress to FULLY_SIGNED if all signed."""
         contract = await self._get_or_404(contract_id)
-        if contract.status != ContractStatus.PENDING_SIGNATURES:
+        if contract.status.value != ContractStatus.PENDING_SIGNATURES.value:  # type: ignore[attr-defined]
             raise InvalidStateTransitionError(
                 message="Contract is not pending signatures"
             )
@@ -74,19 +74,19 @@ class ContractService:
         sig = await self.signature_repo.get_by_signer(contract_id, signer_id)
         if not sig:
             raise ResourceNotFoundError(message="You are not a signer on this contract")
-        if sig.is_signed == "true":
+        if sig.is_signed == "true":  # type: ignore[comparison-overlap]
             raise InvalidStateTransitionError(message="Already signed")
 
-        sig.is_signed = "true"
-        sig.signed_at = datetime.now(timezone.utc)
-        sig.signature_hash = signature_hash
+        sig.is_signed = "true"  # type: ignore[assignment]
+        sig.signed_at = datetime.now(timezone.utc)  # type: ignore[assignment]
+        sig.signature_hash = signature_hash  # type: ignore[assignment]
         sig.version += 1
         sig = await self.signature_repo.update(sig)
 
         # Check if all signatures collected
         all_sigs = await self.signature_repo.get_by_contract(contract_id)
-        if all(s.is_signed == "true" for s in all_sigs):
-            contract.status = ContractStatus.FULLY_SIGNED
+        if all(s.is_signed == "true" for s in all_sigs):  # type: ignore[comparison-overlap]
+            contract.status = ContractStatus.FULLY_SIGNED  # type: ignore[assignment]
             contract.version += 1
             await self.contract_repo.update(contract)
 
@@ -95,11 +95,11 @@ class ContractService:
     async def execute_contract(self, contract_id: uuid.UUID, trace_id: str) -> Contract:
         """FULLY_SIGNED → EXECUTED."""
         contract = await self._get_or_404(contract_id)
-        if contract.status != ContractStatus.FULLY_SIGNED:
+        if contract.status.value != ContractStatus.FULLY_SIGNED.value:  # type: ignore[attr-defined]
             raise InvalidStateTransitionError(
                 message=f"Contract must be FULLY_SIGNED to execute, currently {contract.status.value}"
             )
-        contract.status = ContractStatus.EXECUTED
+        contract.status = ContractStatus.EXECUTED  # type: ignore[assignment]
         contract.version += 1
         return await self.contract_repo.update(contract)
 

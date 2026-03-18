@@ -80,8 +80,8 @@ class RoleService:
             user_role.status.value, RoleStatus.APPROVED.value
         )
 
-        user_role.status = RoleStatus.APPROVED
-        user_role.approved_by = approved_by
+        user_role.status = RoleStatus.APPROVED  # type: ignore[assignment]
+        user_role.approved_by = approved_by  # type: ignore[assignment]
 
         return await self.repository.update(user_role)
 
@@ -101,9 +101,9 @@ class RoleService:
             user_role.status.value, RoleStatus.REJECTED.value
         )
 
-        user_role.status = RoleStatus.REJECTED
-        user_role.approved_by = rejected_by
-        user_role.rejection_reason = reason
+        user_role.status = RoleStatus.REJECTED  # type: ignore[assignment]
+        user_role.approved_by = rejected_by  # type: ignore[assignment]
+        user_role.rejection_reason = reason  # type: ignore[assignment]
 
         return await self.repository.update(user_role)
 
@@ -122,8 +122,8 @@ class RoleService:
             user_role.status.value, RoleStatus.REVOKED.value
         )
 
-        user_role.status = RoleStatus.REVOKED
-        user_role.approved_by = revoked_by
+        user_role.status = RoleStatus.REVOKED  # type: ignore[assignment]
+        user_role.approved_by = revoked_by  # type: ignore[assignment]
 
         return await self.repository.update(user_role)
 

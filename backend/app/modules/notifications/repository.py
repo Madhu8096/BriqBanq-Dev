@@ -33,7 +33,7 @@ class NotificationRepository:
                 Notification.user_id == user_id, Notification.is_read == False
             )
         )
-        return result.scalar()
+        return result.scalar() or 0  # type: ignore[return-value]
 
     async def mark_read(self, notification_id: uuid.UUID) -> None:
         await self.db.execute(

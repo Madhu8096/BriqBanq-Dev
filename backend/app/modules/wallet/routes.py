@@ -99,7 +99,7 @@ async def get_wallet_balance(
 ):
     service = WalletService(db)
     wallet = await service.get_wallet(wallet_id)
-    if wallet.user_id:
+    if wallet.user_id is not None:  # type: ignore[comparison-overlap]
         WalletPolicy.can_view_wallet(current_user, str(wallet.user_id))
     balance_info = await service.get_balance(wallet_id)
     return WalletBalanceResponse(

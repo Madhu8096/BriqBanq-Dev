@@ -97,9 +97,9 @@ class AdminService:
                 message=f"Setting with key '{key}' not found"
             )
 
-        setting.value = value
+        setting.value = value  # type: ignore[assignment]
         if description is not None:
-            setting.description = description
+            setting.description = description  # type: ignore[assignment]
 
         return await self.repository.update_setting(setting)
 

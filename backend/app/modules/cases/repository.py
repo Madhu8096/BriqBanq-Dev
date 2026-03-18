@@ -68,7 +68,7 @@ class CaseRepository:
         if status:
             query = query.where(Case.status == status)
         result = await self.db.execute(query)
-        return result.scalar()
+        return result.scalar() or 0
 
     async def update(self, case: Case) -> Case:
         """Update a case."""

@@ -18,6 +18,35 @@ class NotificationService:
         self.db = db
         self.repository = NotificationRepository(db)
 
+    async def send_notification(
+        self,
+        user_id: uuid.UUID,
+        title: str,
+        message: str,
+        type: str = "IN_APP",
+        priority: str = "MEDIUM",
+        trace_id: str = "",
+    ) -> Notification:
+        """Compatibility wrapper for create_notification."""
+        try:
+            ntype = NotificationType(type)
+        except ValueError:
+            ntype = NotificationType.IN_APP
+            
+        try:
+            nprio = NotificationPriority(priority)
+        except ValueError:
+            nprio = NotificationPriority.MEDIUM
+
+        return await self.create_notification(
+            user_id=user_id,
+            title=title,
+            message=message,
+            notification_type=ntype,
+            priority=nprio,
+            trace_id=trace_id,
+        )
+
     async def create_notification(
         self,
         user_id: uuid.UUID,

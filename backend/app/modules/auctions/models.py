@@ -3,13 +3,22 @@ Auctions module — ORM models.
 Auction lifecycle: SCHEDULED → LIVE → PAUSED → LIVE → ENDED
 """
 
-from sqlalchemy import Column, ForeignKey, String, Numeric, DateTime, Enum as SAEnum, Index
+from datetime import datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING, List, Optional
+import uuid
+
+from sqlalchemy import ForeignKey, String, Numeric, DateTime, Enum as SAEnum, Index
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.infrastructure.database import Base
 from app.shared.base_model import BaseEntityMixin
 from app.shared.enums import AuctionStatus
+
+if TYPE_CHECKING:
+    from app.modules.deals.models import Deal
+    from app.modules.bids.models import Bid
 
 
 class Auction(BaseEntityMixin, Base):
@@ -20,36 +29,36 @@ class Auction(BaseEntityMixin, Base):
 
     __tablename__ = "auctions"
 
-    deal_id = Column(
+    deal_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("deals.id"),
         nullable=False,
         index=True,
     )
-    title = Column(String(255), nullable=False)
-    starting_price = Column(Numeric(15, 2), nullable=False)
-    minimum_increment = Column(Numeric(15, 2), nullable=False, default=100)
-    current_highest_bid = Column(Numeric(15, 2), nullable=True)
-    status = Column(
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    starting_price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    minimum_increment: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False, default=100)
+    current_highest_bid: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
+    status: Mapped[AuctionStatus] = mapped_column(
         SAEnum(AuctionStatus, name="auction_status"),
         default=AuctionStatus.SCHEDULED,
         nullable=False,
     )
-    scheduled_start = Column(DateTime(timezone=True), nullable=False)
-    scheduled_end = Column(DateTime(timezone=True), nullable=False)
-    actual_start = Column(DateTime(timezone=True), nullable=True)
-    actual_end = Column(DateTime(timezone=True), nullable=True)
+    scheduled_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    scheduled_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    actual_start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    actual_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    winning_bid_id = Column(UUID(as_uuid=True), nullable=True)
-    created_by = Column(
+    winning_bid_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False,
     )
 
     # Relationships
-    deal = relationship("Deal", back_populates="auctions")
-    bids = relationship("Bid", back_populates="auction", lazy="selectin")
+    deal: Mapped["Deal"] = relationship("Deal", back_populates="auctions")
+    bids: Mapped[List["Bid"]] = relationship("Bid", back_populates="auction", lazy="selectin")
 
     __table_args__ = (
         Index("ix_auctions_status", "status"),

@@ -414,7 +414,7 @@ export const adminDealService = {
 export const notificationService = {
     getNotifications: async () => {
         if (USE_SIMULATOR) return simulateBackend({ notifications: [] }, "getNotifications");
-        return apiFetch("/api/user/notifications");
+        return apiFetch("/api/v1/notifications/");
     },
     getPreferences: async () => {
         const currentRole = localStorage.getItem("currentRole") || "investor";
@@ -461,11 +461,11 @@ export const notificationService = {
     },
     markAsRead: async (id) => {
         if (USE_SIMULATOR) return simulateBackend({ id }, `markAsRead(${id})`);
-        return apiFetch(`/api/user/notifications/${id}/read`, { method: 'PUT' });
+        return apiFetch(`/api/v1/notifications/${id}/read`, { method: 'POST' });
     },
     markAllAsRead: async () => {
         if (USE_SIMULATOR) return simulateBackend({}, "markAllAsRead");
-        return apiFetch("/api/user/notifications/read_all", { method: 'PUT' });
+        return apiFetch("/api/v1/notifications/read-all", { method: 'POST' });
     },
     deleteNotification: async (id) => {
         if (USE_SIMULATOR) return simulateBackend({ id }, `deleteNotification(${id})`);

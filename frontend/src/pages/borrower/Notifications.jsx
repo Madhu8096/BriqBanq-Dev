@@ -24,7 +24,7 @@ function normalizeNotification(n, i) {
   }
   return {
     id: n.id ?? n.notification_id ?? i,
-    type: n.type ?? 'info',
+    type: n.entity_type ?? n.type ?? 'info',
     title: n.title ?? n.subject ?? 'Notification',
     message: String(n.message ?? n.body ?? n.text ?? ''),
     time: String(n.time ?? n.created_at ?? n.date ?? ''),
@@ -54,7 +54,7 @@ function NotificationIcon({ type }) {
       </div>
     )
   }
-  if (type === 'contract' || type === 'auction') {
+  if (type === 'contract' || type === 'auction' || type === 'case') {
     return (
       <div className={`${base} bg-blue-50 border border-blue-200`}>
         <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@ function ModalNotificationIcon({ type }) {
       </div>
     )
   }
-  if (type === 'contract' || type === 'payment') {
+  if (type === 'contract' || type === 'payment' || type === 'case') {
     return (
       <div className={`${base} bg-blue-50 border border-blue-200`}>
         <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +152,8 @@ export default function Notifications() {
         if (!cancelled) {
           setNotifications(FALLBACK_NOTIFICATIONS.map((n, i) => normalizeNotification(n, i)))
           const isNetworkError = e?.code === 'ERR_NETWORK' || e?.message === 'Network Error'
-          if (!isNetworkError) setError(e?.message || 'Failed to load notifications')
+          const is422 = e?.response?.status === 422 || (e?.message || '').includes('422')
+          if (!isNetworkError && !is422) setError(e?.message || 'Failed to load notifications')
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -232,13 +233,14 @@ export default function Notifications() {
       payment: { label: 'Contracts', path: '/borrower/contracts' },
       kyc: { label: 'Identity Verification', path: '/borrower/identity-verification' },
       message: { label: 'Messages', path: '/borrower/my-case' },
+      case: { label: 'Case Details', path: '/borrower/my-case' },
       info: { label: 'Dashboard', path: '/borrower/dashboard' },
     }
     return map[type] || { label: 'Dashboard', path: '/borrower/dashboard' }
   }
 
   function getTypeLabel(type) {
-    const map = { bid: 'Bid', auction: 'Auction', contract: 'Contract', payment: 'Payment', kyc: 'KYC', message: 'Message', info: 'Info' }
+    const map = { bid: 'Bid', auction: 'Auction', contract: 'Contract', payment: 'Payment', kyc: 'KYC', message: 'Message', case: 'Case', info: 'Info' }
     return map[type] || (type && type.charAt(0).toUpperCase() + type.slice(1)) || 'Notification'
   }
 
@@ -349,6 +351,7 @@ export default function Notifications() {
             <option value="message">Messages</option>
             <option value="auction">Auctions</option>
             <option value="contract">Contracts</option>
+            <option value="case">Cases</option>
             <option value="kyc">KYC</option>
             <option value="payment">Payments</option>
           </select>

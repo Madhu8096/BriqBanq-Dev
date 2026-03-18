@@ -86,11 +86,11 @@ class DocumentService:
         document = await self._get_document_or_404(document_id)
 
         DocumentStateMachine.validate_transition(
-            document.status.value, DocumentStatus.UNDER_REVIEW.value
+            document.status.value, DocumentStatus.UNDER_REVIEW.value  # type: ignore[attr-defined]
         )
 
-        document.status = DocumentStatus.UNDER_REVIEW
-        document.reviewed_by = reviewer_id
+        document.status = DocumentStatus.UNDER_REVIEW  # type: ignore[assignment]
+        document.reviewed_by = reviewer_id  # type: ignore[assignment]
         document.version += 1
         return await self.repository.update(document)
 
@@ -101,11 +101,11 @@ class DocumentService:
         document = await self._get_document_or_404(document_id)
 
         DocumentStateMachine.validate_transition(
-            document.status.value, DocumentStatus.APPROVED.value
+            document.status.value, DocumentStatus.APPROVED.value  # type: ignore[attr-defined]
         )
 
-        document.status = DocumentStatus.APPROVED
-        document.reviewed_by = reviewer_id
+        document.status = DocumentStatus.APPROVED  # type: ignore[assignment]
+        document.reviewed_by = reviewer_id  # type: ignore[assignment]
         document.version += 1
         return await self.repository.update(document)
 
@@ -120,12 +120,12 @@ class DocumentService:
         document = await self._get_document_or_404(document_id)
 
         DocumentStateMachine.validate_transition(
-            document.status.value, DocumentStatus.REJECTED.value
+            document.status.value, DocumentStatus.REJECTED.value  # type: ignore[attr-defined]
         )
 
-        document.status = DocumentStatus.REJECTED
-        document.reviewed_by = reviewer_id
-        document.rejection_reason = reason
+        document.status = DocumentStatus.REJECTED  # type: ignore[assignment]
+        document.reviewed_by = reviewer_id  # type: ignore[assignment]
+        document.rejection_reason = reason  # type: ignore[assignment]
         document.version += 1
         return await self.repository.update(document)
 
@@ -134,7 +134,7 @@ class DocumentService:
     ) -> str:
         """Generate a signed download URL for a document."""
         document = await self._get_document_or_404(document_id)
-        return await storage_client.generate_signed_url(document.s3_key, expiry)
+        return await storage_client.generate_signed_url(document.s3_key, expiry)  # type: ignore[arg-type]
 
     async def get_case_documents(
         self,
@@ -166,7 +166,7 @@ class DocumentService:
             )
 
         # Delete from S3
-        await storage_client.delete_file(document.s3_key)
+        await storage_client.delete_file(document.s3_key)  # type: ignore[arg-type]
 
         # Delete DB record
         await self.repository.delete(document)

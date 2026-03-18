@@ -1,0 +1,296 @@
+{
+  "analysis_metadata": {
+    "total_files": 5,
+    "total_issues": 25,
+    "generated_date": "2026-03-17",
+    "issue_categories": {
+      "enum_assignments": 15,
+      "string_decimal_assignments": 6,
+      "enum_comparisons": 2,
+      "type_conversions": 2
+    }
+  },
+  "files": [
+    {
+      "file_path": "backend/app/modules/admin/service.py",
+      "issues": [
+        {
+          "line": 99,
+          "pattern": "assignment",
+          "code": "setting.value = value",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct assignment to Column[str] attribute",
+          "method": "update_setting"
+        },
+        {
+          "line": 101,
+          "pattern": "assignment",
+          "code": "setting.description = description",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct assignment to Column[Optional[str]] attribute",
+          "method": "update_setting"
+        }
+      ],
+      "total_issues": 2
+    },
+    {
+      "file_path": "backend/app/modules/auctions/service.py",
+      "issues": [
+        {
+          "line": 67,
+          "pattern": "assignment",
+          "code": "auction.status = AuctionStatus.LIVE",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "start_auction"
+        },
+        {
+          "line": 68,
+          "pattern": "assignment",
+          "code": "auction.actual_start = datetime.now(timezone.utc)",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct datetime assignment to Column[datetime] attribute",
+          "method": "start_auction"
+        },
+        {
+          "line": 77,
+          "pattern": "assignment",
+          "code": "auction.status = AuctionStatus.PAUSED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "pause_auction"
+        },
+        {
+          "line": 84,
+          "pattern": "assignment",
+          "code": "auction.status = AuctionStatus.LIVE",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "resume_auction"
+        },
+        {
+          "line": 90,
+          "pattern": "assignment",
+          "code": "auction.status = AuctionStatus.ENDED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "end_auction"
+        },
+        {
+          "line": 91,
+          "pattern": "assignment",
+          "code": "auction.actual_end = datetime.now(timezone.utc)",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct datetime assignment to Column[datetime] attribute",
+          "method": "end_auction"
+        },
+        {
+          "line": 103,
+          "pattern": "comparison",
+          "code": "if auction.status != AuctionStatus.LIVE:",
+          "type_ignore": "# type: ignore[comparison-overlap]",
+          "category": "enum_comparisons",
+          "description": "Enum comparison in conditional check",
+          "method": "update_highest_bid"
+        }
+      ],
+      "total_issues": 7
+    },
+    {
+      "file_path": "backend/app/modules/bids/service.py",
+      "issues": [
+        {
+          "line": 49,
+          "pattern": "comparison",
+          "code": "if auction.status != AuctionStatus.LIVE:",
+          "type_ignore": "# type: ignore[comparison-overlap]",
+          "category": "enum_comparisons",
+          "description": "Enum comparison in conditional check",
+          "method": "place_bid"
+        }
+      ],
+      "total_issues": 1
+    },
+    {
+      "file_path": "backend/app/modules/cases/service.py",
+      "issues": [
+        {
+          "line": 100,
+          "pattern": "assignment",
+          "code": "case.title = title",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct string assignment to Column[str] attribute",
+          "method": "update_case"
+        },
+        {
+          "line": 102,
+          "pattern": "assignment",
+          "code": "case.description = description",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct string assignment to Column[Optional[str]] attribute",
+          "method": "update_case"
+        },
+        {
+          "line": 104,
+          "pattern": "assignment",
+          "code": "case.property_address = property_address",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "string_decimal_assignments",
+          "description": "Direct string assignment to Column[str] attribute",
+          "method": "update_case"
+        },
+        {
+          "line": 119,
+          "pattern": "assignment",
+          "code": "case.status = CaseStatus.SUBMITTED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "submit_case"
+        },
+        {
+          "line": 124,
+          "pattern": "assignment",
+          "code": "case.status = CaseStatus.UNDER_REVIEW",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "start_review"
+        },
+        {
+          "line": 133,
+          "pattern": "assignment",
+          "code": "case.status = CaseStatus.APPROVED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "approve_case"
+        },
+        {
+          "line": 137,
+          "pattern": "assignment",
+          "code": "case.deal_status = DealStatus.LISTED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "approve_case"
+        },
+        {
+          "line": 177,
+          "pattern": "assignment",
+          "code": "case.status = CaseStatus.DRAFT",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "reject_case"
+        },
+        {
+          "line": 204,
+          "pattern": "assignment",
+          "code": "case.status = CaseStatus.LISTED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "list_case"
+        },
+        {
+          "line": 328,
+          "pattern": "assignment",
+          "code": "case.status = new_status_enum",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "update_case_status"
+        },
+        {
+          "line": 331,
+          "pattern": "assignment",
+          "code": "case.deal_status = DealStatus.LISTED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "update_case_status"
+        },
+        {
+          "line": 333,
+          "pattern": "assignment",
+          "code": "case.deal_status = DealStatus.LISTED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "update_case_status"
+        },
+        {
+          "line": 335,
+          "pattern": "assignment",
+          "code": "case.deal_status = DealStatus.CLOSED",
+          "type_ignore": "# type: ignore[assignment]",
+          "category": "enum_assignments",
+          "description": "Direct Enum assignment to Column[Enum] attribute",
+          "method": "update_case_status"
+        }
+      ],
+      "total_issues": 13
+    },
+    {
+      "file_path": "backend/app/modules/cases/routes.py",
+      "issues": [
+        {
+          "line": 331,
+          "pattern": "conversion",
+          "code": "\"estimated_value\": float(case.estimated_value),",
+          "type_ignore": "# type: ignore[arg-type]",
+          "category": "type_conversions",
+          "description": "float() conversion of Column[Numeric] Decimal value",
+          "method": "export_case_report"
+        },
+        {
+          "line": 332,
+          "pattern": "conversion",
+          "code": "\"outstanding_debt\": float(case.outstanding_debt),",
+          "type_ignore": "# type: ignore[arg-type]",
+          "category": "type_conversions",
+          "description": "float() conversion of Column[Numeric] Decimal value",
+          "method": "export_case_report"
+        }
+      ],
+      "total_issues": 2
+    }
+  ],
+  "summary": {
+    "by_file": {
+      "admin/service.py": 2,
+      "auctions/service.py": 7,
+      "bids/service.py": 1,
+      "cases/service.py": 13,
+      "cases/routes.py": 2
+    },
+    "by_pattern": {
+      "assignment": 21,
+      "comparison": 2,
+      "conversion": 2
+    },
+    "by_category": {
+      "enum_assignments": 15,
+      "string_decimal_assignments": 6,
+      "enum_comparisons": 2,
+      "type_conversions": 2
+    },
+    "recommended_fixes_order": [
+      "Enum assignments (Priority 1): 15 instances",
+      "String/Decimal assignments (Priority 2): 6 instances",
+      "Enum comparisons (Priority 3): 2 instances",
+      "Type conversions (Priority 4): 2 instances"
+    ]
+  }
+}

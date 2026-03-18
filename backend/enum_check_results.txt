@@ -1,0 +1,3 @@
+Connecting to: postgresql+asyncpg://brickbanq:brickbanq@localhost:5432/brickbanq
+Current 'case_status' enum values: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'VERIFIED', 'LISTED', 'AUCTION', 'FUNDED', 'CLOSED', 'REJECTED']
+Current 'deal_status' enum values: ['DRAFT', 'LISTED', 'UNDER_CONTRACT', 'SETTLED', 'CLOSED']

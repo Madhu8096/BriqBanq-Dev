@@ -140,10 +140,10 @@ export const borrowerApi = {
     })
   },
 
-  getNotifications: (filters) => api.get('/api/borrower/notifications', { params: filters }),
-  markAsRead: (notificationId) => api.patch(`/api/borrower/notifications/${notificationId}/read`),
-  deleteNotification: (notificationId) => api.delete(`/api/borrower/notifications/${notificationId}`),
-  markAllAsRead: () => api.post('/api/borrower/notifications/mark-all-read'),
+  getNotifications: (filters) => api.get('/api/v1/notifications/', { params: filters }),
+  markAsRead: (notificationId) => api.post(`/api/v1/notifications/${notificationId}/read`),
+  deleteNotification: (notificationId) => api.delete(`/api/v1/notifications/${notificationId}`),
+  markAllAsRead: () => api.post('/api/v1/notifications/read-all'),
 
   getProfile: () => api.get('/api/borrower/profile'),
   updateProfile: (data) => api.patch('/api/borrower/profile', data),

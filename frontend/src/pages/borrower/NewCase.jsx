@@ -114,6 +114,7 @@ const initialFormData = {
   lenderLicenceType: '',
   creditGuide: false,
   creditContract: false,
+  tenure: '12',
 }
 
 const LENDER_DOCS = [
@@ -260,6 +261,8 @@ export default function NewCase() {
         property_type: formData.propertyType || "Other",
         estimated_value: parseFloat(formData.currentValuation) || 0,
         outstanding_debt: parseFloat(formData.outstandingDebt) || 0,
+        interest_rate: parseFloat(formData.interestRate) || 0,
+        tenure: parseInt(formData.tenure) || 0,
       }
 
       const performSubmission = async () => {
@@ -1388,6 +1391,15 @@ export default function NewCase() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Default Notice Date</label>
                 <input type="text" value={formData.defaultNoticeDate} onChange={(e) => update('defaultNoticeDate', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="mm/dd/yyyy" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tenure (Months)</label>
+                <select value={formData.tenure} onChange={(e) => update('tenure', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white">
+                  <option value="6">6 Months</option>
+                  <option value="12">12 Months</option>
+                  <option value="18">18 Months</option>
+                  <option value="24">24 Months</option>
+                </select>
               </div>
             </div>
             <section>

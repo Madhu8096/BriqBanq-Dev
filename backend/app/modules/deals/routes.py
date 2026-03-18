@@ -119,10 +119,29 @@ async def list_all_deals(
 ):
     """List all deals."""
     service = DealService(db)
-    deal_status = DealStatus(status) if status else None
+    
+    # Enforce investor visibility: non-admins only see LISTED deals
+    user_roles = current_user.get("roles", [])
+    is_admin = "ADMIN" in user_roles or current_user.get("is_admin", False)
+    
+    if not is_admin:
+        if status and status != DealStatus.LISTED.value:
+            # Investors/Lenders searching for non-public statuses get empty result
+            return DealListResponse(items=[], total=0, page=page, page_size=page_size)
+        deal_status = DealStatus.LISTED
+    else:
+        deal_status = DealStatus(status) if status else None
+
     offset = (page - 1) * page_size
     deals, total = await service.get_all_deals(status=deal_status, offset=offset, limit=page_size)
-    return DealListResponse(items=deals, total=total, page=page, page_size=page_size)
+    
+    # Explicit conversion to Pydantic objects to fix type errors
+    return DealListResponse(
+        items=[DealResponse.model_validate(d) for d in deals],
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.get("/{deal_id}", response_model=DealResponse)

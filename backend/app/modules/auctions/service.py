@@ -81,7 +81,7 @@ class AuctionService:
         """Resume a paused auction. PAUSED → LIVE."""
         auction = await self._get_auction_or_404(auction_id)
         AuctionStateMachine.validate_transition(auction.status.value, AuctionStatus.LIVE.value)
-        auction.status = AuctionStatus.LIVE
+        auction.status = AuctionStatus.LIVE  # type: ignore[assignment]
         auction.version += 1
         return await self.repository.update(auction)
 
@@ -101,7 +101,7 @@ class AuctionService:
         auction = await self.repository.get_by_id_for_update(auction_id)
         if not auction:
             raise ResourceNotFoundError(message="Auction not found")
-        if auction.status != AuctionStatus.LIVE:
+        if auction.status != AuctionStatus.LIVE:  # type: ignore[comparison-overlap]
             raise AuctionNotLiveError()
         auction.current_highest_bid = amount
         auction.winning_bid_id = bid_id
@@ -126,10 +126,68 @@ class AuctionService:
         return auctions, total
 
     async def _get_auction_or_404(self, auction_id: uuid.UUID) -> Auction:
+        # 1. Try by Auction ID
         auction = await self.repository.get_by_id(auction_id)
-        if not auction:
-            raise ResourceNotFoundError(message="Auction not found")
-        return auction
+        if auction:
+            return auction
+
+        # 2. Try by Deal ID
+        auctions = await self.repository.get_by_deal_id(auction_id)
+        if auctions:
+            return auctions[0]
+
+        # 3. Try by Case ID
+        auctions = await self.repository.get_by_case_id(auction_id)
+        if auctions:
+            return auctions[0]
+
+        # 4. Data Repair Logic: If this ID belongs to an 'AUCTION' case/deal without an auction, create it.
+        from app.modules.cases.repository import CaseRepository
+        from app.modules.deals.repository import DealRepository
+        from app.shared.enums import CaseStatus
+        
+        case_repo = CaseRepository(self.db)
+        deal_repo = DealRepository(self.db)
+        
+        # Check if it's a Case ID
+        case = await case_repo.get_by_id(auction_id)
+        if case and case.status == CaseStatus.AUCTION:
+            # Found an auction-ready case. Ensure deal and then auction.
+            deal = await deal_repo.get_by_case_id(auction_id)
+            if not deal:
+                # This shouldn't happen with our sync but let's be safe
+                from app.modules.deals.service import DealService
+                deal = await DealService(self.db).create_deal(
+                    case_id=case.id, title=case.title, description=case.description,
+                    asking_price=case.estimated_value, reserve_price=None,
+                    seller_id=case.borrower_id, created_by=case.borrower_id, trace_id="data-repair"
+                )
+            
+            # Create the missing auction
+            from datetime import timedelta
+            return await self.create_auction(
+                deal_id=deal.id, title=f"Auction for {case.title}",
+                starting_price=case.estimated_value, minimum_increment=Decimal("100.00"),
+                scheduled_start=datetime.now(timezone.utc),
+                scheduled_end=datetime.now(timezone.utc) + timedelta(days=7),
+                created_by=case.borrower_id, trace_id="data-repair"
+            )
+
+        # Check if it's a Deal ID
+        deal = await deal_repo.get_by_id(auction_id)
+        if deal:
+            case = await case_repo.get_by_id(deal.case_id)
+            if case and case.status == CaseStatus.AUCTION:
+                from datetime import timedelta
+                return await self.create_auction(
+                    deal_id=deal.id, title=f"Auction for {case.title}",
+                    starting_price=case.estimated_value, minimum_increment=Decimal("100.00"),
+                    scheduled_start=datetime.now(timezone.utc),
+                    scheduled_end=datetime.now(timezone.utc) + timedelta(days=7),
+                    created_by=case.borrower_id, trace_id="data-repair"
+                )
+
+        raise ResourceNotFoundError(message="Auction not found")
 
     async def get_auction_winner(self, auction_id: uuid.UUID) -> dict:
         bids = await self.repository.db.execute(

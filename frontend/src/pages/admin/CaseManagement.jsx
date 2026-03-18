@@ -150,6 +150,7 @@ export default function CaseManagement() {
         else if (newStatusUI === 'In Auction') backendStatus = 'AUCTION'
         else if (newStatusUI === 'Pending') backendStatus = 'SUBMITTED'
         else if (newStatusUI === 'Completed') backendStatus = 'CLOSED'
+        else if (newStatusUI === 'Rejected') backendStatus = 'REJECTED'
 
         setIsLoading(true)
         try {
@@ -344,6 +345,7 @@ export default function CaseManagement() {
                             <option>In Auction</option>
                             <option>Pending</option>
                             <option>Completed</option>
+                            <option>Rejected</option>
                         </select>
                     </div>
                 </div>
@@ -382,6 +384,7 @@ export default function CaseManagement() {
                                                 caseItem.status === 'SUBMITTED' ? 'Pending' :
                                                 caseItem.status === 'UNDER_REVIEW' ? 'Pending' :
                                                 caseItem.status === 'CLOSED' ? 'Completed' :
+                                                caseItem.status === 'REJECTED' ? 'Rejected' :
                                                 caseItem.status
                                             }
                                             onChange={(e) => handleStatusChange(caseItem.id, e.target.value)}
@@ -391,6 +394,7 @@ export default function CaseManagement() {
                                             <option>In Auction</option>
                                             <option>Pending</option>
                                             <option>Completed</option>
+                                            <option>Rejected</option>
                                         </select>
                                     </td>
                                     <td className="px-4 py-3">

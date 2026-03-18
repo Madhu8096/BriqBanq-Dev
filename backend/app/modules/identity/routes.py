@@ -147,7 +147,7 @@ async def change_password(
 async def list_users(
     page: int = 1,
     page_size: int = 20,
-    status: str = None,
+    status: str | None = None,  # type: ignore[assignment]
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),
 ):

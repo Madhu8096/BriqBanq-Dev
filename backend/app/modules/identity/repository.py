@@ -11,7 +11,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.identity.models import User
-from app.shared.enums import UserStatus
+from app.shared.enums import UserStatus, RoleType
 
 
 class UserRepository:
@@ -72,4 +72,15 @@ class UserRepository:
         if status:
             query = query.where(User.status == status)
         result = await self.db.execute(query)
-        return result.scalar()
+        return result.scalar() or 0  # type: ignore[return-value]
+
+    async def get_users_by_role(self, role_type: RoleType) -> List[User]:
+        """Get all users with a specific role."""
+        from app.modules.roles.models import UserRole
+        from app.shared.enums import RoleStatus
+        result = await self.db.execute(
+            select(User)
+            .join(UserRole, User.id == UserRole.user_id)
+            .where(UserRole.role_type == role_type, UserRole.status == RoleStatus.APPROVED)
+        )
+        return list(result.scalars().all())

@@ -98,9 +98,10 @@ export default function InvestorDealCard({ deal }) {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+        <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-100">
           <StatBox label="LVR" value={`${deal.lvr}%`} color="text-indigo-600" />
           <StatBox label="Return" value={`${deal.returnRate}%`} color="text-green-600" />
+          <StatBox label="Tenure" value={`${deal.tenure || deal.loanTenure || '12'}m`} color="text-blue-600" />
           <StatBox label="Type" value={deal.type} color="text-gray-900" />
         </div>
 

@@ -70,8 +70,8 @@ class DealService:
     async def list_deal(self, deal_id: uuid.UUID, trace_id: str) -> Deal:
         """List a deal for bidding. DRAFT → LISTED."""
         deal = await self._get_deal_or_404(deal_id)
-        DealStateMachine.validate_transition(deal.status.value, DealStatus.LISTED.value)
-        deal.status = DealStatus.LISTED
+        DealStateMachine.validate_transition(deal.status.value, DealStatus.LISTED.value)  # type: ignore[attr-defined]
+        deal.status = DealStatus.LISTED  # type: ignore[assignment]
         deal.version += 1
         return await self.repository.update(deal)
 
@@ -80,34 +80,34 @@ class DealService:
     ) -> Deal:
         """Move deal under contract after auction. LISTED → UNDER_CONTRACT."""
         deal = await self._get_deal_or_404(deal_id)
-        DealStateMachine.validate_transition(deal.status.value, DealStatus.UNDER_CONTRACT.value)
-        deal.status = DealStatus.UNDER_CONTRACT
-        deal.winning_bidder_id = winning_bidder_id
+        DealStateMachine.validate_transition(deal.status.value, DealStatus.UNDER_CONTRACT.value)  # type: ignore[attr-defined]
+        deal.status = DealStatus.UNDER_CONTRACT  # type: ignore[assignment]
+        deal.winning_bidder_id = winning_bidder_id  # type: ignore[assignment]
         deal.version += 1
         return await self.repository.update(deal)
 
     async def relist_deal(self, deal_id: uuid.UUID, trace_id: str) -> Deal:
         """Re-list a deal after bidder default. UNDER_CONTRACT → LISTED."""
         deal = await self._get_deal_or_404(deal_id)
-        DealStateMachine.validate_transition(deal.status.value, DealStatus.LISTED.value)
-        deal.status = DealStatus.LISTED
-        deal.winning_bidder_id = None
+        DealStateMachine.validate_transition(deal.status.value, DealStatus.LISTED.value)  # type: ignore[attr-defined]
+        deal.status = DealStatus.LISTED  # type: ignore[assignment]
+        deal.winning_bidder_id = None  # type: ignore[assignment]
         deal.version += 1
         return await self.repository.update(deal)
 
     async def settle_deal(self, deal_id: uuid.UUID, trace_id: str) -> Deal:
         """Settle the deal. UNDER_CONTRACT → SETTLED."""
         deal = await self._get_deal_or_404(deal_id)
-        DealStateMachine.validate_transition(deal.status.value, DealStatus.SETTLED.value)
-        deal.status = DealStatus.SETTLED
+        DealStateMachine.validate_transition(deal.status.value, DealStatus.SETTLED.value)  # type: ignore[attr-defined]
+        deal.status = DealStatus.SETTLED  # type: ignore[assignment]
         deal.version += 1
         return await self.repository.update(deal)
 
     async def close_deal(self, deal_id: uuid.UUID, trace_id: str) -> Deal:
         """Close a deal. SETTLED → CLOSED or LISTED → CLOSED."""
         deal = await self._get_deal_or_404(deal_id)
-        DealStateMachine.validate_transition(deal.status.value, DealStatus.CLOSED.value)
-        deal.status = DealStatus.CLOSED
+        DealStateMachine.validate_transition(deal.status.value, DealStatus.CLOSED.value)  # type: ignore[attr-defined]
+        deal.status = DealStatus.CLOSED  # type: ignore[assignment]
         deal.version += 1
         return await self.repository.update(deal)
 

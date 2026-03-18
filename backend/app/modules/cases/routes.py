@@ -44,6 +44,8 @@ async def create_case(
         property_type=request.property_type,
         estimated_value=request.estimated_value,
         outstanding_debt=request.outstanding_debt,
+        interest_rate=request.interest_rate,
+        tenure=request.tenure,
         trace_id=trace_id,
     )
 
@@ -56,7 +58,7 @@ async def create_case(
         entity_id=str(case.id),
         action="CREATE_CASE",
         before_state=None,
-        after_state={"status": "DRAFT", "title": case.title},
+        after_state={"status": "SUBMITTED", "title": case.title},
         trace_id=trace_id,
     )
 
@@ -82,6 +84,8 @@ async def update_case(
         property_type=request.property_type,
         estimated_value=request.estimated_value,
         outstanding_debt=request.outstanding_debt,
+        interest_rate=request.interest_rate,
+        tenure=request.tenure,
         trace_id=trace_id,
     )
 
@@ -257,7 +261,7 @@ async def reject_case(
         entity_id=str(case_id),
         action="REJECT_CASE",
         before_state={"status": "UNDER_REVIEW"},
-        after_state={"status": "DRAFT", "reason": request.rejection_reason},
+        after_state={"status": "REJECTED", "reason": request.rejection_reason},
         trace_id=trace_id,
     )
 
@@ -345,12 +349,13 @@ async def get_my_cases(
     service = CaseService(db)
     case_status = CaseStatus(status) if status else None
     offset = (page - 1) * page_size
-    return await service.get_borrower_cases(
+    cases = await service.get_borrower_cases(
         borrower_id=uuid.UUID(current_user["user_id"]),
         status=case_status,
         offset=offset,
         limit=page_size,
     )
+    return [CaseResponse.model_validate(c) for c in cases]
 
 
 @router.get("/review-queue", response_model=list[CaseResponse])
@@ -364,7 +369,8 @@ async def get_review_queue(
     CasePolicy.can_review_case(current_user)
     service = CaseService(db)
     offset = (page - 1) * page_size
-    return await service.get_cases_for_review(offset=offset, limit=page_size)
+    cases = await service.get_cases_for_review(offset=offset, limit=page_size)
+    return [CaseResponse.model_validate(c) for c in cases]
 
 
 @router.get("/", response_model=CaseListResponse)
@@ -383,7 +389,7 @@ async def list_all_cases(
     cases, total = await service.get_all_cases(
         status=case_status, offset=offset, limit=page_size
     )
-    return CaseListResponse(items=cases, total=total, page=page, page_size=page_size)
+    return CaseListResponse(items=cases, total=total, page=page, page_size=page_size)  # type: ignore[arg-type]
 
 
 @router.get("/{case_id}", response_model=CaseResponse)
@@ -418,8 +424,8 @@ async def export_case_report(
         "borrower_name": case.borrower_name,
         "property_address": case.property_address,
         "property_type": case.property_type,
-        "estimated_value": float(case.estimated_value),
-        "outstanding_debt": float(case.outstanding_debt),
+        "estimated_value": float(case.estimated_value),  # type: ignore[arg-type]
+        "outstanding_debt": float(case.outstanding_debt),  # type: ignore[arg-type]
         "lender_name": case.lender_name,
         "lawyer_name": case.lawyer_name,
         "risk_level": case.risk_level,

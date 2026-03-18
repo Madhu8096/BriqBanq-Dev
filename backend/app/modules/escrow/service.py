@@ -54,25 +54,25 @@ class EscrowService:
     async def hold_escrow(self, escrow_id: uuid.UUID, trace_id: str) -> Escrow:
         """PENDING → HELD. For INTERNAL mode, funds are locked in escrow wallet."""
         escrow = await self._get_or_404(escrow_id)
-        if escrow.status != EscrowStatus.PENDING:
+        if escrow.status.value != EscrowStatus.PENDING.value:  # type: ignore[attr-defined]
             raise EscrowError(message=f"Cannot hold escrow in {escrow.status.value} state")
 
-        if escrow.mode == EscrowMode.INTERNAL and escrow.escrow_wallet_id:
+        if escrow.mode.value == EscrowMode.INTERNAL.value and escrow.escrow_wallet_id:  # type: ignore[attr-defined]
             from app.modules.wallet.service import WalletService
             wallet_service = WalletService(self.db)
-            payer_wallet = await wallet_service.get_user_wallet(escrow.payer_id)
+            payer_wallet = await wallet_service.get_user_wallet(escrow.payer_id)  # type: ignore[arg-type]
             await wallet_service.transfer(
                 from_wallet_id=payer_wallet.id,
-                to_wallet_id=escrow.escrow_wallet_id,
-                amount=escrow.amount,
-                transaction_type="ESCROW_HOLD",
+                to_wallet_id=escrow.escrow_wallet_id,  # type: ignore[arg-type]
+                amount=escrow.amount,  # type: ignore[arg-type]
+                transaction_type=LedgerTransactionType.ESCROW_HOLD,  # type: ignore[arg-type]
                 reference_id=str(escrow.id),
                 reference_type="escrow",
                 description="Escrow hold",
                 trace_id=trace_id,
             )
 
-        escrow.status = EscrowStatus.HELD
+        escrow.status = EscrowStatus.HELD  # type: ignore[assignment]
         escrow.version += 1
         return await self.repository.update(escrow)
 
@@ -81,26 +81,26 @@ class EscrowService:
     ) -> Escrow:
         """HELD → RELEASED. Funds transferred to payee."""
         escrow = await self._get_or_404(escrow_id)
-        if escrow.status != EscrowStatus.HELD:
+        if escrow.status.value != EscrowStatus.HELD.value:  # type: ignore[attr-defined]
             raise EscrowError(message=f"Cannot release escrow in {escrow.status.value} state")
 
-        if escrow.mode == EscrowMode.INTERNAL and escrow.escrow_wallet_id:
+        if escrow.mode.value == EscrowMode.INTERNAL.value and escrow.escrow_wallet_id:  # type: ignore[attr-defined]
             from app.modules.wallet.service import WalletService
             wallet_service = WalletService(self.db)
-            payee_wallet = await wallet_service.get_user_wallet(escrow.payee_id)
+            payee_wallet = await wallet_service.get_user_wallet(escrow.payee_id)  # type: ignore[arg-type]
             await wallet_service.transfer(
-                from_wallet_id=escrow.escrow_wallet_id,
+                from_wallet_id=escrow.escrow_wallet_id,  # type: ignore[arg-type]
                 to_wallet_id=payee_wallet.id,
-                amount=escrow.amount,
-                transaction_type="ESCROW_RELEASE",
+                amount=escrow.amount,  # type: ignore[arg-type]
+                transaction_type=LedgerTransactionType.ESCROW_RELEASE,  # type: ignore[arg-type]
                 reference_id=str(escrow.id),
                 reference_type="escrow",
                 description="Escrow release to payee",
                 trace_id=trace_id,
             )
 
-        escrow.status = EscrowStatus.RELEASED
-        escrow.release_reason = reason or "Settlement completed"
+        escrow.status = EscrowStatus.RELEASED  # type: ignore[assignment]
+        escrow.release_reason = reason or "Settlement completed"  # type: ignore[assignment]
         escrow.version += 1
         return await self.repository.update(escrow)
 
@@ -109,26 +109,26 @@ class EscrowService:
     ) -> Escrow:
         """HELD → REFUNDED. Funds returned to payer."""
         escrow = await self._get_or_404(escrow_id)
-        if escrow.status != EscrowStatus.HELD:
+        if escrow.status.value != EscrowStatus.HELD.value:  # type: ignore[attr-defined]
             raise EscrowError(message=f"Cannot refund escrow in {escrow.status.value} state")
 
-        if escrow.mode == EscrowMode.INTERNAL and escrow.escrow_wallet_id:
+        if escrow.mode.value == EscrowMode.INTERNAL.value and escrow.escrow_wallet_id:  # type: ignore[attr-defined]
             from app.modules.wallet.service import WalletService
             wallet_service = WalletService(self.db)
-            payer_wallet = await wallet_service.get_user_wallet(escrow.payer_id)
+            payer_wallet = await wallet_service.get_user_wallet(escrow.payer_id)  # type: ignore[arg-type]
             await wallet_service.transfer(
-                from_wallet_id=escrow.escrow_wallet_id,
+                from_wallet_id=escrow.escrow_wallet_id,  # type: ignore[arg-type]
                 to_wallet_id=payer_wallet.id,
-                amount=escrow.amount,
-                transaction_type="REFUND",
+                amount=escrow.amount,  # type: ignore[arg-type]
+                transaction_type=LedgerTransactionType.REFUND,  # type: ignore[arg-type]
                 reference_id=str(escrow.id),
                 reference_type="escrow",
                 description="Escrow refund to payer",
                 trace_id=trace_id,
             )
 
-        escrow.status = EscrowStatus.REFUNDED
-        escrow.release_reason = reason or "Refund"
+        escrow.status = EscrowStatus.REFUNDED  # type: ignore[assignment]
+        escrow.release_reason = reason or "Refund"  # type: ignore[assignment]
         escrow.version += 1
         return await self.repository.update(escrow)
 

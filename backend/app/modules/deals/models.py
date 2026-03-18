@@ -4,9 +4,12 @@ Deal entity for listed cases.
 Lifecycle: DRAFT → LISTED → UNDER_CONTRACT → SETTLED → CLOSED
 """
 
-from sqlalchemy import Column, ForeignKey, String, Text, Numeric, Enum as SAEnum, Index
+import uuid
+from typing import Optional, List, Any
+from decimal import Decimal
+from sqlalchemy import ForeignKey, String, Text, Numeric, Enum as SAEnum, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.infrastructure.database import Base
 from app.shared.base_model import BaseEntityMixin
@@ -21,49 +24,100 @@ class Deal(BaseEntityMixin, Base):
 
     __tablename__ = "deals"
 
-    case_id = Column(
+    case_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("cases.id"),
         nullable=False,
         unique=True,
         index=True,
     )
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    asking_price = Column(Numeric(15, 2), nullable=False)
-    reserve_price = Column(Numeric(15, 2), nullable=True)
-    status = Column(
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    asking_price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    reserve_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(15, 2), nullable=True)
+    status: Mapped[DealStatus] = mapped_column(
         SAEnum(DealStatus, name="deal_status"),
         default=DealStatus.DRAFT,
         nullable=False,
     )
 
     # Participants
-    seller_id = Column(
+    seller_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False,
     )
-    winning_bidder_id = Column(
+    winning_bidder_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=True,
     )
-    created_by = Column(
+    created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False,
     )
 
-    metadata_json = Column(JSONB, nullable=True)
+    metadata_json: Mapped[Optional[Any]] = mapped_column(JSONB, nullable=True)
 
     # Relationships
-    auctions = relationship("Auction", back_populates="deal", lazy="selectin")
+    case: Mapped["app.modules.cases.models.Case"] = relationship("app.modules.cases.models.Case", lazy="selectin")
+    auctions: Mapped[List["Auction"]] = relationship("Auction", back_populates="deal", lazy="selectin")
 
     __table_args__ = (
         Index("ix_deals_status", "status"),
         Index("ix_deals_seller", "seller_id"),
     )
+
+    @property
+    def property_address(self) -> Optional[str]:
+        return self.case.property_address if self.case else None
+
+    @property
+    def suburb(self) -> Optional[str]:
+        addr = self.property_address
+        if not addr:
+            return None
+        parts = addr.split(",")
+        return parts[1].strip() if len(parts) > 1 else None
+
+    @property
+    def state(self) -> Optional[str]:
+        addr = self.property_address
+        if not addr:
+            return None
+        parts = addr.split(",")
+        if len(parts) > 2:
+            subparts = parts[2].strip().split(" ")
+            return subparts[0] if subparts else None
+        return None
+
+    @property
+    def postcode(self) -> Optional[str]:
+        addr = self.property_address
+        if not addr:
+            return None
+        parts = addr.split(",")
+        if len(parts) > 2:
+            subparts = parts[2].strip().split(" ")
+            return subparts[1] if len(subparts) > 1 else None
+        return None
+
+    @property
+    def property_type(self) -> Optional[str]:
+        return self.case.property_type if self.case else None
+
+    @property
+    def estimated_value(self) -> Optional[Decimal]:
+        return self.case.estimated_value if self.case else None
+
+    @property
+    def interest_rate(self) -> Optional[Decimal]:
+        return self.case.interest_rate if self.case else None
+
+    @property
+    def tenure(self) -> Optional[int]:
+        return self.case.tenure if self.case else None
 
     def __repr__(self) -> str:
         return f"<Deal(id={self.id}, title={self.title}, status={self.status})>"

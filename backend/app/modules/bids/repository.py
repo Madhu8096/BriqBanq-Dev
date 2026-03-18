@@ -65,4 +65,4 @@ class BidRepository:
         result = await self.db.execute(
             select(func.count(Bid.id)).where(Bid.auction_id == auction_id)
         )
-        return result.scalar()
+        return result.scalar() or 0

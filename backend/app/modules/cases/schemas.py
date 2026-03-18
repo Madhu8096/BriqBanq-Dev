@@ -9,7 +9,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
-from app.shared.enums import CaseStatus
+from app.shared.enums import CaseStatus, DealStatus
 
 
 class CaseCreateRequest(BaseModel):
@@ -20,6 +20,8 @@ class CaseCreateRequest(BaseModel):
     property_type: str = Field(..., min_length=1, max_length=50)
     estimated_value: Decimal = Field(..., gt=0)
     outstanding_debt: Decimal = Field(..., gt=0)
+    interest_rate: Optional[Decimal] = Field(None, gt=0)
+    tenure: Optional[int] = Field(None, gt=0)
 
 
 class CaseUpdateRequest(BaseModel):
@@ -30,6 +32,8 @@ class CaseUpdateRequest(BaseModel):
     property_type: Optional[str] = Field(None, max_length=50)
     estimated_value: Optional[Decimal] = Field(None, gt=0)
     outstanding_debt: Optional[Decimal] = Field(None, gt=0)
+    interest_rate: Optional[Decimal] = Field(None, gt=0)
+    tenure: Optional[int] = Field(None, gt=0)
 
 
 class CaseReviewRequest(BaseModel):
@@ -57,6 +61,10 @@ class CaseResponse(BaseModel):
     property_type: str
     estimated_value: Decimal
     outstanding_debt: Decimal
+    interest_rate: Optional[Decimal] = None
+    tenure: Optional[int] = None
+    deal_status: Optional[DealStatus] = None
+    approved_at: Optional[datetime] = None
     status: CaseStatus
     borrower_id: uuid.UUID
     borrower_name: Optional[str] = None

@@ -1,0 +1,14 @@
+{
+    "include": [
+        "backend/app"
+    ],
+    "executionEnvironments": [
+        {
+            "root": "backend",
+            "extraPaths": [
+                "backend",
+                "backend/env/Lib/site-packages"
+            ]
+        }
+    ]
+}

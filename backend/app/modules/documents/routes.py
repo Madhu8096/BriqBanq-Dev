@@ -173,7 +173,7 @@ async def download_document(
 
     return DocumentDownloadResponse(
         document_id=document.id,
-        document_name=document.document_name,
+        document_name=document.document_name,  # type: ignore[arg-type]
         download_url=download_url,
     )
 

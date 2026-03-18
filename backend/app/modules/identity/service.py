@@ -99,10 +99,10 @@ class UserService:
         if not user:
             raise InvalidCredentialsError()
 
-        if user.status == UserStatus.SUSPENDED:
+        if user.status.value == UserStatus.SUSPENDED.value:  # type: ignore[attr-defined]
             raise AccountSuspendedError()
 
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(password, user.hashed_password):  # type: ignore[arg-type]
             raise InvalidCredentialsError()
 
         # Get approved roles
@@ -152,7 +152,7 @@ class UserService:
         if not user:
             raise ResourceNotFoundError(message="User not found")
 
-        if user.status == UserStatus.SUSPENDED:
+        if user.status.value == UserStatus.SUSPENDED.value:  # type: ignore[attr-defined]
             raise AccountSuspendedError()
 
         # Get approved roles
@@ -222,11 +222,11 @@ class UserService:
             raise ResourceNotFoundError(message="User not found")
 
         if request.first_name:
-            user.first_name = request.first_name
+            user.first_name = request.first_name  # type: ignore[assignment]
         if request.last_name:
-            user.last_name = request.last_name
+            user.last_name = request.last_name  # type: ignore[assignment]
         if request.phone is not None:
-            user.phone = request.phone
+            user.phone = request.phone  # type: ignore[assignment]
 
         return await self.repository.update(user)
 
@@ -241,10 +241,10 @@ class UserService:
         if not user:
             raise ResourceNotFoundError(message="User not found")
 
-        if not verify_password(request.current_password, user.hashed_password):
+        if not verify_password(request.current_password, user.hashed_password):  # type: ignore[arg-type]
             raise InvalidCredentialsError(message="Current password is incorrect")
 
-        user.hashed_password = hash_password(request.new_password)
+        user.hashed_password = hash_password(request.new_password)  # type: ignore[assignment]
         await self.repository.update(user)
 
     async def suspend_user(self, user_id: uuid.UUID, trace_id: str) -> User:
@@ -253,7 +253,7 @@ class UserService:
         if not user:
             raise ResourceNotFoundError(message="User not found")
 
-        user.status = UserStatus.SUSPENDED
+        user.status = UserStatus.SUSPENDED  # type: ignore[assignment]
         await self.repository.update(user)
 
         # Cache suspension status for fast auth checks
@@ -267,7 +267,7 @@ class UserService:
         if not user:
             raise ResourceNotFoundError(message="User not found")
 
-        user.status = UserStatus.ACTIVE
+        user.status = UserStatus.ACTIVE  # type: ignore[assignment]
         await self.repository.update(user)
 
         # Remove suspension cache

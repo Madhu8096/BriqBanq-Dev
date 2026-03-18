@@ -20,11 +20,10 @@ class CasePolicy:
 
     @staticmethod
     def can_review_case(current_user: dict) -> bool:
-        """Only admins and lawyers can review cases."""
-        allowed_roles = [RoleType.ADMIN.value, RoleType.LAWYER.value]
-        if not any(r in current_user.get("roles", []) for r in allowed_roles):
+        """Only admins can review cases."""
+        if RoleType.ADMIN.value not in current_user.get("roles", []):
             raise AuthorizationError(
-                message="Only administrators and lawyers can review cases"
+                message="Only administrators can review cases"
             )
         return True
 

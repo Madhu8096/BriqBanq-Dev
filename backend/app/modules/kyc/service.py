@@ -76,8 +76,8 @@ class KYCService:
             kyc_record.status.value, KYCStatus.UNDER_REVIEW.value
         )
 
-        kyc_record.status = KYCStatus.UNDER_REVIEW
-        kyc_record.reviewed_by = reviewer_id
+        kyc_record.status = KYCStatus.UNDER_REVIEW  # type: ignore[assignment]
+        kyc_record.reviewed_by = reviewer_id  # type: ignore[assignment]
 
         return await self.repository.update(kyc_record)
 
@@ -93,8 +93,8 @@ class KYCService:
             kyc_record.status.value, KYCStatus.APPROVED.value
         )
 
-        kyc_record.status = KYCStatus.APPROVED
-        kyc_record.reviewed_by = reviewer_id
+        kyc_record.status = KYCStatus.APPROVED  # type: ignore[assignment]
+        kyc_record.reviewed_by = reviewer_id  # type: ignore[assignment]
 
         return await self.repository.update(kyc_record)
 
@@ -114,9 +114,9 @@ class KYCService:
             kyc_record.status.value, KYCStatus.REJECTED.value
         )
 
-        kyc_record.status = KYCStatus.REJECTED
-        kyc_record.reviewed_by = reviewer_id
-        kyc_record.rejection_reason = reason
+        kyc_record.status = KYCStatus.REJECTED  # type: ignore[assignment]
+        kyc_record.reviewed_by = reviewer_id  # type: ignore[assignment]
+        kyc_record.rejection_reason = reason  # type: ignore[assignment]
 
         return await self.repository.update(kyc_record)
 
@@ -133,4 +133,4 @@ class KYCService:
     async def is_user_kyc_approved(self, user_id: uuid.UUID) -> bool:
         """Check if user has approved KYC."""
         latest = await self.repository.get_latest_by_user_id(user_id)
-        return latest is not None and latest.status == KYCStatus.APPROVED
+        return latest is not None and latest.status.value == KYCStatus.APPROVED.value  # type: ignore[attr-defined]
