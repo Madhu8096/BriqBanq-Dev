@@ -269,7 +269,7 @@ export default function IdentityVerification() {
                 <DatePicker
                   value={form.dob}
                   onChange={(dateStr) => setForm((f) => ({ ...f, dob: dateStr }))}
-                  placeholder="MM/DD/YYYY"
+                  placeholderText="DD/MM/YYYY"
                 />
               </div>
               <div>

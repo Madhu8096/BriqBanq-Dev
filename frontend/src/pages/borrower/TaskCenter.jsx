@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Badge from './components/Badge'
 import { MOCK_BORROWER_TASKS } from './data/borrowerMockData'
+import DatePicker from '../../components/common/DatePicker'
 
 const priorityVariant = { Urgent: 'urgent', High: 'high', Medium: 'medium', Done: 'done' }
 const statusVariant = { Overdue: 'overdue', Pending: 'pending', InProgress: 'in-progress', Completed: 'completed' }
@@ -343,10 +344,21 @@ export default function TaskCenter() {
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex items-start gap-3 min-w-0 flex-1">
-                <button type="button" onClick={handleToggleCheck(task.id)} className="mt-0.5 shrink-0" aria-label={task.status === 'Completed' ? 'Mark incomplete' : 'Mark complete'}>
-                  <span className={`inline-block w-5 h-5 border-2 rounded ${task.status === 'Completed' ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300'}`}>
-                    {task.status === 'Completed' && '✓'}
-                  </span>
+                <button
+                  type="button"
+                  onClick={handleToggleCheck(task.id)}
+                  className={`mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
+                    task.status === 'Completed'
+                      ? 'bg-indigo-600 border-indigo-600'
+                      : 'bg-white border-gray-400 hover:border-indigo-400'
+                  }`}
+                  aria-label={task.status === 'Completed' ? 'Mark incomplete' : 'Mark complete'}
+                >
+                  {task.status === 'Completed' && (
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                 </button>
                 <div className="min-w-0">
                   <p className={`text-sm font-medium text-gray-900 ${task.status === 'Completed' ? 'line-through' : ''}`}>
@@ -402,8 +414,8 @@ export default function TaskCenter() {
       {/* Create / Edit Task modal */}
       {(showNewTaskModal || editingTask) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 rounded-t-lg">
               <h2 id="task-modal-title" className="text-lg font-semibold text-gray-900">{editingTask ? 'Edit Task' : 'Create New Task'}</h2>
               <button
                 type="button"
@@ -416,7 +428,7 @@ export default function TaskCenter() {
                 </svg>
               </button>
             </div>
-            <div className="px-6 py-4 space-y-4">
+            <div className="px-6 py-4 space-y-4 overflow-visible">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
                 <input
@@ -452,12 +464,10 @@ export default function TaskCenter() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                  <input
-                    type="text"
+                  <DatePicker
                     value={newTaskForm.dueDate}
-                    onChange={(e) => setNewTaskField('dueDate', e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onChange={(val) => setNewTaskField('dueDate', val)}
+                    placeholderText="MM/DD/YYYY"
                   />
                 </div>
               </div>
@@ -474,7 +484,7 @@ export default function TaskCenter() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
               <button
                 type="button"
                 onClick={handleCloseNewTaskModal}

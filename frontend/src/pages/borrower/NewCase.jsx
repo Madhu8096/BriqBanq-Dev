@@ -216,6 +216,11 @@ const initialFormData = {
   creditGuide: false,
   creditContract: false,
   tenure: '12',
+  disclosureKeyFacts: false,
+  disclosureFeesCharges: false,
+  disclosureContractCopy: false,
+  disclosureBorrowerConsent: false,
+  disclosureFinalConfirmation: false,
 }
 
 const LENDER_DOCS = [
@@ -251,7 +256,7 @@ export default function NewCase() {
   const [insuranceUploaded, setInsuranceUploaded] = useState('') // Store filename
   const [supportingDocs, setSupportingDocs] = useState({ title: '', certificate: '', report: '' }) // Store filenames
   const fileInputRef = useRef(null)
-  const [uploadContext, setUploadContext] = useState(null)
+  const uploadContextRef = useRef(null)
   const [runAnalysisLoading, setRunAnalysisLoading] = useState(false)
   const [runAnalysisResult, setRunAnalysisResult] = useState(null)
   const [pendingTrustee, setPendingTrustee] = useState(null)
@@ -347,6 +352,12 @@ export default function NewCase() {
       if (!formData.lenderLicenceType) newErrors.lenderLicenceType = 'Licence type is required'
       if (!formData.creditGuide) newErrors.creditGuide = 'Credit guide confirmation is required'
       if (!formData.creditContract) newErrors.creditContract = 'Credit contract confirmation is required'
+    } else if (s === 9) {
+      if (!formData.disclosureKeyFacts) newErrors.disclosureKeyFacts = 'You must confirm the Key Facts Sheet was provided'
+      if (!formData.disclosureFeesCharges) newErrors.disclosureFeesCharges = 'You must confirm all fees and charges were disclosed'
+      if (!formData.disclosureContractCopy) newErrors.disclosureContractCopy = 'You must confirm the borrower received a copy of the contract'
+      if (!formData.disclosureBorrowerConsent) newErrors.disclosureBorrowerConsent = 'Borrower consent confirmation is required'
+      if (!formData.disclosureFinalConfirmation) newErrors.disclosureFinalConfirmation = 'You must check the final confirmation before proceeding'
     } else if (s === 10) {
       if (!formData.reasonForDefault) newErrors.reasonForDefault = 'Reason for default is required'
     }
@@ -471,34 +482,34 @@ export default function NewCase() {
   }
 
   const triggerUpload = (context) => {
-    setUploadContext(context)
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
+    uploadContextRef.current = context
+    fileInputRef.current?.click()
   }
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    const context = uploadContextRef.current
+    if (!context) return
+
     // 5MB validation
     if (file.size > 5 * 1024 * 1024) {
       const errorMsg = 'File size must be less than 5 MB.'
-      setErrors((prev) => ({ ...prev, [uploadContext.field || 'upload']: errorMsg }))
+      setErrors((prev) => ({ ...prev, [context.field || 'upload']: errorMsg }))
       setShowGlobalError(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      e.target.value = '' // Clear selection
+      e.target.value = ''
       return
     }
 
     // Success - clear errors and update state
     setErrors((prev) => {
       const next = { ...prev }
-      delete next[uploadContext.field || 'upload']
+      delete next[context.field || 'upload']
       return next
     })
 
-    const context = uploadContext
     if (context.type === 'lender') {
       setUploadedLenderDocs((prev) => ({ ...prev, [context.title]: file.name }))
     } else if (context.type === 'valuation') {
@@ -1113,12 +1124,10 @@ export default function NewCase() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-600 mb-1">Date of Birth</label>
-                      <input
-                        type="text"
+                      <DatePicker
                         value={pendingGuarantor.dateOfBirth}
-                        onChange={(e) => setPendingGuarantor((p) => ({ ...p, dateOfBirth: e.target.value }))}
-                        placeholder="mm/dd/yyyy"
-                        className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white"
+                        onChange={(val) => setPendingGuarantor((p) => ({ ...p, dateOfBirth: val }))}
+                        placeholderText="MM/DD/YYYY"
                       />
                     </div>
                     <div>
@@ -1780,11 +1789,126 @@ export default function NewCase() {
         )}
 
         {step === 9 && (
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-slate-900">Disclosure</h2>
-            <p className="text-sm text-slate-500 mt-1">Confirm all disclosure documents have been provided</p>
-            <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700">
-              Disclosure step — ensure Key Facts Sheet and all fees are disclosed as per NCCP requirements.
+          <div className="p-6 space-y-5">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Disclosure</h2>
+              <p className="text-sm text-slate-500 mt-1">Confirm all NCCP disclosure obligations have been fulfilled before proceeding</p>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex gap-2">
+              <span className="shrink-0 text-amber-600" aria-hidden>!</span>
+              <span>All required disclosures must be completed before the borrower signs the credit contract. Incomplete disclosures may void the contract and attract regulatory penalties.</span>
+            </div>
+
+            <div className="space-y-4">
+              {/* Key Facts Sheet */}
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.disclosureKeyFacts}
+                    onChange={(e) => update('disclosureKeyFacts', e.target.checked)}
+                    className={`mt-0.5 rounded shrink-0 ${errors.disclosureKeyFacts ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600 focus:ring-indigo-500`}
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${errors.disclosureKeyFacts ? 'text-red-700' : 'text-slate-800'}`}>
+                      Key Facts Sheet has been provided *
+                    </span>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      I confirm that a Key Facts Sheet (as required under NCCP s133BB) has been given to the borrower prior to signing, summarising the loan details, comparison rate, and total repayments.
+                    </p>
+                    {errors.disclosureKeyFacts && <p className="mt-1 text-xs text-red-500">{errors.disclosureKeyFacts}</p>}
+                  </div>
+                </label>
+              </div>
+
+              {/* Fees & Charges */}
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.disclosureFeesCharges}
+                    onChange={(e) => update('disclosureFeesCharges', e.target.checked)}
+                    className={`mt-0.5 rounded shrink-0 ${errors.disclosureFeesCharges ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600 focus:ring-indigo-500`}
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${errors.disclosureFeesCharges ? 'text-red-700' : 'text-slate-800'}`}>
+                      All fees and charges have been disclosed *
+                    </span>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      I confirm that all applicable fees, charges, interest rates, and comparison rates have been fully disclosed to the borrower in writing, including establishment fees, ongoing fees, discharge fees, and any early repayment penalties.
+                    </p>
+                    {errors.disclosureFeesCharges && <p className="mt-1 text-xs text-red-500">{errors.disclosureFeesCharges}</p>}
+                  </div>
+                </label>
+              </div>
+
+              {/* Contract Copy */}
+              <div className="p-4 border border-slate-200 rounded-lg">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.disclosureContractCopy}
+                    onChange={(e) => update('disclosureContractCopy', e.target.checked)}
+                    className={`mt-0.5 rounded shrink-0 ${errors.disclosureContractCopy ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} text-indigo-600 focus:ring-indigo-500`}
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${errors.disclosureContractCopy ? 'text-red-700' : 'text-slate-800'}`}>
+                      Borrower has received a copy of the credit contract *
+                    </span>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      I confirm that the borrower has been provided with a copy of the credit contract (NCCP s64) prior to, or at the time of, signing. The borrower was given adequate time to read and seek independent advice.
+                    </p>
+                    {errors.disclosureContractCopy && <p className="mt-1 text-xs text-red-500">{errors.disclosureContractCopy}</p>}
+                  </div>
+                </label>
+              </div>
+
+              {/* Borrower Consent */}
+              <div className="p-4 border border-slate-200 rounded-lg bg-indigo-50 border-indigo-200">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.disclosureBorrowerConsent}
+                    onChange={(e) => update('disclosureBorrowerConsent', e.target.checked)}
+                    className={`mt-0.5 rounded shrink-0 ${errors.disclosureBorrowerConsent ? 'border-red-500 ring-1 ring-red-500' : 'border-indigo-300'} text-indigo-600 focus:ring-indigo-500`}
+                  />
+                  <div>
+                    <span className={`text-sm font-medium ${errors.disclosureBorrowerConsent ? 'text-red-700' : 'text-indigo-800'}`}>
+                      Borrower has given informed consent to proceed *
+                    </span>
+                    <p className="text-xs text-indigo-700 mt-0.5">
+                      I declare that the borrower has been fully informed of the nature of the credit contract, all associated risks, and has voluntarily provided their written consent to proceed with this application. All disclosures comply with the National Consumer Credit Protection Act 2009.
+                    </p>
+                    {errors.disclosureBorrowerConsent && <p className="mt-1 text-xs text-red-500">{errors.disclosureBorrowerConsent}</p>}
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Final Confirmation */}
+            <div className={`p-4 rounded-lg border-2 ${errors.disclosureFinalConfirmation ? 'border-red-400 bg-red-50' : formData.disclosureFinalConfirmation ? 'border-green-400 bg-green-50' : 'border-slate-900 bg-slate-900'}`}>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.disclosureFinalConfirmation}
+                  onChange={(e) => update('disclosureFinalConfirmation', e.target.checked)}
+                  className={`mt-0.5 w-5 h-5 rounded shrink-0 ${errors.disclosureFinalConfirmation ? 'border-red-500 ring-2 ring-red-400' : 'border-slate-300'} text-indigo-600 focus:ring-indigo-500`}
+                />
+                <div>
+                  <span className={`text-sm font-semibold ${errors.disclosureFinalConfirmation ? 'text-red-700' : formData.disclosureFinalConfirmation ? 'text-green-800' : 'text-white'}`}>
+                    I confirm all disclosure obligations have been fulfilled *
+                  </span>
+                  <p className={`text-xs mt-1 ${errors.disclosureFinalConfirmation ? 'text-red-600' : formData.disclosureFinalConfirmation ? 'text-green-700' : 'text-slate-300'}`}>
+                    By checking this box, I declare that all four disclosure requirements above have been completed in full and in compliance with the National Consumer Credit Protection Act 2009. I understand that false declarations may result in penalties, licence suspension, or legal action.
+                  </p>
+                  {errors.disclosureFinalConfirmation && <p className="mt-1 text-xs font-medium text-red-600">{errors.disclosureFinalConfirmation}</p>}
+                </div>
+              </label>
+            </div>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500">
+              All five confirmations above are mandatory. Proceeding without completing these disclosures may constitute a breach of your Australian Credit Licence obligations under the NCCP Act 2009.
             </div>
           </div>
         )}
@@ -1872,7 +1996,8 @@ export default function NewCase() {
         type="file"
         ref={fileInputRef}
         onChange={handleFileUpload}
-        className="hidden"
+        className="absolute opacity-0 w-0 h-0 pointer-events-none"
+        tabIndex={-1}
         accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
       />
 

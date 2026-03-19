@@ -1,6 +1,6 @@
 export default function ImportantDisclaimer() {
   return (
-    <div className="bg-black text-white rounded-lg p-8">
+    <div className="bg-blue-900 text-white rounded-lg p-8">
       <h2 className="text-lg font-semibold mb-4">Important Disclaimer</h2>
       <div className="space-y-4 text-xs text-slate-300">
         <p>
@@ -21,7 +21,7 @@ export default function ImportantDisclaimer() {
           capital.
         </p>
       </div>
-      <div className="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-400">
+      <div className="mt-8 pt-6 border-t border-blue-700 text-xs text-blue-200">
         <p>© 2025 Brickbanq Pty Ltd. All rights reserved. Australian Credit Licence: XXXXXX</p>
         <p className="mt-1">Document Version: 1.0 February 2025</p>
       </div>

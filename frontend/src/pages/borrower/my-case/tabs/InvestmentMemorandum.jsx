@@ -13,6 +13,191 @@ import InvestmentTerms from './investment-memorandum/InvestmentTerms'
 import ContactInformation from './investment-memorandum/ContactInformation'
 import ImportantDisclaimer from './investment-memorandum/ImportantDisclaimer'
 
+/* ── Edit Modal ─────────────────────────────────────────── */
+function EditMemoModal({ data, onSave, onClose }) {
+  const [form, setForm] = useState({
+    address:          data?.property?.fullAddress || data?.property?.address || '',
+    propertyType:     data?.property?.type || '',
+    bedrooms:         data?.property?.bedrooms ?? '',
+    bathrooms:        data?.property?.bathrooms ?? '',
+    parking:          data?.property?.parking ?? '',
+    propertyValue:    data?.financials?.propertyValue ?? '',
+    outstandingDebt:  data?.financials?.outstandingDebt ?? '',
+    expectedReturn:   data?.financials?.expectedReturn ?? '',
+    ltvRatio:         data?.financials?.ltvRatio ?? '',
+    summaryText:      (data?.executiveSummary?.text || []).join('\n\n'),
+    contactEmail:     data?.contact?.email || '',
+    contactPhone:     data?.contact?.phone || '',
+  })
+
+  const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
+
+  const handleSave = () => {
+    const updated = {
+      ...data,
+      property: {
+        ...data.property,
+        fullAddress: form.address,
+        address:     form.address.split(',')[0]?.trim() || form.address,
+        type:        form.propertyType,
+        bedrooms:    Number(form.bedrooms) || 0,
+        bathrooms:   Number(form.bathrooms) || 0,
+        parking:     Number(form.parking) || 0,
+      },
+      financials: {
+        ...data.financials,
+        propertyValue:   Number(form.propertyValue) || data.financials?.propertyValue,
+        outstandingDebt: Number(form.outstandingDebt) || data.financials?.outstandingDebt,
+        expectedReturn:  Number(form.expectedReturn) || data.financials?.expectedReturn,
+        ltvRatio:        Number(form.ltvRatio) || data.financials?.ltvRatio,
+      },
+      executiveSummary: {
+        ...data.executiveSummary,
+        text: form.summaryText.split('\n\n').filter(Boolean),
+      },
+      contact: {
+        ...data.contact,
+        email: form.contactEmail,
+        phone: form.contactPhone,
+      },
+    }
+    onSave(updated)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Edit Investment Memorandum</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Update the key details shown in the memorandum</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable form */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+          {/* Property */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 w-full">Property</legend>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Full Address</label>
+              <input value={form.address} onChange={set('address')}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Property Type</label>
+                <select value={form.propertyType} onChange={set('propertyType')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                  {['Apartment','House','Townhouse','Villa','Unit','Land'].map(t => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Parking Spaces</label>
+                <input type="number" min={0} value={form.parking} onChange={set('parking')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Bedrooms</label>
+                <input type="number" min={0} value={form.bedrooms} onChange={set('bedrooms')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Bathrooms</label>
+                <input type="number" min={0} value={form.bathrooms} onChange={set('bathrooms')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Financials */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 w-full">Financials</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Property Value ($)</label>
+                <input type="number" min={0} value={form.propertyValue} onChange={set('propertyValue')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Outstanding Debt ($)</label>
+                <input type="number" min={0} value={form.outstandingDebt} onChange={set('outstandingDebt')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Expected Return (% p.a.)</label>
+                <input type="number" step="0.1" min={0} value={form.expectedReturn} onChange={set('expectedReturn')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">LTV Ratio (%)</label>
+                <input type="number" step="0.1" min={0} max={100} value={form.ltvRatio} onChange={set('ltvRatio')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Executive Summary */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 w-full">Executive Summary</legend>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Summary Text (separate paragraphs with a blank line)</label>
+              <textarea value={form.summaryText} onChange={set('summaryText')} rows={6}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" />
+            </div>
+          </fieldset>
+
+          {/* Contact */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-1 w-full">Contact Information</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                <input type="email" value={form.contactEmail} onChange={set('contactEmail')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                <input value={form.contactPhone} onChange={set('contactPhone')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <button type="button" onClick={onClose}
+            className="border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const normalizeMemo = (raw) => {
   if (!raw || typeof raw !== 'object') return null
   const d = raw?.data !== undefined ? raw.data : raw
@@ -23,6 +208,8 @@ export default function InvestmentMemorandum({ caseId }) {
   const [memoData, setMemoData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   /* eslint-disable react-hooks/set-state-in-effect -- reset loading/error at start of fetch */
   useEffect(() => {
@@ -84,8 +271,20 @@ export default function InvestmentMemorandum({ caseId }) {
     window.print()
   }
 
-  const handleEdit = () => {
-    // Backend: navigate to edit or open edit modal
+  const handleEdit = () => setIsEditing(true)
+
+  const handleSaveEdit = async (updated) => {
+    setIsEditing(false)
+    setMemoData(updated)
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 3000)
+    if (caseId) {
+      try {
+        await borrowerApi.updateInvestmentMemo(caseId, updated)
+      } catch {
+        // saved locally; backend sync optional
+      }
+    }
   }
 
   if (loading) {
@@ -110,9 +309,24 @@ export default function InvestmentMemorandum({ caseId }) {
 
   return (
     <div className="space-y-0" id="investment-memo-content">
+      {isEditing && (
+        <EditMemoModal
+          data={memoData}
+          onSave={handleSaveEdit}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
       {error && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800 no-print">
           {error}
+        </div>
+      )}
+      {saveSuccess && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800 no-print flex items-center gap-2">
+          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Memorandum updated successfully.
         </div>
       )}
       <HeaderControls onEdit={handleEdit} onPrint={handlePrint} onDownload={handleDownloadPDF} />

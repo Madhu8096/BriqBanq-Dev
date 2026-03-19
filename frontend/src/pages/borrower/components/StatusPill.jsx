@@ -14,6 +14,8 @@ const statusToVariant = {
   Overdue: 'overdue',
   Protected: 'protected',
   'In Progress': 'in-progress',
+  Draft: 'draft',
+  Cancelled: 'cancelled',
 }
 
 export default function StatusPill({ status }) {

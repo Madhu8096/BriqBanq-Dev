@@ -42,7 +42,7 @@ export default function BorrowerDashboard() {
   const pendingDocCount = documents.filter((d) => d.status === 'pending').length
 
   const supportSectionRef = useRef(null)
-
+  const [showSupportModal, setShowSupportModal] = useState(false)
 
   const handleViewAuction = () => navigate('/borrower/auction')
   const handleViewLiveAuction = () => navigate('/borrower/auction')
@@ -50,13 +50,10 @@ export default function BorrowerDashboard() {
     setUploadTargetDoc(null)
     setShowUpload(true)
   }
-  const handleSupportResources = () => {
-    setActiveTab('overview')
-    setTimeout(() => supportSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-  }
-  const handleContactSupport = () => {
-    window.location.href = 'mailto:support@brickbanq.com?subject=Dashboard%20Support'
-  }
+  const handleSupportResources = () => setShowSupportModal(true)
+  const [showFaqModal, setShowFaqModal] = useState(false)
+  const [openFaqIndex, setOpenFaqIndex] = useState(null)
+  const handleContactSupport = () => setShowFaqModal(true)
   const handleDownloadDocument = (doc) => () => {
     const blob = new Blob([`Document: ${doc.title}\nUploaded: ${doc.uploadedDate}\n\n(This is a placeholder download.)`], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -84,14 +81,6 @@ export default function BorrowerDashboard() {
     // Keep modal open briefly so the success message is visible, then auto-close
     setTimeout(() => setShowUpload(false), 2000)
   }
-
-  const handleSupport = () => {
-    setActiveTab('overview')
-    setTimeout(() => {
-      supportSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 100)
-  }
-
 
   return (
     <div className="p-6 md:p-8 space-y-6 bg-gray-50 min-h-full">
@@ -139,7 +128,7 @@ export default function BorrowerDashboard() {
             </button>
             <button
               type="button"
-              onClick={handleSupport}
+              onClick={handleSupportResources}
               className="flex items-center justify-center gap-2 min-h-[44px] bg-white text-black border border-gray-300 text-base font-normal px-4 py-2 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 active:scale-[0.98] transition-transform w-full"
             >
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -537,6 +526,204 @@ export default function BorrowerDashboard() {
           onSuccess={handleUploadSuccess}
           onClose={() => setShowUpload(false)}
         />
+      )}
+
+      {/* FAQ / Contact Support Modal */}
+      {showFaqModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="faq-modal-title"
+          onClick={(e) => e.target === e.currentTarget && setShowFaqModal(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowFaqModal(false)}
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 id="faq-modal-title" className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Contact Support — FAQs
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowFaqModal(false)}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* FAQ list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+              <p className="text-sm text-gray-500 mb-4">Find answers to common questions below. Still need help? Email us directly.</p>
+              {[
+                {
+                  q: 'What is the mortgage resolution process?',
+                  a: 'The mortgage resolution process involves your lender placing your property into a managed auction through BriqBanq. You remain informed throughout and can engage with your case details, documents, and auction status from this dashboard.',
+                },
+                {
+                  q: 'How do I upload required documents?',
+                  a: 'Go to the Documents tab on your dashboard, or click "Upload Document" on the action card. Accepted formats are PDF, JPG, and PNG (max 50 MB each). Documents are reviewed by your case manager within 1–2 business days.',
+                },
+                {
+                  q: 'What happens after the auction ends?',
+                  a: 'Once the auction closes, the highest bid is reviewed for approval. If accepted, settlement proceeds are used to clear your outstanding balance. Any surplus after costs is returned to you. You will be notified at every stage.',
+                },
+                {
+                  q: 'Can I dispute the auction outcome?',
+                  a: 'Yes. You have the right to raise a dispute with the Australian Financial Complaints Authority (AFCA) at any time. Call 1800 931 678 or visit afca.org.au. You should also seek independent legal advice as soon as possible.',
+                },
+                {
+                  q: 'How do I verify my identity (KYC)?',
+                  a: "Navigate to Identity Verification in the sidebar. Complete the form with your personal details and upload a government-issued ID (passport, driver's licence, or national ID card). Verification is typically processed within 24\u201348 hours.",
+                },
+                {
+                  q: 'Who can I call for free financial counselling?',
+                  a: 'The National Debt Helpline provides free, confidential financial counselling. Call 1800 007 007 (Mon–Fri, 9:30 am – 4:30 pm). You can also access MoneySmart tools at moneysmart.gov.au.',
+                },
+                {
+                  q: 'How do I contact the BriqBanq support team directly?',
+                  a: 'Email us at support@brickbanq.com with your case number in the subject line. Our team responds within one business day.',
+                },
+              ].map((faq, idx) => (
+                <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+                    onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                    aria-expanded={openFaqIndex === idx}
+                  >
+                    <span>{faq.q}</span>
+                    <svg
+                      className={`w-4 h-4 text-gray-400 shrink-0 ml-3 transition-transform duration-200 ${openFaqIndex === idx ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openFaqIndex === idx && (
+                    <div className="px-4 pb-4 pt-1 text-sm text-gray-600 bg-gray-50 border-t border-gray-100">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-xs text-gray-500">Still need help? We're here for you.</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = 'mailto:support@brickbanq.com?subject=Dashboard%20Support' }}
+                  className="inline-flex items-center gap-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Email Support
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFaqModal(false)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Resources Modal */}
+      {showSupportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="support-modal-title"
+          onClick={(e) => e.target === e.currentTarget && setShowSupportModal(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowSupportModal(false)}
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 id="support-modal-title" className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <span className="text-blue-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </span>
+                Support Resources
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(false)}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                The following free and confidential resources are available to help you through the mortgage stress process.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { title: 'National Debt Helpline', desc: 'Free financial counselling for people in financial difficulty.', contact: '1800 007 007', link: 'https://ndh.org.au' },
+                  { title: 'MoneySmart (ASIC)', desc: 'Government tools and guidance for managing money and debt.', link: 'https://moneysmart.gov.au' },
+                  { title: 'Australian Financial Complaints Authority (AFCA)', desc: 'Free, independent dispute resolution for financial complaints.', contact: '1800 931 678', link: 'https://afca.org.au' },
+                  { title: 'Legal Aid', desc: 'Free legal advice for eligible people facing financial or housing issues.', link: 'https://www.legalaid.nsw.gov.au' },
+                  { title: 'Beyond Blue', desc: 'Mental health support — financial stress can affect wellbeing too.', contact: '1300 22 4636', link: 'https://beyondblue.org.au' },
+                ].map((r) => (
+                  <div key={r.title} className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                    <div className="mt-0.5 text-blue-500 shrink-0">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{r.title}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">{r.desc}</p>
+                      {r.contact && <p className="text-xs font-medium text-blue-700 mt-1">{r.contact}</p>}
+                      {r.link && (
+                        <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline mt-0.5 inline-block">
+                          Visit website →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.href = 'mailto:support@brickbanq.com?subject=Support%20Resources%20Request'}
+                className="border border-gray-300 bg-white text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Email Us
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(false)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

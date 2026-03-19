@@ -137,6 +137,8 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedNotification, setSelectedNotification] = useState(null)
+  const [markAllLoading, setMarkAllLoading] = useState(false)
+  const [markAllSuccess, setMarkAllSuccess] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -194,12 +196,20 @@ export default function Notifications() {
   }
 
   const handleMarkAllRead = async () => {
+    if (markAllLoading || unreadCount === 0) return
+    setMarkAllLoading(true)
+    setMarkAllSuccess(false)
     try {
       await borrowerApi.markAllAsRead()
     } catch {
-      // Offline or API not ready: still update UI
+      // Offline or API not ready — still update UI
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true, isNew: false })))
+    setMarkAllLoading(false)
+    setMarkAllSuccess(true)
+    // If currently filtered to unread-only, reset so the user sees the now-read items
+    if (statusFilter === 'unread') setStatusFilter('all')
+    setTimeout(() => setMarkAllSuccess(false), 3000)
   }
 
   const handleDelete = async (notificationId) => {
@@ -367,16 +377,45 @@ export default function Notifications() {
           <button type="button" onClick={handleClearFilters} className="text-sm font-medium text-gray-600 hover:text-gray-900">
             Clear Filters
           </button>
-          <button
-            type="button"
-            onClick={handleMarkAllRead}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 ml-auto"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Mark All Read
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {markAllSuccess && (
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 animate-pulse">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                All marked as read
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleMarkAllRead}
+              disabled={markAllLoading || unreadCount === 0}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                unreadCount === 0
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                  : markAllSuccess
+                    ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                    : 'border-blue-200 text-blue-600 hover:bg-blue-50 bg-white'
+              }`}
+            >
+              {markAllLoading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Marking…
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {unreadCount === 0 ? 'All Read' : `Mark All Read (${unreadCount})`}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -407,7 +446,11 @@ export default function Notifications() {
                 tabIndex={0}
                 onClick={() => handleViewDetails(notification)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleViewDetails(notification) } }}
-                className="p-4 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                className={`p-4 transition-colors cursor-pointer border-l-4 ${
+                  !notification.read
+                    ? 'bg-blue-50/40 border-l-blue-500 hover:bg-blue-50/60'
+                    : 'bg-white border-l-transparent hover:bg-gray-50/50'
+                }`}
               >
                 <div className="flex items-start gap-3">
                   <NotificationIcon type={notification.type} />

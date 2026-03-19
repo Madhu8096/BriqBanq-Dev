@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Breadcrumb from './components/Breadcrumb'
 import useCountdown from '../../hooks/useCountdown'
 import { MOCK_AUCTION_ROOM } from './data/borrowerMockData'
+import { jsPDF } from 'jspdf'
 
 const formatAud = (n) =>
   n == null ? 'A$0' : new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }).format(n)
@@ -30,6 +31,9 @@ export default function AuctionRoom() {
   const [isPlacingBid, setIsPlacingBid] = useState(false)
   const [viewingDocument, setViewingDocument] = useState(null)
   const [downloadingDocId, setDownloadingDocId] = useState(null)
+  const [openBidMenuIndex, setOpenBidMenuIndex] = useState(null)
+  const [bidMenuPos, setBidMenuPos] = useState({ top: 0, right: 0 })
+  const bidMenuRef = useRef(null)
 
   const endDate = data.auction?.endDate ? new Date(data.auction.endDate) : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
   const countdown = useCountdown(endDate)
@@ -40,6 +44,17 @@ export default function AuctionRoom() {
   useEffect(() => {
     setBidHistory(data.bidHistory || [])
   }, [data.bidHistory])
+
+  useEffect(() => {
+    if (openBidMenuIndex === null) return
+    const handleClickOutside = (e) => {
+      if (bidMenuRef.current && !bidMenuRef.current.contains(e.target)) {
+        setOpenBidMenuIndex(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openBidMenuIndex])
 
   useEffect(() => {
     if (!viewingDocument) return
@@ -81,7 +96,174 @@ export default function AuctionRoom() {
 
   const handleCancelBid = () => setBidAmount('')
 
-  const handleViewDocument = (doc) => () => setViewingDocument(doc)
+  const docBlobUrlsRef = useRef({})
+
+  const generateDocumentPdf = (doc) => {
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageW = pdf.internal.pageSize.getWidth()
+    const margin = 20
+
+    // Header bar
+    pdf.setFillColor(79, 70, 229)
+    pdf.rect(0, 0, pageW, 22, 'F')
+    pdf.setTextColor(255, 255, 255)
+    pdf.setFontSize(13)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('BriqBanq — Mortgage Resolution Platform', margin, 14)
+
+    // Document title
+    pdf.setTextColor(30, 30, 30)
+    pdf.setFontSize(18)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(doc.title, margin, 38)
+
+    // Divider
+    pdf.setDrawColor(200, 200, 200)
+    pdf.line(margin, 42, pageW - margin, 42)
+
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(100, 100, 100)
+    pdf.text(`Generated: ${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}`, margin, 49)
+    pdf.text('Case Reference: MIP-2026-001  |  Property: 45 Victoria Street, Potts Point NSW 2011', margin, 55)
+
+    let y = 68
+
+    const sectionTitle = (label) => {
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(79, 70, 229)
+      pdf.text(label, margin, y)
+      y += 2
+      pdf.setDrawColor(79, 70, 229)
+      pdf.line(margin, y, pageW - margin, y)
+      y += 6
+      pdf.setTextColor(30, 30, 30)
+    }
+
+    const row = (label, value) => {
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(80, 80, 80)
+      pdf.text(label, margin, y)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(30, 30, 30)
+      pdf.text(String(value), margin + 55, y)
+      y += 7
+    }
+
+    const bodyText = (text) => {
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(50, 50, 50)
+      const lines = pdf.splitTextToSize(text, pageW - margin * 2)
+      pdf.text(lines, margin, y)
+      y += lines.length * 5.5 + 4
+    }
+
+    if (doc.title === 'Loan Agreement') {
+      sectionTitle('Parties')
+      row('Lender:', 'National Mortgage Bank Ltd (ABN 12 345 678 900)')
+      row('Borrower:', 'Madhu Munigala')
+      row('Borrower ABN:', '98 765 432 100')
+      y += 3
+      sectionTitle('Loan Details')
+      row('Loan Amount:', 'A$980,000')
+      row('Interest Rate:', '6.25% p.a. (variable)')
+      row('Term:', '25 years')
+      row('Repayment Type:', 'Principal & Interest')
+      row('Start Date:', '15 January 2021')
+      row('Security:', '45 Victoria Street, Potts Point NSW 2011')
+      y += 3
+      sectionTitle('Default & Enforcement')
+      row('Default Date:', '10 October 2025')
+      row('Arrears:', 'A$18,500')
+      row('Notice Issued:', '01 November 2025')
+      y += 3
+      sectionTitle('Terms & Conditions')
+      bodyText('This agreement is governed by the laws of New South Wales, Australia. The borrower acknowledges receipt of the loan and agrees to repay the principal and interest as scheduled. In the event of default, the lender reserves the right to enforce the mortgage security in accordance with applicable legislation, including the Real Property Act 1900 and National Consumer Credit Protection Act 2009.')
+    } else if (doc.title === 'Property Valuation') {
+      sectionTitle('Property Details')
+      row('Address:', '45 Victoria Street, Potts Point NSW 2011')
+      row('Property Type:', 'Residential — Apartment')
+      row('Lot & DP:', 'Lot 8 DP 123456')
+      row('Land Area:', '142 m²')
+      row('Floor Area:', '190 m²')
+      row('Year Built:', '1995')
+      row('Condition:', 'Good')
+      y += 3
+      sectionTitle('Valuation Summary')
+      row('Valuation Date:', '15 January 2026')
+      row('Market Value:', 'A$1,250,000')
+      row('Valuation Method:', 'Direct Comparison')
+      row('Valuer:', 'Preston Rowe Paterson Pty Ltd')
+      row('Licence No.:', 'V-12345 (NSW)')
+      y += 3
+      sectionTitle('Comparable Sales')
+      row('43 Victoria St:', 'A$1,210,000 (Dec 2025)')
+      row('51 Victoria St:', 'A$1,280,000 (Nov 2025)')
+      row('12 Macleay St:', 'A$1,195,000 (Oct 2025)')
+      y += 3
+      sectionTitle('Valuer\'s Comments')
+      bodyText('The property is a well-maintained residential apartment in a sought-after harbourside suburb. Recent renovations including a new kitchen and bathroom have positively influenced value. Market conditions remain stable with consistent buyer demand in the Potts Point precinct.')
+    } else if (doc.title === 'Title Search') {
+      sectionTitle('Title Information')
+      row('Title Reference:', 'Folio 8/123456')
+      row('Local Government:', 'City of Sydney Council')
+      row('Estate:', 'Fee Simple')
+      row('Registered Owner:', 'Madhu Munigala')
+      row('Search Date:', '10 February 2026')
+      y += 3
+      sectionTitle('Encumbrances & Interests')
+      row('Mortgage:', 'National Mortgage Bank Ltd — Reg. No. AM 987654')
+      row('Covenant:', 'No adverse covenants noted')
+      row('Easements:', 'Nil')
+      row('Caveats:', 'Nil')
+      row('PPSR Interests:', 'Nil registered against property')
+      y += 3
+      sectionTitle('Zoning')
+      row('Zone:', 'R1 General Residential')
+      row('Floor Space Ratio:', '0.5:1')
+      row('Height Limit:', '8.5 m')
+      y += 3
+      sectionTitle('Search Notes')
+      bodyText('This title search has been conducted as at the date noted above. All interests registered on the title have been accurately reported. Parties should conduct their own further searches as required prior to settlement.')
+    } else {
+      sectionTitle('Policy Details')
+      row('Policy Number:', 'HBI-2026-004521')
+      row('Insurer:', 'NRMA Insurance Ltd')
+      row('Insured:', 'Madhu Munigala')
+      row('Property:', '45 Victoria Street, Potts Point NSW 2011')
+      row('Sum Insured:', 'A$1,500,000 (building replacement)')
+      row('Commencement:', '1 January 2026')
+      row('Expiry:', '31 December 2026')
+      row('Premium:', 'A$2,400 p.a. (paid)')
+      y += 3
+      sectionTitle('Cover Summary')
+      row('Building:', 'Full replacement value')
+      row('Storm & Flood:', 'Included')
+      row('Fire:', 'Included')
+      row('Public Liability:', 'A$20,000,000')
+      row('Excess:', 'A$500 per claim')
+      y += 3
+      sectionTitle('Special Conditions')
+      bodyText('This policy is noted in favour of National Mortgage Bank Ltd as mortgagee in accordance with standard mortgage interest conditions. The insurer must notify the mortgagee of any cancellation or material change to this policy. Claims are subject to full policy terms and conditions.')
+    }
+
+    // Footer
+    pdf.setFontSize(8)
+    pdf.setTextColor(160, 160, 160)
+    pdf.text('This is a sample document for demonstration purposes only. BriqBanq Mortgage Resolution Platform — Confidential.', margin, 285)
+
+    return pdf.output('bloburl')
+  }
+
+  const handleViewDocument = (doc) => () => {
+    if (!docBlobUrlsRef.current[doc.title]) {
+      docBlobUrlsRef.current[doc.title] = generateDocumentPdf(doc)
+    }
+    setViewingDocument({ ...doc, viewUrl: docBlobUrlsRef.current[doc.title] })
+  }
   const handleCloseDocumentView = () => setViewingDocument(null)
 
   const handleDownloadDocument = async (doc) => {
@@ -104,7 +286,9 @@ export default function AuctionRoom() {
         let blob
         if (isPdf) {
           try {
-            const res = await fetch('https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf')
+            const pdfInstance = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+            const blobUrl = generateDocumentPdf(doc)
+            const res = await fetch(blobUrl)
             if (res.ok) blob = await res.blob()
           } catch { /* ignore */ }
         }
@@ -436,9 +620,24 @@ export default function AuctionRoom() {
                       <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white shrink-0">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                       </span>
-                      <button type="button" className="p-1 text-gray-400 hover:text-gray-600" aria-label="More">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
-                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          aria-label="More options"
+                          onClick={(e) => {
+                            if (openBidMenuIndex === i) {
+                              setOpenBidMenuIndex(null)
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setBidMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                              setOpenBidMenuIndex(i)
+                            }
+                          }}
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -462,6 +661,64 @@ export default function AuctionRoom() {
           </div>
         </div>
       </div>
+
+      {/* Bid history ellipsis dropdown — fixed position so it escapes overflow-y:auto clipping */}
+      {openBidMenuIndex !== null && (
+        <div
+          ref={bidMenuRef}
+          className="fixed w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-[9999] py-1"
+          style={{ top: bidMenuPos.top, right: bidMenuPos.right }}
+        >
+          {[
+            {
+              label: 'View',
+              icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></>,
+              onClick: () => {
+                const bid = bidHistory[openBidMenuIndex]
+                alert(`Bid Details\nAmount: ${formatShort(bid?.amount)}\nRank: #${openBidMenuIndex + 1}\nStatus: Accepted`)
+                setOpenBidMenuIndex(null)
+              },
+            },
+            {
+              label: 'Download',
+              icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
+              onClick: () => {
+                const bid = bidHistory[openBidMenuIndex]
+                const blob = new Blob(
+                  [`Bid Amount: ${formatShort(bid?.amount)}\nRank: #${openBidMenuIndex + 1}\nStatus: Accepted\nDate: ${bid?.time ?? new Date().toLocaleString()}\n`],
+                  { type: 'text/plain' }
+                )
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `bid-${openBidMenuIndex + 1}.txt`
+                a.click()
+                URL.revokeObjectURL(url)
+                setOpenBidMenuIndex(null)
+              },
+            },
+            {
+              label: 'Details',
+              icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+              onClick: () => {
+                const bid = bidHistory[openBidMenuIndex]
+                alert(`Bid Details\nAmount: ${formatShort(bid?.amount)}\nBidder: ${bid?.user ?? 'You'}\nTime: ${bid?.time ?? '—'}\nStatus: ${bid?.status ?? 'Accepted'}`)
+                setOpenBidMenuIndex(null)
+              },
+            },
+          ].map(({ label, icon, onClick }) => (
+            <button
+              key={label}
+              type="button"
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              onClick={onClick}
+            >
+              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Document preview modal */}
       {viewingDocument && (
@@ -488,32 +745,11 @@ export default function AuctionRoom() {
               </button>
             </div>
             <div className="flex-1 min-h-0 p-4">
-              {viewingDocument.viewUrl ? (
-                <iframe
-                  src={viewingDocument.viewUrl}
-                  title={viewingDocument.title}
-                  className="w-full h-[70vh] rounded-lg border border-gray-200"
-                />
-              ) : (
-                <>
-                  <iframe
-                    src="https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf"
-                    title={`Preview: ${viewingDocument.title}`}
-                    className="w-full h-[70vh] rounded-lg border border-gray-200"
-                  />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Sample document preview. If the document does not load above,{' '}
-                    <a
-                      href="https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:underline"
-                    >
-                      open in new tab
-                    </a>.
-                  </p>
-                </>
-              )}
+              <iframe
+                src={viewingDocument.viewUrl}
+                title={viewingDocument.title}
+                className="w-full h-[70vh] rounded-lg border border-gray-200"
+              />
               {viewingDocument.description && (
                 <p className="text-sm text-gray-500 mt-2">{viewingDocument.description}</p>
               )}

@@ -1,6 +1,53 @@
 import { useState, useEffect } from 'react'
 import DatePicker from '../../../components/common/DatePicker'
 
+/** Reusable number spinner: displays value with − / + buttons */
+function NumberSpinner({ value, onChange, min = 0, max = 9999, step = 1, prefix = '', suffix = '' }) {
+  const num = parseFloat(value) || 0
+  const dec = step < 1 ? String(step).split('.')[1]?.length || 2 : 0
+
+  const decrement = () => {
+    const next = Math.max(min, parseFloat((num - step).toFixed(dec)))
+    onChange(String(next))
+  }
+  const increment = () => {
+    const next = Math.min(max, parseFloat((num + step).toFixed(dec)))
+    onChange(String(next))
+  }
+
+  return (
+    <div className="flex items-center w-full border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+      <button
+        type="button"
+        onClick={decrement}
+        className="flex-shrink-0 px-3 py-2.5 text-slate-500 hover:bg-slate-100 border-r border-slate-300 text-lg leading-none select-none transition-colors"
+      >
+        −
+      </button>
+      <div className="flex-1 flex items-center justify-center gap-0.5 py-2.5 text-sm font-semibold text-slate-900 bg-white select-none">
+        {prefix && <span className="text-slate-500 text-xs">{prefix}</span>}
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={e => onChange(e.target.value)}
+          className="w-16 text-center text-sm font-semibold text-slate-900 bg-transparent border-0 outline-none focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        {suffix && <span className="text-slate-500 text-xs">{suffix}</span>}
+      </div>
+      <button
+        type="button"
+        onClick={increment}
+        className="flex-shrink-0 px-3 py-2.5 text-slate-500 hover:bg-slate-100 border-l border-slate-300 text-lg leading-none select-none transition-colors"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
 const TABS = [
   { id: 'case-details', label: 'Case Details', icon: '📋' },
   { id: 'property-images', label: 'Property Images', icon: '🖼️' },
@@ -41,6 +88,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [aiSuggestLoading, setAiSuggestLoading] = useState(false)
   const [aiSuggestMessage, setAiSuggestMessage] = useState(null)
   const [aiGenerateLoading, setAiGenerateLoading] = useState(null) // 'marketingDescription' | 'investmentHighlights' | 'locationMarketNotes'
@@ -103,6 +151,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
 
   const handleSave = async () => {
     setSaveError(null)
+    setSaveSuccess(false)
     setIsSaving(true)
     try {
       await onSave?.({
@@ -110,7 +159,11 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
         propertyImages,
         aiContent,
       })
-      handleClose()
+      setSaveSuccess(true)
+      setTimeout(() => {
+        setSaveSuccess(false)
+        handleClose()
+      }, 1200)
     } catch (err) {
       console.error('Save failed', err)
       setSaveError(err?.message || 'Save failed. Please try again.')
@@ -319,32 +372,35 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Interest Rate (%)</label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
+                      <NumberSpinner
                         value={caseDetails.interestRate}
-                        onChange={(e) => updateCaseDetail('interestRate', e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(v) => updateCaseDetail('interestRate', v)}
+                        min={0}
+                        max={30}
+                        step={0.25}
+                        suffix="%"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Default Rate (%)</label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
+                      <NumberSpinner
                         value={caseDetails.defaultRate}
-                        onChange={(e) => updateCaseDetail('defaultRate', e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(v) => updateCaseDetail('defaultRate', v)}
+                        min={0}
+                        max={50}
+                        step={0.25}
+                        suffix="%"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Days in Default</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
+                      <NumberSpinner
                         value={caseDetails.daysInDefault}
-                        onChange={(e) => updateCaseDetail('daysInDefault', e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(v) => updateCaseDetail('daysInDefault', v)}
+                        min={0}
+                        max={3650}
+                        step={1}
+                        suffix="d"
                       />
                     </div>
                   </div>
@@ -381,22 +437,22 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Bedrooms</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
+                      <NumberSpinner
                         value={caseDetails.bedrooms}
-                        onChange={(e) => updateCaseDetail('bedrooms', e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(v) => updateCaseDetail('bedrooms', v)}
+                        min={0}
+                        max={20}
+                        step={1}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Bathrooms</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
+                      <NumberSpinner
                         value={caseDetails.bathrooms}
-                        onChange={(e) => updateCaseDetail('bathrooms', e.target.value)}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(v) => updateCaseDetail('bathrooms', v)}
+                        min={0}
+                        max={20}
+                        step={1}
                       />
                     </div>
                   </div>
@@ -419,7 +475,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                       <DatePicker
                         value={caseDetails.valuationDate}
                         onChange={(dateStr) => updateCaseDetail('valuationDate', dateStr)}
-                        placeholder="MM/DD/YYYY"
+                        placeholderText="MM/DD/YYYY"
                       />
                     </div>
                     <div>
@@ -615,25 +671,43 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
           {/* Footer */}
           <div className="flex flex-col gap-3 p-6 border-t border-slate-200 flex-shrink-0 bg-slate-50/50">
             {saveError && (
-              <p className="text-sm text-red-600" role="alert">
-                {saveError}
-              </p>
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5" role="alert">
+                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <p className="text-sm text-red-700">{saveError}</p>
+              </div>
+            )}
+            {saveSuccess && (
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2.5" role="status">
+                <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-sm text-emerald-700 font-medium">Changes saved successfully!</p>
+              </div>
             )}
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 border border-slate-300 bg-white text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50"
+                disabled={isSaving}
+                className="px-4 py-2 border border-slate-300 bg-white text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                disabled={isSaving || saveSuccess}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
               >
-                Save Changes
+                {isSaving && (
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                {isSaving ? 'Saving…' : saveSuccess ? 'Saved!' : 'Save Changes'}
               </button>
             </div>
           </div>

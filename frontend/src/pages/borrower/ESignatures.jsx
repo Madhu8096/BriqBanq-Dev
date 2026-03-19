@@ -96,6 +96,8 @@ export default function ESignatures() {
   const [documentStatusFilter, setDocumentStatusFilter] = useState('All Statuses')
   const [showUploadDocumentModal, setShowUploadDocumentModal] = useState(false)
   const [uploadDocumentForm, setUploadDocumentForm] = useState({ name: '', type: 'PDF', envelopeId: '' })
+  const [uploadDocumentFile, setUploadDocumentFile] = useState(null)
+  const [uploadDocumentDrag, setUploadDocumentDrag] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [editTemplateForm, setEditTemplateForm] = useState({ name: '', type: 'Procurement', description: '' })
   const [reports, setReports] = useState([])
@@ -109,6 +111,11 @@ export default function ESignatures() {
   const [envelopeStatusFilter, setEnvelopeStatusFilter] = useState('All Statuses')
   const [showEnvelopeFilters, setShowEnvelopeFilters] = useState(false)
   const [showDocumentFilters, setShowDocumentFilters] = useState(false)
+  const [showConfigureHsmModal, setShowConfigureHsmModal] = useState(false)
+  const [hsmConfig, setHsmConfig] = useState({ keyRetention: '90', backupEnabled: true, autoRotate: true, auditLevel: 'Full' })
+  const [evidenceTypeFilter, setEvidenceTypeFilter] = useState('All Types')
+  const [evidenceActorFilter, setEvidenceActorFilter] = useState('All Actors')
+  const [showEvidenceFilters, setShowEvidenceFilters] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -200,11 +207,14 @@ export default function ESignatures() {
     if (envelopeStatusFilter !== 'All Statuses' && e.status !== envelopeStatusFilter) return false
     return true
   })
-  const filteredEvidence = evidenceEvents.filter(
-    (e) =>
-      !evidenceSearch ||
-      [e.id, e.type, e.actor].some((v) => String(v).toLowerCase().includes(evidenceSearch.toLowerCase()))
-  )
+  const evidenceTypeOptions = ['All Types', ...Array.from(new Set((evidenceEvents || []).map((e) => e.type).filter(Boolean)))]
+  const evidenceActorOptions = ['All Actors', ...Array.from(new Set((evidenceEvents || []).map((e) => e.actor).filter(Boolean)))]
+  const filteredEvidence = (evidenceEvents || []).filter((e) => {
+    if (evidenceSearch && ![e.id, e.type, e.actor].some((v) => String(v).toLowerCase().includes(evidenceSearch.toLowerCase()))) return false
+    if (evidenceTypeFilter !== 'All Types' && e.type !== evidenceTypeFilter) return false
+    if (evidenceActorFilter !== 'All Actors' && e.actor !== evidenceActorFilter) return false
+    return true
+  })
   const filteredDocuments = documentsList.filter((d) => {
     if (documentSearch && ![d.name, d.type, d.uploadedBy, d.status, d.envelopeId].some((v) => String(v || '').toLowerCase().includes(documentSearch.toLowerCase()))) return false
     if (documentTypeFilter !== 'All Types' && d.type !== documentTypeFilter) return false
@@ -269,7 +279,7 @@ export default function ESignatures() {
     triggerFileDownload(name, content, 'application/json')
   }
   const handleIssueCertificate = () => setShowIssueCertificateModal(true)
-  const handleConfigureHSM = () => {}
+  const handleConfigureHSM = () => setShowConfigureHsmModal(true)
   const closeIssueCertificateModal = () => {
     setShowIssueCertificateModal(false)
     setIssueCertificateForm({
@@ -332,27 +342,46 @@ export default function ESignatures() {
   const handleNewPolicyRule = () => setShowNewPolicyRuleModal(true)
   const handleUploadDocument = () => setShowUploadDocumentModal(true)
   const handleSubmitUploadDocument = () => {
-    if (!uploadDocumentForm.name.trim()) return
+    const docName = uploadDocumentForm.name.trim() || (uploadDocumentFile ? uploadDocumentFile.name.replace(/\.[^/.]+$/, '') : '')
+    if (!docName && !uploadDocumentFile) return
+    const ext = uploadDocumentFile
+      ? '.' + (uploadDocumentFile.name.split('.').pop() || uploadDocumentForm.type.toLowerCase())
+      : uploadDocumentForm.type === 'PDF' ? '.pdf' : '.docx'
+    const sizeBytes = uploadDocumentFile?.size ?? 0
+    const sizeLabel = sizeBytes > 1_048_576
+      ? `${(sizeBytes / 1_048_576).toFixed(1)} MB`
+      : sizeBytes > 0 ? `${Math.round(sizeBytes / 1024)} KB` : '—'
     const newDoc = {
       id: `doc-${Date.now()}`,
-      name: uploadDocumentForm.name.trim().replace(/\s+/g, '_') + (uploadDocumentForm.type === 'PDF' ? '.pdf' : '.docx'),
-      type: uploadDocumentForm.type,
-      size: '—',
+      name: (docName || 'document').replace(/\s+/g, '_') + ext,
+      type: uploadDocumentFile ? (uploadDocumentFile.name.split('.').pop()?.toUpperCase() || uploadDocumentForm.type) : uploadDocumentForm.type,
+      size: sizeLabel,
       uploadedDate: new Date().toISOString().slice(0, 10),
       uploadedBy: 'You',
       status: 'Pending',
       envelopeId: uploadDocumentForm.envelopeId || null,
       hash: `sha256:${Math.random().toString(36).slice(2, 11)}...`,
+      _localFile: uploadDocumentFile || null,
     }
     setDocuments((prev) => [newDoc, ...prev])
     setShowUploadDocumentModal(false)
     setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' })
+    setUploadDocumentFile(null)
   }
   const handleDocumentView = (doc) => {
     if (doc) setViewingDocument(doc)
   }
   const handleDocumentDownload = (doc) => {
     if (!doc) return
+    if (doc._localFile) {
+      const url = URL.createObjectURL(doc._localFile)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = doc.name || doc._localFile.name
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      return
+    }
     const name = (doc.name || `document-${doc.id}`).replace(/\s+/g, '_')
     triggerFileDownload(name, `Document: ${doc.name}\nType: ${doc.type}\nStatus: ${doc.status}\nEnvelope: ${doc.envelopeId || '—'}\nUploaded by: ${doc.uploadedBy || '—'}\nDate: ${doc.uploadedDate || '—'}\nHash: ${doc.hash || '—'}\n\n(GovSign placeholder download)`)
   }
@@ -797,23 +826,6 @@ export default function ESignatures() {
                               <button type="button" onClick={() => handleViewEnvelope(row)} className="p-2 text-gray-600 hover:bg-gray-100 rounded" title="View" aria-label="View">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                               </button>
-                              <div className="relative" data-envelope-actions>
-                                <button type="button" onClick={handleEnvelopeActions(row)} className="p-2 text-gray-600 hover:bg-gray-100 rounded" title="More" aria-label="More actions" aria-expanded={envelopeActionsOpen === row.id}>
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
-                                </button>
-                                {envelopeActionsOpen === row.id && (
-                                  <div className="absolute right-0 top-full mt-1 py-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                    <button type="button" onClick={() => handleViewEnvelope(row)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                      View
-                                    </button>
-                                    <button type="button" onClick={() => handleDownloadEnvelope(row)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                      Download
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1146,19 +1158,48 @@ export default function ESignatures() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={evidenceSearch}
-                  onChange={(e) => setEvidenceSearch(e.target.value)}
-                  className="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-                <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <div className="flex flex-wrap gap-3 mb-4 items-center">
+                <div className="relative flex-1 min-w-[200px]">
+                  <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <input
+                    type="text"
+                    placeholder="Search by ID, type, or actor…"
+                    value={evidenceSearch}
+                    onChange={(e) => setEvidenceSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 border border-gray-300 rounded-lg py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEvidenceFilters((v) => !v)}
+                  className={`px-4 py-2 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${showEvidenceFilters || evidenceTypeFilter !== 'All Types' || evidenceActorFilter !== 'All Actors' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  Filter
+                  Filter {(evidenceTypeFilter !== 'All Types' || evidenceActorFilter !== 'All Actors') && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
                 </button>
+                {(evidenceTypeFilter !== 'All Types' || evidenceActorFilter !== 'All Actors') && (
+                  <button type="button" onClick={() => { setEvidenceTypeFilter('All Types'); setEvidenceActorFilter('All Actors') }} className="text-xs text-gray-500 hover:text-gray-800 underline">Clear filters</button>
+                )}
               </div>
+              {showEvidenceFilters && (
+                <div className="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex-1 min-w-[160px]">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Event Type</label>
+                    <select value={evidenceTypeFilter} onChange={(e) => setEvidenceTypeFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      {evidenceTypeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex-1 min-w-[160px]">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Actor</label>
+                    <select value={evidenceActorFilter} onChange={(e) => setEvidenceActorFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                      {evidenceActorOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <span className="text-xs text-gray-500 pb-1">{filteredEvidence.length} of {(evidenceEvents || []).length} events</span>
+                  </div>
+                </div>
+              )}
               <div className="space-y-4">
                 <h3 className="font-semibold text-gray-900">Event Chain</h3>
                 {filteredEvidence.map((evt) => (
@@ -1185,39 +1226,47 @@ export default function ESignatures() {
               </div>
               <div className="rounded-lg border-2 border-gray-200 bg-gray-50/50 p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Generate new report</h3>
-                <div className="flex flex-wrap gap-4 items-end">
-                  <div className="min-w-[200px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+                  <div className="lg:col-span-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Report type</label>
-                    <select value={reportTypeFilter} onChange={(e) => setReportTypeFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <select value={reportTypeFilter} onChange={(e) => setReportTypeFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm h-11 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                       {reportTypes.map((r) => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-0.5">{reportTypes.find((r) => r.id === reportTypeFilter)?.description}</p>
+                    <p className="text-xs text-gray-500 mt-1 min-h-[16px]">{reportTypes.find((r) => r.id === reportTypeFilter)?.description}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">From date</label>
                     <GlobalDatePicker value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} />
+                    <p className="text-xs text-gray-400 mt-1 min-h-[16px]">{reportDateFrom || 'Not set'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">To date</label>
                     <GlobalDatePicker value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} />
+                    <p className="text-xs text-gray-400 mt-1 min-h-[16px]">{reportDateTo || 'Not set'}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleGenerateReport}
-                    disabled={generatingReport}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {generatingReport ? (
-                      <>
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-                        Generating…
-                      </>
-                    ) : (
-                      <>Generate Report</>
-                    )}
-                  </button>
+                  <div className="flex flex-col justify-start">
+                    <label className="block text-sm font-medium text-gray-700 mb-1 invisible select-none">Generate</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateReport}
+                      disabled={generatingReport}
+                      className="w-full h-11 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {generatingReport ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          Generate Report
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
               <h3 className="font-semibold text-gray-900 mb-3">Generated reports</h3>
@@ -1564,43 +1613,93 @@ export default function ESignatures() {
       )}
 
       {showUploadDocumentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="upload-document-title" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog" aria-modal="true" aria-labelledby="upload-document-title"
+          onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setUploadDocumentFile(null); }}
+        >
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 id="upload-document-title" className="text-lg font-semibold text-gray-900">Upload Document</h3>
-            <p className="text-sm text-gray-500 mt-1">Add a document to an envelope or as a standalone file</p>
-            <div className="mt-4 space-y-4">
+            <div className="flex items-start justify-between gap-3 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Document name *</label>
+                <h3 id="upload-document-title" className="text-lg font-semibold text-gray-900">Upload Document</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Add a document to an envelope or as a standalone file</p>
+              </div>
+              <button type="button" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setUploadDocumentFile(null); }} className="p-1.5 text-gray-400 hover:text-gray-600 rounded" aria-label="Close">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              {/* File drop zone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">File *</label>
+                <label
+                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadDocumentDrag ? 'border-indigo-500 bg-indigo-50' : uploadDocumentFile ? 'border-emerald-400 bg-emerald-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}
+                  onDragOver={(e) => { e.preventDefault(); setUploadDocumentDrag(true) }}
+                  onDragLeave={() => setUploadDocumentDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault(); setUploadDocumentDrag(false)
+                    const f = e.dataTransfer.files?.[0]
+                    if (f) { setUploadDocumentFile(f); if (!uploadDocumentForm.name) setUploadDocumentForm((p) => ({ ...p, name: f.name.replace(/\.[^/.]+$/, '') })) }
+                  }}
+                >
+                  <input
+                    type="file"
+                    className="sr-only"
+                    accept=".pdf,.docx,.doc,.xlsx,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (f) { setUploadDocumentFile(f); if (!uploadDocumentForm.name) setUploadDocumentForm((p) => ({ ...p, name: f.name.replace(/\.[^/.]+$/, '') })) }
+                    }}
+                  />
+                  {uploadDocumentFile ? (
+                    <div className="text-center px-4">
+                      <svg className="w-8 h-8 text-emerald-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <p className="text-sm font-medium text-emerald-700 truncate max-w-[260px]">{uploadDocumentFile.name}</p>
+                      <p className="text-xs text-gray-500">{uploadDocumentFile.size > 1_048_576 ? `${(uploadDocumentFile.size / 1_048_576).toFixed(1)} MB` : `${Math.round(uploadDocumentFile.size / 1024)} KB`}</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <svg className="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      <p className="text-sm text-gray-600">Drag & drop or <span className="text-indigo-600 font-medium">click to browse</span></p>
+                      <p className="text-xs text-gray-400 mt-0.5">PDF, DOCX, XLSX, PNG, JPG</p>
+                    </div>
+                  )}
+                </label>
+                {uploadDocumentFile && (
+                  <button type="button" onClick={() => setUploadDocumentFile(null)} className="mt-1 text-xs text-red-600 hover:text-red-700 font-medium">Remove file</button>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Document name <span className="text-gray-400 font-normal">(auto-filled from file)</span></label>
                 <input
                   type="text"
                   value={uploadDocumentForm.name}
                   onChange={(e) => setUploadDocumentForm((p) => ({ ...p, name: e.target.value }))}
                   placeholder="e.g. Contract_2026"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  aria-required="true"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select value={uploadDocumentForm.type} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, type: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option>PDF</option>
-                  <option>DOCX</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Link to envelope (optional)</label>
-                <select value={uploadDocumentForm.envelopeId || ''} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, envelopeId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Link to envelope <span className="text-gray-400 font-normal">(optional)</span></label>
+                <select value={uploadDocumentForm.envelopeId || ''} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, envelopeId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="">— None —</option>
                   {envelopes.map((env) => (
                     <option key={env.id} value={env.id}>{env.id} — {env.title}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-0.5">Envelopes from your current list ({envelopes.length})</p>
               </div>
             </div>
             <div className="flex gap-2 mt-6">
-              <button type="button" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); }} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={handleSubmitUploadDocument} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg">Upload</button>
+              <button type="button" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setUploadDocumentFile(null); }} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button
+                type="button"
+                onClick={handleSubmitUploadDocument}
+                disabled={!uploadDocumentFile && !uploadDocumentForm.name.trim()}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg inline-flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                Upload Document
+              </button>
             </div>
           </div>
         </div>
@@ -1772,6 +1871,78 @@ export default function ESignatures() {
               <div><dt className="text-gray-500">Valid From / To</dt><dd className="text-gray-900">{certificateDetail.validFrom} — {certificateDetail.validTo}</dd></div>
             </dl>
             <button type="button" onClick={() => setCertificateDetail(null)} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg">Close</button>
+          </div>
+        </div>
+      )}
+      {/* Configure HSM Modal */}
+      {showConfigureHsmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="configure-hsm-title" onClick={() => setShowConfigureHsmModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div>
+                <h3 id="configure-hsm-title" className="text-lg font-semibold text-gray-900">Configure HSM</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Hardware Security Module cluster settings</p>
+              </div>
+              <button type="button" onClick={() => setShowConfigureHsmModal(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded" aria-label="Close">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            {/* Cluster info — read-only */}
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                <span className="text-sm font-semibold text-green-800">HSM Cluster Active</span>
+              </div>
+              <dl className="text-sm space-y-1">
+                <div className="flex justify-between"><dt className="text-gray-600">Primary</dt><dd className="font-medium text-gray-900">{hsmCluster.primary}</dd></div>
+                <div className="flex justify-between"><dt className="text-gray-600">Secondary</dt><dd className="font-medium text-gray-900">{hsmCluster.secondary}</dd></div>
+                <div className="flex justify-between"><dt className="text-gray-600">Region</dt><dd className="font-medium text-gray-900">{hsmCluster.region}</dd></div>
+                <div className="flex justify-between"><dt className="text-gray-600">Certification</dt><dd className="font-medium text-gray-900">{hsmCluster.certified}</dd></div>
+              </dl>
+            </div>
+            {/* Configurable settings */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Key Retention Period (days)</label>
+                <select value={hsmConfig.keyRetention} onChange={(e) => setHsmConfig((p) => ({ ...p, keyRetention: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="30">30 days</option>
+                  <option value="60">60 days</option>
+                  <option value="90">90 days (recommended)</option>
+                  <option value="180">180 days</option>
+                  <option value="365">365 days</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Audit Logging Level</label>
+                <select value={hsmConfig.auditLevel} onChange={(e) => setHsmConfig((p) => ({ ...p, auditLevel: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="Full">Full (all operations)</option>
+                  <option value="Standard">Standard (sign/key ops only)</option>
+                  <option value="Minimal">Minimal (errors only)</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Automatic Key Rotation</p>
+                  <p className="text-xs text-gray-500">Rotate keys every {hsmConfig.keyRetention} days automatically</p>
+                </div>
+                <button type="button" onClick={() => setHsmConfig((p) => ({ ...p, autoRotate: !p.autoRotate }))} className={`relative w-11 h-6 rounded-full transition-colors ${hsmConfig.autoRotate ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${hsmConfig.autoRotate ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Backup Cluster Enabled</p>
+                  <p className="text-xs text-gray-500">Mirror keys to secondary HSM cluster</p>
+                </div>
+                <button type="button" onClick={() => setHsmConfig((p) => ({ ...p, backupEnabled: !p.backupEnabled }))} className={`relative w-11 h-6 rounded-full transition-colors ${hsmConfig.backupEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${hsmConfig.backupEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button type="button" onClick={() => setShowConfigureHsmModal(false)} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => { setShowConfigureHsmModal(false) }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg">Save Configuration</button>
+            </div>
           </div>
         </div>
       )}
