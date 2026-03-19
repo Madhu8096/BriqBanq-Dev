@@ -87,7 +87,7 @@ class CaseRepository:
         """Get cases submitted for review."""
         result = await self.db.execute(
             select(Case)
-            .where(Case.status == CaseStatus.SUBMITTED)
+            .where(Case.status.in_([CaseStatus.SUBMITTED, CaseStatus.UNDER_REVIEW]))
             .offset(offset)
             .limit(limit)
             .order_by(Case.created_at.asc())

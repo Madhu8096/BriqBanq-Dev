@@ -59,7 +59,7 @@ async def create_case(
         entity_id=str(case.id),
         action="CREATE_CASE",
         before_state=None,
-        after_state={"status": "DRAFT", "title": case.title},
+        after_state={"status": "SUBMITTED", "title": case.title},
         trace_id=trace_id,
     )
 
@@ -163,8 +163,8 @@ async def submit_case(
         entity_type="case",
         entity_id=str(case_id),
         action="SUBMIT_CASE",
-        before_state={"status": "DRAFT"},
-        after_state={"status": "SUBMITTED"},
+        before_state={"status": "SUBMITTED"},
+        after_state={"status": "UNDER_REVIEW"},
         trace_id=trace_id,
     )
 

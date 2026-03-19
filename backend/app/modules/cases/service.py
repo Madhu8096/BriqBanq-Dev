@@ -72,7 +72,7 @@ class CaseService:
             outstanding_debt=outstanding_debt,
             interest_rate=interest_rate,
             tenure=tenure,
-            status=CaseStatus.DRAFT,
+            status=CaseStatus.SUBMITTED,
             borrower_id=borrower_id,
         )
         case = await self.repository.create(case)
@@ -143,10 +143,10 @@ class CaseService:
             raise AuthorizationError(message="You can only submit your own cases")
 
         CaseStateMachine.validate_transition(
-            case.status.value, CaseStatus.SUBMITTED.value
+            case.status.value, CaseStatus.UNDER_REVIEW.value
         )
 
-        case.status = CaseStatus.SUBMITTED  # type: ignore[assignment]
+        case.status = CaseStatus.UNDER_REVIEW  # type: ignore[assignment]
         case.rejection_reason = None  # type: ignore[assignment]  # Clear any previous rejection
         case.version += 1
         case = await self.repository.update(case)
@@ -159,7 +159,7 @@ class CaseService:
                 await notif_service.create_notification(
                     user_id=admin.id,
                     title="New Case Submitted",
-                    message=f"A new case '{case.title}' has been submitted and requires your review.",
+                    message=f"A new case '{case.title}' has been submitted and is ready for review.",
                     entity_type="case",
                     entity_id=str(case.id),
                     trace_id=trace_id
@@ -167,8 +167,8 @@ class CaseService:
             
             await notif_service.create_notification(
                 user_id=borrower_id,
-                title="Case Status: Pending",
-                message="Your case has been submitted and is pending review.",
+                title="Case Status: Under Review",
+                message="Your case has been submitted and is now under review.",
                 entity_type="case",
                 entity_id=str(case.id),
                 trace_id=trace_id
