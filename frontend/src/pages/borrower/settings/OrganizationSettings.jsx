@@ -52,7 +52,13 @@ export default function OrganizationSettings() {
   }, [])
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    let filtered = value
+    if (field === 'phone') {
+      filtered = value.replace(/[^0-9+\-()\s]/g, '')
+    } else if (field === 'postcode') {
+      filtered = value.replace(/[^0-9]/g, '').slice(0, 4)
+    }
+    setFormData((prev) => ({ ...prev, [field]: filtered }))
     setIsDirty(true)
   }
 
@@ -184,7 +190,7 @@ export default function OrganizationSettings() {
         </div>
         {showInvite && (
           <div className="flex flex-wrap items-end gap-3 p-4 bg-slate-50 rounded-lg mb-4">
-            <FormInput label="Name" value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Full name" />
+            <FormInput label="Name" value={inviteName} onChange={(e) => setInviteName(e.target.value.replace(/[^a-zA-Z\s''-]/g, ''))} placeholder="Full name" />
             <FormInput label="Email" type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@example.com" />
             <button type="button" onClick={addMember} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded">Add</button>
             <button type="button" onClick={() => { setShowInvite(false); setInviteName(''); setInviteEmail('') }} className="border border-slate-300 bg-white text-slate-700 text-sm px-4 py-2 rounded hover:bg-slate-50">Cancel</button>

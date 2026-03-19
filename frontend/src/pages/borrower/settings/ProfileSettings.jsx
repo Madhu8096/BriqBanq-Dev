@@ -82,7 +82,15 @@ export default function ProfileSettings() {
   }, [setCtxProfile, authUser, updateUser])
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    let filtered = value
+    if (field === 'firstName' || field === 'lastName' || field === 'city') {
+      filtered = value.replace(/[^a-zA-Z\s''-]/g, '')
+    } else if (field === 'phone') {
+      filtered = value.replace(/[^0-9+\-()\s]/g, '')
+    } else if (field === 'postcode') {
+      filtered = value.replace(/[^0-9]/g, '').slice(0, 4)
+    }
+    setFormData((prev) => ({ ...prev, [field]: filtered }))
     setIsDirty(true)
     if (errors[field]) setErrors((e) => ({ ...e, [field]: null }))
   }

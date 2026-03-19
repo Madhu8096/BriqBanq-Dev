@@ -265,7 +265,18 @@ export default function NewCase() {
   const [showGlobalError, setShowGlobalError] = useState(false)
 
   const update = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }))
+    const nameFields = ['firstName', 'lastName', 'trustName', 'trusteeName', 'companyName', 'borrowerLawyerName']
+    const phoneFields = ['phoneNumber', 'lenderPhone', 'borrowerLawyerPhone']
+    const postcodeFields = ['postcode', 'billingPostcode']
+    let filtered = value
+    if (nameFields.includes(key)) {
+      filtered = value.replace(/[^a-zA-Z\s''-]/g, '')
+    } else if (phoneFields.includes(key)) {
+      filtered = value.replace(/[^0-9+\-()\s]/g, '')
+    } else if (postcodeFields.includes(key)) {
+      filtered = value.replace(/[^0-9]/g, '').slice(0, 4)
+    }
+    setFormData((prev) => ({ ...prev, [key]: filtered }))
     // Clear error for this field when updated
     if (errors[key]) {
       setErrors((prev) => {
@@ -1117,7 +1128,7 @@ export default function NewCase() {
                       <input
                         type="text"
                         value={pendingGuarantor.name}
-                        onChange={(e) => setPendingGuarantor((p) => ({ ...p, name: e.target.value }))}
+                        onChange={(e) => setPendingGuarantor((p) => ({ ...p, name: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))}
                         placeholder="Full name or company name"
                         className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white"
                       />
@@ -1135,7 +1146,7 @@ export default function NewCase() {
                       <input
                         type="text"
                         value={pendingGuarantor.phone}
-                        onChange={(e) => setPendingGuarantor((p) => ({ ...p, phone: e.target.value }))}
+                        onChange={(e) => setPendingGuarantor((p) => ({ ...p, phone: e.target.value.replace(/[^0-9+\-()\s]/g, '') }))}
                         placeholder="0400 000 000"
                         className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white"
                       />

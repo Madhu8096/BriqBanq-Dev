@@ -200,7 +200,7 @@ export default function UserManagement() {
       <div className="flex flex-col items-end gap-4">
         {showAddUser && (
           <div className="w-full max-w-md p-4 bg-slate-50 rounded-lg border border-slate-200 flex flex-wrap gap-3 items-end">
-            <FormInput label="Name" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder="Full name" />
+            <FormInput label="Name" value={addName} onChange={(e) => setAddName(e.target.value.replace(/[^a-zA-Z\s''-]/g, ''))} placeholder="Full name" />
             <FormInput label="Email" type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="email@example.com" />
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>

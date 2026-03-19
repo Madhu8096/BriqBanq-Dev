@@ -337,7 +337,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                       <input
                         type="text"
                         value={caseDetails.borrowerName}
-                        onChange={(e) => updateCaseDetail('borrowerName', e.target.value)}
+                        onChange={(e) => updateCaseDetail('borrowerName', e.target.value.replace(/[^a-zA-Z\s''-]/g, ''))}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
@@ -431,7 +431,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                       <input
                         type="text"
                         value={caseDetails.postcode}
-                        onChange={(e) => updateCaseDetail('postcode', e.target.value)}
+                        onChange={(e) => updateCaseDetail('postcode', e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
@@ -483,7 +483,7 @@ export default function ManageCaseModal({ caseData, isOpen, onClose, onSave }) {
                       <input
                         type="text"
                         value={caseDetails.valuerName}
-                        onChange={(e) => updateCaseDetail('valuerName', e.target.value)}
+                        onChange={(e) => updateCaseDetail('valuerName', e.target.value.replace(/[^a-zA-Z\s''-]/g, ''))}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>

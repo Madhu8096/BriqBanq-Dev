@@ -251,7 +251,7 @@ export default function IdentityVerification() {
                 <input
                   type="text"
                   value={form.firstName}
-                  onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
@@ -260,7 +260,7 @@ export default function IdentityVerification() {
                 <input
                   type="text"
                   value={form.lastName}
-                  onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
