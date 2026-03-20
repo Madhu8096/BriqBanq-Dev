@@ -54,8 +54,25 @@ export default function AssignedCases() {
     setStatusFilter('All Status')
   }
 
-  const handleTestIdSystem = () => setShowTestIdModal(true)
-  const closeTestIdModal = () => setShowTestIdModal(false)
+  const [testRunning, setTestRunning] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+
+  const handleTestIdSystem = () => {
+    setTestResult(null)
+    setShowTestIdModal(true)
+  }
+  const closeTestIdModal = () => {
+    setShowTestIdModal(false)
+    setTestRunning(false)
+    setTestResult(null)
+  }
+  const handleRunTest = async () => {
+    setTestRunning(true)
+    setTestResult(null)
+    await new Promise((r) => setTimeout(r, 1500))
+    setTestRunning(false)
+    setTestResult('passed')
+  }
 
   const handleNewCaseSuccess = () => {
     setShowNewCase(false)
@@ -284,9 +301,32 @@ export default function AssignedCases() {
             <p className="mt-3 text-sm text-gray-600">
               Run identity verification and KYC test flows for development or QA. Connect to your configured ID provider (e.g. GreenID, InfoTrack) to validate document and identity checks.
             </p>
-            <div className="mt-6 flex gap-2">
+            {testResult === 'passed' && (
+              <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                All ID system checks passed successfully.
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
               <button type="button" onClick={closeTestIdModal} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-[#2A3037] bg-white hover:bg-gray-50">Close</button>
-              <button type="button" onClick={closeTestIdModal} className="flex-1 px-4 py-2 rounded-lg bg-[#3474E1] text-white text-sm font-medium hover:bg-[#2a5fc4]">Run Test</button>
+              <button
+                type="button"
+                onClick={handleRunTest}
+                disabled={testRunning || testResult === 'passed'}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors disabled:cursor-not-allowed ${testResult === 'passed' ? 'bg-emerald-600 text-white' : 'bg-[#3474E1] hover:bg-[#2a5fc4] text-white disabled:opacity-60'}`}
+              >
+                {testRunning ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Running…
+                  </>
+                ) : testResult === 'passed' ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                    Test Passed
+                  </>
+                ) : 'Run Test'}
+              </button>
             </div>
           </div>
         </div>

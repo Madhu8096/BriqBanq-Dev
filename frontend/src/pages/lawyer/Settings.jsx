@@ -347,7 +347,7 @@ export default function Settings() {
         {/* Page title â€” Figma */}
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your mortgage resolution case</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your account, organisation and preferences</p>
         </div>
 
         {/* Section header: gear + Settings + description */}
@@ -416,11 +416,11 @@ export default function Settings() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>First Name *</label>
-                      <input type="text" value={profile.firstName ?? ''} onChange={(e) => setProfile((p) => ({ ...p, firstName: e.target.value }))} className={inputClass} />
+                      <input type="text" value={profile.firstName ?? ''} onChange={(e) => setProfile((p) => ({ ...p, firstName: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))} className={inputClass} />
                     </div>
                     <div>
                       <label className={labelClass}>Last Name *</label>
-                      <input type="text" value={profile.lastName ?? ''} onChange={(e) => setProfile((p) => ({ ...p, lastName: e.target.value }))} className={inputClass} />
+                      <input type="text" value={profile.lastName ?? ''} onChange={(e) => setProfile((p) => ({ ...p, lastName: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))} className={inputClass} />
                     </div>
                   </div>
                   <div className="mt-4">
@@ -429,7 +429,7 @@ export default function Settings() {
                   </div>
                   <div className="mt-4">
                     <label className={labelClass}>Phone Number</label>
-                    <input type="text" value={profile.phone ?? ''} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} placeholder="+61 412 345 678" className={inputClass} />
+                    <input type="text" value={profile.phone ?? ''} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value.replace(/[^0-9+\-()\s]/g, '') }))} placeholder="+61 412 345 678" className={inputClass} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
@@ -441,9 +441,13 @@ export default function Settings() {
                     </div>
                     <div>
                       <label className={labelClass}>Job Title</label>
-                      <textarea rows={3} value={profile.bio ?? ''} onChange={(e) => { setProfile((p) => ({ ...p, bio: e.target.value })); setBioLength(e.target.value.length) }} className={inputClass} placeholder="e.g. Experienced investment professional..." />
-                      <p className="text-xs text-gray-400 text-right mt-1">{bioLength} / 500 characters</p>
+                      <input type="text" value={profile.jobTitle ?? ''} onChange={(e) => setProfile((p) => ({ ...p, jobTitle: e.target.value }))} placeholder="e.g. Senior Legal Advisor" className={inputClass} />
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className={labelClass}>Bio</label>
+                    <textarea rows={3} value={profile.bio ?? ''} onChange={(e) => { setProfile((p) => ({ ...p, bio: e.target.value })); setBioLength(e.target.value.length) }} className={inputClass} placeholder="Tell us about yourself..." />
+                    <p className="text-xs text-gray-400 text-right mt-1">{bioLength} / 500 characters</p>
                   </div>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
@@ -473,7 +477,7 @@ export default function Settings() {
                       </div>
                       <div>
                         <label className={labelClass}>Postcode</label>
-                        <input type="text" value={profile.address?.postcode ?? ''} onChange={(e) => setProfile((p) => ({ ...p, address: { ...p.address, postcode: e.target.value } }))} className={inputClass} />
+                        <input type="text" value={profile.address?.postcode ?? ''} onChange={(e) => setProfile((p) => ({ ...p, address: { ...p.address, postcode: e.target.value.replace(/[^0-9]/g, '').slice(0, 4) } }))} className={inputClass} />
                       </div>
                     </div>
                     <div>
@@ -509,7 +513,7 @@ export default function Settings() {
                 <div><label className={labelClass}>Phone</label><input type="text" value={org.phone} onChange={(e) => setOrg((o) => ({ ...o, phone: e.target.value }))} className={inputClass} /></div>
                 <div><label className={labelClass}>Street Address</label><input type="text" value={org.street} onChange={(e) => setOrg((o) => ({ ...o, street: e.target.value }))} className={inputClass} /></div>
                 <div><label className={labelClass}>City</label><input type="text" value={org.city} onChange={(e) => setOrg((o) => ({ ...o, city: e.target.value }))} className={inputClass} /></div>
-                <div><label className={labelClass}>Postcode</label><input type="text" value={org.postcode} onChange={(e) => setOrg((o) => ({ ...o, postcode: e.target.value }))} className={inputClass} /></div>
+                <div><label className={labelClass}>Postcode</label><input type="text" value={org.postcode} onChange={(e) => setOrg((o) => ({ ...o, postcode: e.target.value.replace(/[^0-9]/g, '').slice(0, 4) }))} className={inputClass} /></div>
                 <div><label className={labelClass}>Industry</label><select value={org.industry} onChange={(e) => setOrg((o) => ({ ...o, industry: e.target.value }))} className={inputClass}><option>Financial Services</option><option>Legal</option><option>Real Estate</option></select></div>
                 <div><label className={labelClass}>Company Size</label><select value={org.companySize} onChange={(e) => setOrg((o) => ({ ...o, companySize: e.target.value }))} className={inputClass}><option>50-100 employees</option><option>1-10</option><option>11-50</option><option>100+</option></select></div>
                 <div><label className={labelClass}>State</label><select value={org.state} onChange={(e) => setOrg((o) => ({ ...o, state: e.target.value }))} className={inputClass}><option value="ACT">ACT</option><option value="NSW">NSW</option><option value="NT">NT</option><option value="QLD">QLD</option><option value="SA">SA</option><option value="TAS">TAS</option><option value="VIC">VIC</option><option value="WA">WA</option></select></div>

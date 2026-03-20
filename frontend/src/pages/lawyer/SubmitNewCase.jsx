@@ -113,6 +113,62 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState(initialFormData)
   const [submitting, setSubmitting] = useState(false)
+  const [validatingProperty, setValidatingProperty] = useState(false)
+  const [propertyValidated, setPropertyValidated] = useState(false)
+  const [runningChecks, setRunningChecks] = useState(false)
+  const [checksComplete, setChecksComplete] = useState(false)
+  const [runningAnalysis, setRunningAnalysis] = useState(false)
+  const [analysisComplete, setAnalysisComplete] = useState(false)
+  const [directors, setDirectors] = useState([])
+  const [shareholders, setShareholders] = useState([])
+  const [trustees, setTrustees] = useState([])
+  const [guarantors, setGuarantors] = useState([])
+  const [showAddPerson, setShowAddPerson] = useState(null) // 'director'|'shareholder'|'trustee'|'guarantor'
+  const [personForm, setPersonForm] = useState({ name: '', role: '', email: '' })
+
+  const handleAddPerson = (type) => {
+    setPersonForm({ name: '', role: '', email: '' })
+    setShowAddPerson(type)
+  }
+  const handleSavePerson = () => {
+    if (!personForm.name.trim()) return
+    const entry = { id: Date.now(), ...personForm }
+    if (showAddPerson === 'director') setDirectors((p) => [...p, entry])
+    else if (showAddPerson === 'shareholder') setShareholders((p) => [...p, entry])
+    else if (showAddPerson === 'trustee') setTrustees((p) => [...p, entry])
+    else if (showAddPerson === 'guarantor') setGuarantors((p) => [...p, entry])
+    setShowAddPerson(null)
+  }
+  const handleRemovePerson = (type, id) => {
+    if (type === 'director') setDirectors((p) => p.filter((x) => x.id !== id))
+    else if (type === 'shareholder') setShareholders((p) => p.filter((x) => x.id !== id))
+    else if (type === 'trustee') setTrustees((p) => p.filter((x) => x.id !== id))
+    else if (type === 'guarantor') setGuarantors((p) => p.filter((x) => x.id !== id))
+  }
+
+  const handleValidateProperty = async () => {
+    setValidatingProperty(true)
+    setPropertyValidated(false)
+    await new Promise((r) => setTimeout(r, 1200))
+    setValidatingProperty(false)
+    setPropertyValidated(true)
+  }
+
+  const handleRunChecks = async () => {
+    setRunningChecks(true)
+    setChecksComplete(false)
+    await new Promise((r) => setTimeout(r, 1500))
+    setRunningChecks(false)
+    setChecksComplete(true)
+  }
+
+  const handleRunAnalysis = async () => {
+    setRunningAnalysis(true)
+    setAnalysisComplete(false)
+    await new Promise((r) => setTimeout(r, 1500))
+    setRunningAnalysis(false)
+    setAnalysisComplete(true)
+  }
 
   const update = (key, value) => setFormData((prev) => ({ ...prev, [key]: value }))
 
@@ -223,9 +279,28 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                     <input type="text" value={formData.intendedLoanAmount} onChange={(e) => update('intendedLoanAmount', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white" placeholder="Amount" />
                   </div>
                 </div>
-                <button type="button" className="mt-5 w-full sm:w-auto px-5 py-2.5 bg-[#4F46E5] text-white text-sm font-medium rounded-md hover:bg-[#4338CA] flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  Validate & Pull Property Data
+                <button
+                  type="button"
+                  onClick={handleValidateProperty}
+                  disabled={validatingProperty}
+                  className={`mt-5 w-full sm:w-auto px-5 py-2.5 text-white text-sm font-medium rounded-md flex items-center justify-center gap-2 transition-colors ${propertyValidated ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#4F46E5] hover:bg-[#4338CA]'} disabled:opacity-60 disabled:cursor-wait`}
+                >
+                  {validatingProperty ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      Validating…
+                    </>
+                  ) : propertyValidated ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                      Property Data Validated
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      Validate &amp; Pull Property Data
+                    </>
+                  )}
                 </button>
               </div>
             </section>
@@ -391,11 +466,23 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                     </h3>
                     <p className="text-sm text-slate-500 mt-1">All directors must be verified</p>
                   </div>
-                  <button type="button" className="px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-md hover:bg-[#1D4ED8] flex items-center gap-2 shrink-0">
+                  <button type="button" onClick={() => handleAddPerson('director')} className="px-4 py-2 bg-[#2563EB] text-white text-sm font-medium rounded-md hover:bg-[#1D4ED8] flex items-center gap-2 shrink-0">
                     <span>+</span> Add Director
                   </button>
                 </div>
-                <p className="text-sm text-slate-500 mt-4">No directors added yet. Click &apos;Add Director&apos; to begin.</p>
+                {directors.length === 0 ? (
+                  <p className="text-sm text-slate-500 mt-4">No directors added yet. Click &apos;Add Director&apos; to begin.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {directors.map((d) => (
+                      <li key={d.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md text-sm">
+                        <span className="font-medium text-slate-800">{d.name}</span>
+                        {d.role && <span className="text-slate-500">{d.role}</span>}
+                        <button type="button" onClick={() => handleRemovePerson('director', d.id)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
 
@@ -412,11 +499,23 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                     </h3>
                     <p className="text-sm text-slate-500 mt-1">AML/CTF Act requires verification of beneficial owners with 25%+ shareholding</p>
                   </div>
-                  <button type="button" className="px-4 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-md hover:bg-[#15803D] flex items-center gap-2 shrink-0">
+                  <button type="button" onClick={() => handleAddPerson('shareholder')} className="px-4 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-md hover:bg-[#15803D] flex items-center gap-2 shrink-0">
                     <span>+</span> Add Shareholder
                   </button>
                 </div>
-                <p className="text-sm text-slate-500 mt-4">No shareholders added yet. Click &apos;Add Shareholder&apos; to begin.</p>
+                {shareholders.length === 0 ? (
+                  <p className="text-sm text-slate-500 mt-4">No shareholders added yet. Click &apos;Add Shareholder&apos; to begin.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {shareholders.map((s) => (
+                      <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm">
+                        <span className="font-medium text-slate-800">{s.name}</span>
+                        {s.role && <span className="text-slate-500">{s.role}</span>}
+                        <button type="button" onClick={() => handleRemovePerson('shareholder', s.id)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
 
@@ -468,11 +567,23 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                     </h3>
                     <p className="text-sm text-slate-500 mt-1">All trustees must be verified (can be individuals or companies)</p>
                   </div>
-                  <button type="button" className="px-4 py-2 bg-[#7C3AED] text-white text-sm font-medium rounded-md hover:bg-[#6D28D9] flex items-center gap-2 shrink-0">
+                  <button type="button" onClick={() => handleAddPerson('trustee')} className="px-4 py-2 bg-[#7C3AED] text-white text-sm font-medium rounded-md hover:bg-[#6D28D9] flex items-center gap-2 shrink-0">
                     <span>+</span> Add Trustee
                   </button>
                 </div>
-                <p className="text-sm text-slate-500 mt-4">No trustees added yet. Click &apos;Add Trustee&apos; to begin.</p>
+                {trustees.length === 0 ? (
+                  <p className="text-sm text-slate-500 mt-4">No trustees added yet. Click &apos;Add Trustee&apos; to begin.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {trustees.map((t) => (
+                      <li key={t.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-md text-sm">
+                        <span className="font-medium text-slate-800">{t.name}</span>
+                        {t.role && <span className="text-slate-500">{t.role}</span>}
+                        <button type="button" onClick={() => handleRemovePerson('trustee', t.id)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
 
@@ -553,11 +664,23 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                   </h3>
                   <p className="text-sm text-slate-500 mt-1">Add any guarantors (optional - can be individuals or companies)</p>
                 </div>
-                <button type="button" className="px-4 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-md hover:bg-[#15803D] flex items-center gap-2 shrink-0">
+                <button type="button" onClick={() => handleAddPerson('guarantor')} className="px-4 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-md hover:bg-[#15803D] flex items-center gap-2 shrink-0">
                   <span>+</span> Add Guarantor
                 </button>
               </div>
-              <p className="text-sm text-slate-500 mt-4">No guarantors added. Click &apos;Add Guarantor&apos; if required.</p>
+              {guarantors.length === 0 ? (
+                <p className="text-sm text-slate-500 mt-4">No guarantors added. Click &apos;Add Guarantor&apos; if required.</p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {guarantors.map((g) => (
+                    <li key={g.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md text-sm">
+                      <span className="font-medium text-slate-800">{g.name}</span>
+                      {g.role && <span className="text-slate-500">{g.role}</span>}
+                      <button type="button" onClick={() => handleRemovePerson('guarantor', g.id)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {/* Credit Check Requirements (NCCP & Privacy Act) */}
@@ -659,9 +782,28 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                   <li key={item} className="flex items-center gap-2">• {item}</li>
                 ))}
               </ul>
-              <button type="button" className="mt-4 px-4 py-2 bg-white text-purple-700 text-sm font-medium rounded-md hover:bg-purple-50 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
-                Run All Checks Now - $186.00
+              <button
+                type="button"
+                onClick={handleRunChecks}
+                disabled={runningChecks}
+                className={`mt-4 px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-colors disabled:cursor-wait ${checksComplete ? 'bg-white text-emerald-700 hover:bg-emerald-50' : 'bg-white text-purple-700 hover:bg-purple-50'}`}
+              >
+                {runningChecks ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Running Checks…
+                  </>
+                ) : checksComplete ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                    All Checks Passed ✓
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
+                    Run All Checks Now - $186.00
+                  </>
+                )}
               </button>
               <p className="text-xs text-purple-200 mt-3">By proceeding, you authorise Drove to charge $186.00 (inc. GST) to your account for automated verification services.</p>
             </div>
@@ -720,7 +862,7 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">CVV *</label>
-                  <input type="text" value={formData.cvv} onChange={(e) => update('cvv', e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
+                  <input type="password" inputMode="numeric" maxLength={4} value={formData.cvv} onChange={(e) => update('cvv', e.target.value.replace(/[^0-9]/g, ''))} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Billing Address</label>
@@ -1149,7 +1291,24 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <h3 className="font-medium text-slate-900 flex items-center gap-2">AI Compliance Agent</h3>
               <p className="text-sm text-slate-600 mt-1">Automated compliance checking & data verification assistant</p>
-              <button type="button" className="mt-3 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700">Run Analysis</button>
+              <button
+                type="button"
+                onClick={handleRunAnalysis}
+                disabled={runningAnalysis}
+                className={`mt-3 px-4 py-2 text-white text-sm font-medium rounded-md flex items-center gap-2 transition-colors disabled:cursor-wait ${analysisComplete ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+              >
+                {runningAnalysis ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Analysing…
+                  </>
+                ) : analysisComplete ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                    Analysis Complete
+                  </>
+                ) : 'Run Analysis'}
+              </button>
             </div>
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700">
               Complete Credit Pack Assembly — All InfoTrack documents and third-party documents assembled with data reduction as per Privacy Act 1988 and OAIC guidelines.
@@ -1190,6 +1349,57 @@ export default function SubmitNewCase({ onClose, onSuccess }) {
           {step === 11 ? (submitting ? 'Submitting...' : 'Submit & Create Case') : 'Next →'}
         </button>
       </div>
+
+      {/* Add Person modal */}
+      {showAddPerson && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-base font-semibold text-slate-900 mb-4 capitalize">
+              Add {showAddPerson}
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  value={personForm.name}
+                  onChange={(e) => setPersonForm((p) => ({ ...p, name: e.target.value.replace(/[^a-zA-Z\s''-]/g, '') }))}
+                  placeholder="Enter full name"
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3474E1]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Role / Title</label>
+                <input
+                  type="text"
+                  value={personForm.role}
+                  onChange={(e) => setPersonForm((p) => ({ ...p, role: e.target.value }))}
+                  placeholder="e.g. Managing Director"
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3474E1]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={personForm.email}
+                  onChange={(e) => setPersonForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="email@example.com"
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3474E1]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-5">
+              <button type="button" onClick={() => setShowAddPerson(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Cancel
+              </button>
+              <button type="button" onClick={handleSavePerson} disabled={!personForm.name.trim()} className="px-4 py-2 bg-[#3474E1] hover:bg-[#2a5fc4] disabled:opacity-50 rounded-lg text-sm font-medium text-white">
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

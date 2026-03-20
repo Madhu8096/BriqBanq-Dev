@@ -82,6 +82,8 @@ export default function ESignatures() {
   const [documentStatusFilter, setDocumentStatusFilter] = useState('All Statuses')
   const [showUploadDocumentModal, setShowUploadDocumentModal] = useState(false)
   const [uploadDocumentForm, setUploadDocumentForm] = useState({ name: '', type: 'PDF', envelopeId: '' })
+  const [selectedUploadFile, setSelectedUploadFile] = useState(null)
+  const [uploadNameError, setUploadNameError] = useState('')
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [editTemplateForm, setEditTemplateForm] = useState({ name: '', type: 'Procurement', description: '' })
   const [reports, setReports] = useState([])
@@ -105,6 +107,13 @@ export default function ESignatures() {
   const [showNewPolicyRuleModal, setShowNewPolicyRuleModal] = useState(false)
   const [newPolicyRuleForm, setNewPolicyRuleForm] = useState({ title: '', description: '', scope: 'All organisations', status: 'Active' })
   const [localPolicyRules, setLocalPolicyRules] = useState([])
+  const [showEnvelopeFilters, setShowEnvelopeFilters] = useState(false)
+  const [envelopeTypeFilter, setEnvelopeTypeFilter] = useState('All Types')
+  const [envelopeStatusFilter, setEnvelopeStatusFilter] = useState('All Statuses')
+  const [envelopeRiskFilter, setEnvelopeRiskFilter] = useState('All Risks')
+  const [evidenceTypeFilter, setEvidenceTypeFilter] = useState('All Types')
+  const [showHSMModal, setShowHSMModal] = useState(false)
+  const [reportDateError, setReportDateError] = useState('')
 
   useEffect(() => {
     const closeEnvelopeActions = (e) => {
@@ -197,16 +206,18 @@ export default function ESignatures() {
   const documentsList = documents.length ? documents : (data?.documents ?? MOCK_GOVSIGN_DOCUMENTS)
   const templatesList = templates.length ? templates : (data?.templates ?? MOCK_GOVSIGN_TEMPLATES)
 
-  const filteredEnvelopes = envelopes.filter(
-    (e) =>
-      !envelopeSearch ||
-      [e.id, e.title, e.sender, e.type].some((v) => String(v).toLowerCase().includes(envelopeSearch.toLowerCase()))
-  )
-  const filteredEvidence = evidenceEvents.filter(
-    (e) =>
-      !evidenceSearch ||
-      [e.id, e.type, e.actor].some((v) => String(v).toLowerCase().includes(evidenceSearch.toLowerCase()))
-  )
+  const filteredEnvelopes = envelopes.filter((e) => {
+    if (envelopeSearch && ![e.id, e.title, e.sender, e.type].some((v) => String(v).toLowerCase().includes(envelopeSearch.toLowerCase()))) return false
+    if (envelopeTypeFilter !== 'All Types' && e.type !== envelopeTypeFilter) return false
+    if (envelopeStatusFilter !== 'All Statuses' && e.status !== envelopeStatusFilter) return false
+    if (envelopeRiskFilter !== 'All Risks' && e.risk !== envelopeRiskFilter) return false
+    return true
+  })
+  const filteredEvidence = evidenceEvents.filter((e) => {
+    if (evidenceSearch && ![e.id, e.type, e.actor, e.originIp, e.auth].some((v) => String(v || '').toLowerCase().includes(evidenceSearch.toLowerCase()))) return false
+    if (evidenceTypeFilter !== 'All Types' && e.type !== evidenceTypeFilter) return false
+    return true
+  })
   const filteredDocuments = documentsList.filter((d) => {
     if (documentSearch && ![d.name, d.type, d.uploadedBy, d.status, d.envelopeId].some((v) => String(v || '').toLowerCase().includes(documentSearch.toLowerCase()))) return false
     if (documentTypeFilter !== 'All Types' && d.type !== documentTypeFilter) return false
@@ -292,7 +303,7 @@ export default function ESignatures() {
     closeIssueCertificateModal()
   }
   const handleIssueCertificate = () => setShowIssueCertificateModal(true)
-  const handleConfigureHSM = () => {}
+  const handleConfigureHSM = () => setShowHSMModal(true)
   const handleCertificateExport = (certId) => {
     const cert = certificatesDisplay.find((c) => c.id === certId)
     if (!cert) return
@@ -324,14 +335,28 @@ export default function ESignatures() {
     closeNewPolicyRuleModal()
   }
   const handleNewPolicyRule = () => setShowNewPolicyRuleModal(true)
-  const handleUploadDocument = () => setShowUploadDocumentModal(true)
+  const handleUploadDocument = () => {
+    setSelectedUploadFile(null)
+    setUploadNameError('')
+    setShowUploadDocumentModal(true)
+  }
   const handleSubmitUploadDocument = () => {
-    if (!uploadDocumentForm.name.trim()) return
+    if (!uploadDocumentForm.name.trim()) {
+      setUploadNameError('Document name is required.')
+      return
+    }
+    setUploadNameError('')
+    const fileSizeBytes = selectedUploadFile?.size || 0
+    const fileSizeDisplay = fileSizeBytes > 0
+      ? fileSizeBytes >= 1024 * 1024
+        ? `${(fileSizeBytes / 1024 / 1024).toFixed(1)} MB`
+        : `${(fileSizeBytes / 1024).toFixed(0)} KB`
+      : '—'
     const newDoc = {
       id: `doc-${Date.now()}`,
       name: uploadDocumentForm.name.trim().replace(/\s+/g, '_') + (uploadDocumentForm.type === 'PDF' ? '.pdf' : '.docx'),
       type: uploadDocumentForm.type,
-      size: '—',
+      size: fileSizeDisplay,
       uploadedDate: new Date().toISOString().slice(0, 10),
       uploadedBy: 'You',
       status: 'Pending',
@@ -341,6 +366,8 @@ export default function ESignatures() {
     setDocuments((prev) => [newDoc, ...prev])
     setShowUploadDocumentModal(false)
     setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' })
+    setSelectedUploadFile(null)
+    setUploadNameError('')
   }
   const handleDocumentView = (doc) => {
     if (doc) setViewingDocument(doc)
@@ -368,10 +395,15 @@ export default function ESignatures() {
     setEditingTemplate(null)
   }
   const handleGenerateReport = () => {
-    setGeneratingReport(true)
-    const typeInfo = reportTypes.find((r) => r.id === reportTypeFilter) || reportTypes[0]
+    setReportDateError('')
     const from = reportDateFrom || new Date().toISOString().slice(0, 10)
     const to = reportDateTo || new Date().toISOString().slice(0, 10)
+    if (reportDateFrom && reportDateTo && reportDateTo < reportDateFrom) {
+      setReportDateError('"To date" cannot be earlier than "From date".')
+      return
+    }
+    setGeneratingReport(true)
+    const typeInfo = reportTypes.find((r) => r.id === reportTypeFilter) || reportTypes[0]
     setTimeout(() => {
       const newRpt = {
         id: `rpt-${Date.now()}`,
@@ -680,12 +712,55 @@ export default function ESignatures() {
                   <button type="button" onClick={handleCreateEnvelope} className="px-4 py-2.5 bg-[#3474E1] text-white text-sm font-medium rounded-lg hover:bg-[#2a5fc4] flex items-center gap-2">
                     <span>+</span> Create Envelope
                   </button>
-                  <button type="button" className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEnvelopeFilters((v) => !v)}
+                    className={`px-4 py-2.5 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${showEnvelopeFilters ? 'border-[#3474E1] bg-[#EEF4FF] text-[#3474E1]' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     Filters
+                    {(envelopeTypeFilter !== 'All Types' || envelopeStatusFilter !== 'All Statuses' || envelopeRiskFilter !== 'All Risks') && (
+                      <span className="w-2 h-2 rounded-full bg-[#3474E1]" />
+                    )}
                   </button>
                 </div>
               </div>
+              {showEnvelopeFilters && (
+                <div className="flex flex-wrap gap-3 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-gray-600 whitespace-nowrap">Type</label>
+                    <select value={envelopeTypeFilter} onChange={(e) => setEnvelopeTypeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
+                      <option>All Types</option>
+                      <option>Procurement</option>
+                      <option>Contract</option>
+                      <option>Deed</option>
+                      <option>Board Resolution</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-gray-600 whitespace-nowrap">Status</label>
+                    <select value={envelopeStatusFilter} onChange={(e) => setEnvelopeStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
+                      <option>All Statuses</option>
+                      <option>Draft</option>
+                      <option>In Signing</option>
+                      <option>Completed</option>
+                      <option>Pending Approval</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-gray-600 whitespace-nowrap">Risk</label>
+                    <select value={envelopeRiskFilter} onChange={(e) => setEnvelopeRiskFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
+                      <option>All Risks</option>
+                      <option>OFFICIAL</option>
+                      <option>PROTECTED</option>
+                      <option>URGENT</option>
+                    </select>
+                  </div>
+                  <button type="button" onClick={() => { setEnvelopeTypeFilter('All Types'); setEnvelopeStatusFilter('All Statuses'); setEnvelopeRiskFilter('All Risks') }} className="text-xs text-gray-500 hover:text-gray-700 underline">
+                    Clear filters
+                  </button>
+                </div>
+              )}
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-sm text-left">
                   <thead>
@@ -822,7 +897,7 @@ export default function ESignatures() {
                   <p className="text-sm text-gray-500 mt-0.5">Documents in envelopes — view, download, or upload</p>
                 </div>
                 <button type="button" onClick={handleUploadDocument} className="px-4 py-2.5 bg-[#3474E1] text-white text-sm font-medium rounded-lg hover:bg-[#2a5fc4] flex items-center gap-2 shadow-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 16m4-4v12" /></svg>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                   Upload Document
                 </button>
               </div>
@@ -852,9 +927,18 @@ export default function ESignatures() {
                   <option>Pending</option>
                   <option>In Signing</option>
                 </select>
-                <button type="button" className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setDocumentTypeFilter('All Types'); setDocumentStatusFilter('All Statuses'); setDocumentSearch('') }}
+                  className={`px-4 py-2.5 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+                    (documentTypeFilter !== 'All Types' || documentStatusFilter !== 'All Statuses')
+                      ? 'border-[#3474E1] bg-[#EEF4FF] text-[#3474E1]'
+                      : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                  }`}
+                  title="Clear all filters"
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  Filters
+                  {(documentTypeFilter !== 'All Types' || documentStatusFilter !== 'All Statuses') ? 'Clear Filters' : 'Filters'}
                 </button>
               </div>
 
@@ -1053,18 +1137,36 @@ export default function ESignatures() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={evidenceSearch}
-                  onChange={(e) => setEvidenceSearch(e.target.value)}
-                  className="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                />
-                <button type="button" className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  Filter
-                </button>
+              <div className="flex flex-wrap gap-3 mb-4">
+                <div className="relative flex-1 min-w-[200px]">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by ID, type, actor..."
+                    value={evidenceSearch}
+                    onChange={(e) => setEvidenceSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3474E1] focus:border-transparent"
+                  />
+                </div>
+                <select
+                  value={evidenceTypeFilter}
+                  onChange={(e) => setEvidenceTypeFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]"
+                >
+                  <option value="All Types">All Types</option>
+                  <option value="ENVELOPE_CREATED">Envelope Created</option>
+                  <option value="DOCUMENT_HASH_COMPUTED">Document Hash</option>
+                  <option value="RECIPIENTS_ADDED">Recipients Added</option>
+                  <option value="RISK_ASSESSMENT_COMPLETED">Risk Assessment</option>
+                  <option value="HSM_SIGNATURE_APPLIED">HSM Signature</option>
+                </select>
+                {(evidenceSearch || evidenceTypeFilter !== 'All Types') && (
+                  <button type="button" onClick={() => { setEvidenceSearch(''); setEvidenceTypeFilter('All Types') }} className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    Clear
+                  </button>
+                )}
               </div>
               <div className="space-y-4">
                 <h3 className="font-semibold text-gray-900">Event Chain</h3>
@@ -1092,39 +1194,60 @@ export default function ESignatures() {
               </div>
               <div className="rounded-lg border-2 border-gray-200 bg-gray-50/50 p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Generate new report</h3>
-                <div className="flex flex-wrap gap-4 items-end">
-                  <div className="min-w-[200px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Report type</label>
-                    <select value={reportTypeFilter} onChange={(e) => setReportTypeFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <select value={reportTypeFilter} onChange={(e) => setReportTypeFilter(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
                       {reportTypes.map((r) => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-0.5">{reportTypes.find((r) => r.id === reportTypeFilter)?.description}</p>
+                    <p className="text-xs text-gray-500 mt-1 min-h-[16px]">{reportTypes.find((r) => r.id === reportTypeFilter)?.description}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">From date</label>
-                    <GlobalDatePicker value={reportDateFrom} onChange={(e) => setReportDateFrom(e.target.value)} />
+                    <GlobalDatePicker
+                      value={reportDateFrom}
+                      onChange={(e) => { setReportDateFrom(e.target.value); setReportDateError('') }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1 min-h-[16px]" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">To date</label>
-                    <GlobalDatePicker value={reportDateTo} onChange={(e) => setReportDateTo(e.target.value)} />
+                    <GlobalDatePicker
+                      value={reportDateTo}
+                      onChange={(e) => { setReportDateTo(e.target.value); setReportDateError('') }}
+                      minDate={reportDateFrom ? new Date(reportDateFrom) : undefined}
+                    />
+                    <p className="text-xs text-red-600 mt-1 min-h-[16px] flex items-center gap-1">
+                      {reportDateError && (
+                        <>
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                          {reportDateError}
+                        </>
+                      )}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleGenerateReport}
-                    disabled={generatingReport}
-                    className="px-4 py-2 bg-[#3474E1] text-white text-sm font-medium rounded-lg hover:bg-[#2a5fc4] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {generatingReport ? (
-                      <>
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-                        Generating…
-                      </>
-                    ) : (
-                      <>Generate Report</>
-                    )}
-                  </button>
+                  <div className="pb-[20px]">
+                    <button
+                      type="button"
+                      onClick={handleGenerateReport}
+                      disabled={generatingReport}
+                      className="w-full px-4 py-2 bg-[#3474E1] text-white text-sm font-medium rounded-lg hover:bg-[#2a5fc4] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {generatingReport ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                          Generate Report
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
               <h3 className="font-semibold text-gray-900 mb-3">Generated reports</h3>
@@ -1427,43 +1550,119 @@ export default function ESignatures() {
       )}
 
       {showUploadDocumentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="upload-document-title" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); }}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 id="upload-document-title" className="text-lg font-semibold text-gray-900">Upload Document</h3>
-            <p className="text-sm text-gray-500 mt-1">Add a document to an envelope or as a standalone file</p>
-            <div className="mt-4 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="upload-document-title"
+          onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setSelectedUploadFile(null); setUploadNameError('') }}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 id="upload-document-title" className="text-lg font-semibold text-gray-900">Upload Document</h3>
+              <button
+                type="button"
+                onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setSelectedUploadFile(null); setUploadNameError('') }}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                aria-label="Close"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Add a document to an envelope or as a standalone file</p>
+            <div className="space-y-4">
+              {/* File picker */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select file</label>
+                <label className={`flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded-xl px-4 py-6 cursor-pointer transition-colors ${selectedUploadFile ? 'border-[#3474E1] bg-[#EEF4FF]/40' : 'border-gray-300 hover:border-[#3474E1] hover:bg-[#EEF4FF]/20'}`}>
+                  {selectedUploadFile ? (
+                    <>
+                      <svg className="w-8 h-8 text-[#3474E1]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <span className="text-sm font-medium text-[#3474E1]">{selectedUploadFile.name}</span>
+                      <span className="text-xs text-gray-500">
+                        {selectedUploadFile.size >= 1024 * 1024
+                          ? `${(selectedUploadFile.size / 1024 / 1024).toFixed(1)} MB`
+                          : `${(selectedUploadFile.size / 1024).toFixed(0)} KB`
+                        } · Click to change
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                      <span className="text-sm text-gray-500">Click to browse or drag &amp; drop</span>
+                      <span className="text-xs text-gray-400">PDF, DOC, DOCX</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setSelectedUploadFile(file)
+                      const ext = file.name.split('.').pop()?.toUpperCase() || 'PDF'
+                      setUploadDocumentForm((p) => ({
+                        ...p,
+                        name: file.name.replace(/\.[^/.]+$/, ''),
+                        type: ext === 'DOCX' || ext === 'DOC' ? 'DOCX' : 'PDF',
+                      }))
+                      setUploadNameError('')
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Document name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Document name *</label>
                 <input
                   type="text"
                   value={uploadDocumentForm.name}
-                  onChange={(e) => setUploadDocumentForm((p) => ({ ...p, name: e.target.value }))}
+                  onChange={(e) => { setUploadDocumentForm((p) => ({ ...p, name: e.target.value })); setUploadNameError('') }}
                   placeholder="e.g. Contract_2026"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  aria-required="true"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3474E1] ${uploadNameError ? 'border-red-400' : 'border-gray-300'}`}
                 />
+                {uploadNameError && <p className="text-xs text-red-500 mt-1">{uploadNameError}</p>}
               </div>
+
+              {/* Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                <select value={uploadDocumentForm.type} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, type: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option>PDF</option>
-                  <option>DOCX</option>
+                <label className="block text-sm font-medium text-gray-700 mb-1">File type</label>
+                <select value={uploadDocumentForm.type} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, type: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
+                  <option value="PDF">PDF</option>
+                  <option value="DOCX">DOCX</option>
                 </select>
               </div>
+
+              {/* Link to envelope */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Link to envelope (optional)</label>
-                <select value={uploadDocumentForm.envelopeId || ''} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, envelopeId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Link to envelope <span className="font-normal text-gray-400">(optional)</span></label>
+                <select value={uploadDocumentForm.envelopeId || ''} onChange={(e) => setUploadDocumentForm((p) => ({ ...p, envelopeId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3474E1]">
                   <option value="">— None —</option>
                   {envelopes.map((env) => (
                     <option key={env.id} value={env.id}>{env.id} — {env.title}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-0.5">Envelopes from your current list ({envelopes.length})</p>
               </div>
             </div>
-            <div className="flex gap-2 mt-6">
-              <button type="button" onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); }} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={handleSubmitUploadDocument} className="flex-1 bg-[#3474E1] hover:bg-[#2a5fc4] text-white text-sm font-medium py-2 rounded-lg">Upload</button>
+
+            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => { setShowUploadDocumentModal(false); setUploadDocumentForm({ name: '', type: 'PDF', envelopeId: '' }); setSelectedUploadFile(null); setUploadNameError('') }}
+                className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitUploadDocument}
+                className="flex-1 bg-[#3474E1] hover:bg-[#2a5fc4] text-white text-sm font-medium py-2.5 rounded-lg flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                Upload Document
+              </button>
             </div>
           </div>
         </div>
@@ -1662,6 +1861,61 @@ export default function ESignatures() {
             <div className="flex gap-2 mt-6">
               <button type="button" onClick={closeNewPolicyRuleModal} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
               <button type="button" onClick={handleSubmitNewPolicyRule} className="flex-1 bg-[#3474E1] hover:bg-[#2a5fc4] text-white text-sm font-medium py-2 rounded-lg">Add Rule</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HSM Configuration Modal */}
+      {showHSMModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="hsm-modal-title">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 id="hsm-modal-title" className="text-lg font-semibold text-gray-900">Configure HSM Cluster</h3>
+              <button type="button" onClick={() => setShowHSMModal(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded" aria-label="Close">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="space-y-4 text-sm">
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                <span className="text-green-700 text-xs">{hsmCluster.primary} — {hsmCluster.certified}</span>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Cluster</label>
+                <input type="text" defaultValue={hsmCluster.primary} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readOnly />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Cluster</label>
+                <input type="text" defaultValue={hsmCluster.secondary} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readOnly />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <input type="text" defaultValue={hsmCluster.region} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readOnly />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Certification</label>
+                <input type="text" defaultValue={hsmCluster.certified} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" readOnly />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Key Algorithm</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option>RSA-4096</option>
+                  <option>EC P-384</option>
+                  <option>EC P-521</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Auto-Failover</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option>Enabled</option>
+                  <option>Disabled</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button type="button" onClick={() => setShowHSMModal(false)} className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setShowHSMModal(false)} className="flex-1 bg-[#3474E1] hover:bg-[#2a5fc4] text-white text-sm font-medium py-2 rounded-lg">Save Configuration</button>
             </div>
           </div>
         </div>

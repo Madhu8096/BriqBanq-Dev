@@ -7,6 +7,8 @@ import TaskCenter from './TaskCenter'
 import Notifications from './Notifications'
 import Settings from './Settings'
 import CaseDetail from './CaseDetail'
+import Reports from './Reports'
+import ContractReview from './ContractReview'
 
 export default function LawyerRoutes() {
   return (
@@ -19,6 +21,8 @@ export default function LawyerRoutes() {
       <Route path="task-center" element={<TaskCenter />} />
       <Route path="notifications" element={<Notifications />} />
       <Route path="settings" element={<Settings />} />
+      <Route path="reports" element={<Reports />} />
+      <Route path="contract-review" element={<ContractReview />} />
     </Route>
   )
 }

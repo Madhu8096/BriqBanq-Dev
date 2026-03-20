@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Badge from './components/Badge'
+import DatePicker from '../../components/common/DatePicker'
 import { MOCK_TASKS } from './data/mockData'
 
 const priorityVariant = { Urgent: 'urgent', High: 'high', Medium: 'medium', Done: 'done' }
 const statusVariant = { Overdue: 'overdue', Pending: 'pending', InProgress: 'in-progress', Completed: 'completed' }
 
 const PRIORITY_OPTIONS = ['Low', 'Medium', 'High', 'Urgent']
-const MODULE_OPTIONS = ['Brickbanq', 'Accounting', 'Compliance', 'Legal Review', 'Documentation', 'AML/CTF', 'Compliance']
+const MODULE_OPTIONS = ['Brickbanq', 'Accounting', 'Compliance', 'Legal Review', 'Documentation', 'AML/CTF']
 
 export default function TaskCenter() {
   const navigate = useNavigate()
@@ -239,8 +240,8 @@ export default function TaskCenter() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-wrap justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#2A3037]">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your mortgage resolution case</p>
+          <h1 className="text-2xl font-bold text-[#2A3037]">Task Center</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage all your tasks across BriqBanq</p>
         </div>
         <button
           type="button"
@@ -249,11 +250,6 @@ export default function TaskCenter() {
         >
           + New Task
         </button>
-      </div>
-
-      <div>
-        <h2 className="text-lg font-bold text-[#2A3037]">Task Center</h2>
-        <p className="text-sm text-gray-500">Manage all your tasks across Grow platform</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -583,12 +579,10 @@ export default function TaskCenter() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                  <input
-                    type="text"
+                  <DatePicker
                     value={newTaskForm.dueDate}
-                    onChange={(e) => setNewTaskField('dueDate', e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3474E1] focus:border-transparent"
+                    onChange={(val) => setNewTaskField('dueDate', val)}
+                    placeholderText="DD/MM/YYYY"
                   />
                 </div>
               </div>
