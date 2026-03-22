@@ -44,3 +44,4 @@ factory-boy==3.3.0
 python-dotenv==1.0.1
 uuid6==2024.1.12
 xhtml2pdf==0.2.14
+reportlab==3.6.13

@@ -1,0 +1,35 @@
+﻿--- USERS ---
+ID: 1e6178ae-a6aa-48f1-a9c1-e42b4ac35842, Email: munigalam48@gmail.com, Name: siddu, Status: ACTIVE
+ID: eacd2454-fe3e-4c4e-985a-b42ce53928b5, Email: nb72466@gmail.com, Name: madhu, Status: ACTIVE
+ID: c1ef5dbd-5fc0-4962-988b-410cc0626789, Email: siddugadde123@gmail.com, Name: siddu, Status: ACTIVE
+ID: 45d7c431-4018-4c1e-b743-59ab0c7900ff, Email: shravanidasari10@gmail.com, Name: siddu, Status: ACTIVE
+ID: ab705ec3-56d3-442e-a640-6bfa2cd4af22, Email: madhuvinee10@gmail.com, Name: srikanth, Status: ACTIVE
+ID: 149c2df3-200b-4284-ab0b-f9b32f815abf, Email: borrower@brickbanq.com, Name: Sample, Status: ACTIVE
+ID: b91c3e66-1c94-4ae8-a37a-8124a5fbbcd0, Email: amarbesaveni123@gmail.com, Name: amar, Status: ACTIVE
+ID: 92ccd290-24b4-46f4-9560-a89fe3ce9c64, Email: vanaparthikarthik12@gmail.com, Name: karthik, Status: ACTIVE
+ID: f6abf121-b0c4-4f24-a35a-d1eb345cdcdd, Email: kiranambati123@gmail.com, Name: kiran, Status: ACTIVE
+ID: e31dac63-17ae-4ed8-897c-bae88945eeba, Email: agent_test_10@gmail.com, Name: Agent, Status: ACTIVE
+ID: 06f6feb4-3678-489a-8bb3-74cb37fe7e15, Email: liveexpertai@gmail.com, Name: live, Status: ACTIVE
+ID: 69308f0d-578e-49ae-a507-32cade54dd4c, Email: vanaparthikarthik20@gmail.com, Name: vanaparthi, Status: ACTIVE
+ID: 1e84b58e-4b54-4fe4-a20f-60a39d25bd8d, Email: madhumunigala94@gmail.com, Name: madhu, Status: ACTIVE
+ID: 8c1a5db2-79c6-432e-9a0d-9d1940a52c2b, Email: siddarthagadde11@gmail.com, Name: siddartha, Status: ACTIVE
+ID: 463cbc1a-1fc0-46bb-875b-d01884fdba25, Email: shravanidasari1998@gmail.com, Name: shravani, Status: ACTIVE
+ID: 478d08d3-e6fd-4f5c-bfa3-f2e812306c95, Email: admin@brickbanq.com, Name: Platform, Status: ACTIVE
+
+--- USER ROLES ---
+UserID: 478d08d3-e6fd-4f5c-bfa3-f2e812306c95, Role: ADMIN, Status: APPROVED
+UserID: 149c2df3-200b-4284-ab0b-f9b32f815abf, Role: BORROWER, Status: APPROVED
+UserID: 1e6178ae-a6aa-48f1-a9c1-e42b4ac35842, Role: BORROWER, Status: APPROVED
+UserID: eacd2454-fe3e-4c4e-985a-b42ce53928b5, Role: BORROWER, Status: APPROVED
+UserID: c1ef5dbd-5fc0-4962-988b-410cc0626789, Role: INVESTOR, Status: APPROVED
+UserID: 45d7c431-4018-4c1e-b743-59ab0c7900ff, Role: BORROWER, Status: APPROVED
+UserID: ab705ec3-56d3-442e-a640-6bfa2cd4af22, Role: LAWYER, Status: APPROVED
+UserID: b91c3e66-1c94-4ae8-a37a-8124a5fbbcd0, Role: BORROWER, Status: APPROVED
+UserID: 92ccd290-24b4-46f4-9560-a89fe3ce9c64, Role: INVESTOR, Status: APPROVED
+UserID: f6abf121-b0c4-4f24-a35a-d1eb345cdcdd, Role: LENDER, Status: APPROVED
+UserID: e31dac63-17ae-4ed8-897c-bae88945eeba, Role: BORROWER, Status: APPROVED
+UserID: 06f6feb4-3678-489a-8bb3-74cb37fe7e15, Role: INVESTOR, Status: APPROVED
+UserID: 69308f0d-578e-49ae-a507-32cade54dd4c, Role: BORROWER, Status: APPROVED
+UserID: 1e84b58e-4b54-4fe4-a20f-60a39d25bd8d, Role: BORROWER, Status: APPROVED
+UserID: 8c1a5db2-79c6-432e-9a0d-9d1940a52c2b, Role: BORROWER, Status: APPROVED
+UserID: 463cbc1a-1fc0-46bb-875b-d01884fdba25, Role: INVESTOR, Status: APPROVED
